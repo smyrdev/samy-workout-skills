@@ -1,0 +1,4 @@
+# Personal profiles are user data, never committed.
+# The schema lives at skills/onboarding/profile.example.json instead.
+profiles/*
+!profiles/.gitkeep
