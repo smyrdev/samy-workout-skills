@@ -1,0 +1,20 @@
+{
+  "$schema_version": "1.0",
+  "exclude": {
+    "exercises": ["burpee"],
+    "equipment": [],
+    "movement_groups": [],
+    "muscles": []
+  },
+  "focus": {
+    "muscles": ["shoulders"],
+    "must_include": ["barbell bench press"]
+  },
+  "order": [
+    "must_include_first",
+    "trailer_groups_last",
+    "compound_before_isolation",
+    "focus_muscles_first",
+    "large_groups_before_small"
+  ]
+}

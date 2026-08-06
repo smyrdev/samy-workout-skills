@@ -3,5 +3,8 @@
 profiles/*
 !profiles/.gitkeep
 
+# Exercise dataset clones are a local cache, described by skills/generation/datasets.json.
+datasets/
+
 __pycache__/
 *.pyc
