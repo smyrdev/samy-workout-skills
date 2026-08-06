@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/smyrdev/samy-workout-skills/skills/generation/schema/plan.schema.json",
+  "title": "Generated workout plan",
+  "description": "profiles/<slug>/plans/plan-YYYY-MM-DD.json — written by the generation skill's scripts/generate.py, one file per generated plan, never overwritten (same-day re-runs suffix -2, -3). Self-contained: exercise volume maps are copied in, so the plan is readable without the dataset. A plan-YYYY-MM-DD.md render sits next to it for humans.",
+  "type": "object",
+  "required": ["$schema_version", "created_at", "profile_slug", "program", "dataset",
+               "rules_applied", "targets", "sessions", "deload_week", "warnings"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema_version": { "const": "1.0" },
+    "created_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "profile_slug": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+    "program": {
+      "description": "Echo of the program block this plan was generated from, including any per-cycle overrides the person confirmed.",
+      "type": "object",
+      "required": ["name", "emoji", "primary_goal", "days_per_week", "session_minutes",
+                   "split", "deload"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "emoji": { "type": "string", "minLength": 1 },
+        "primary_goal": { "enum": ["hypertrophy", "strength", "both"] },
+        "days_per_week": { "type": "integer", "minimum": 3, "maximum": 7 },
+        "session_minutes": {
+          "enum": ["up_to_20", "20-40", "40-60", "60-90", "90-120", "over_120"]
+        },
+        "split": { "enum": ["full_body", "upper_lower"] },
+        "deload": { "type": "boolean" }
+      }
+    },
+    "dataset": {
+      "description": "Which dataset produced this plan. commit is the clone's SHA when known, so a plan is reproducible even though ref usually tracks a moving branch.",
+      "type": "object",
+      "required": ["name", "repo", "ref", "commit"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "repo": { "type": "string", "minLength": 1 },
+        "ref": { "type": "string", "minLength": 1 },
+        "commit": { "type": ["string", "null"] }
+      }
+    },
+    "rules_applied": {
+      "description": "The merged rules snapshot (defaults + personal rules.json) the fit actually used.",
+      "type": "object",
+      "required": ["exclude", "focus", "order"],
+      "additionalProperties": false,
+      "properties": {
+        "exclude": {
+          "type": "object",
+          "required": ["exercises", "equipment", "movement_groups", "muscles"],
+          "additionalProperties": false,
+          "properties": {
+            "exercises": { "type": "array", "items": { "type": "string" } },
+            "equipment": { "type": "array", "items": { "type": "string" } },
+            "movement_groups": { "type": "array", "items": { "type": "string" } },
+            "muscles": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "focus": {
+          "type": "object",
+          "required": ["muscles", "must_include"],
+          "additionalProperties": false,
+          "properties": {
+            "muscles": { "type": "array", "items": { "type": "string" } },
+            "must_include": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "order": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "targets": {
+      "description": "Per muscle group: the sets volume.py allocated, and the fractional sets this plan actually delivers (each set adds 1.0 for direct muscles, 0.5 for indirect ones). Groups excluded by rules are absent.",
+      "type": "object"
+    },
+    "sessions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["day", "focus", "exercises"],
+        "additionalProperties": false,
+        "properties": {
+          "day": { "type": "integer", "minimum": 1, "maximum": 7 },
+          "focus": { "type": "string", "minLength": 1 },
+          "exercises": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "name", "equipment", "movement_group", "primary",
+                           "sets", "reps", "volume"],
+              "additionalProperties": false,
+              "properties": {
+                "id": { "type": "string", "minLength": 1 },
+                "name": { "type": "string", "minLength": 1 },
+                "equipment": { "type": "string", "minLength": 1 },
+                "movement_group": { "type": ["string", "null"] },
+                "primary": { "type": "string", "minLength": 1 },
+                "sets": { "type": "integer", "minimum": 1 },
+                "reps": { "type": "string", "minLength": 1 },
+                "volume": {
+                  "type": "object",
+                  "description": "Muscle-group involvement per set, in the skill's canonical vocabulary (already mapped from the dataset's)."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "deload_week": {
+      "description": "null when the program has no deload; otherwise how to derive the lighter final week from the sessions above.",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["sets_multiplier", "note"],
+          "additionalProperties": false,
+          "properties": {
+            "sets_multiplier": { "type": "number", "exclusiveMinimum": 0 },
+            "note": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    },
+    "warnings": {
+      "description": "Honest reporting: short:<group> when an allocation could not be reached, unknown_exclude_*:<name> and unmatched_must_include:<name> for rules entries that matched nothing.",
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}

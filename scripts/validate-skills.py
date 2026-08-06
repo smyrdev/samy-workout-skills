@@ -18,6 +18,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SKILL_DIR = ROOT / "skills" / "onboarding"
+GEN_DIR = ROOT / "skills" / "generation"
 
 FAILURES = []
 
@@ -92,10 +93,13 @@ def is_quoted_single_line(raw_value):
 # --------------------------------------------------------------------------------------
 
 def check_skill_frontmatter():
-    portable = SKILL_DIR / "SKILL.md"
-    wrapper = ROOT / ".claude" / "skills" / "onboard" / "SKILL.md"
-
-    for path, exact_keys in ((portable, True), (wrapper, False)):
+    checks = (
+        (SKILL_DIR / "SKILL.md", True),
+        (ROOT / ".claude" / "skills" / "onboard" / "SKILL.md", False),
+        (GEN_DIR / "SKILL.md", True),
+        (ROOT / ".claude" / "skills" / "generate" / "SKILL.md", False),
+    )
+    for path, exact_keys in checks:
         rel = path.relative_to(ROOT)
         if not path.is_file():
             fail(f"{rel}: file not found")
@@ -131,21 +135,21 @@ ABS_PATH_PATTERNS = [
 
 
 def check_portable_skill_neutrality():
-    path = SKILL_DIR / "SKILL.md"
-    if not path.is_file():
-        return
-    text = path.read_text(encoding="utf-8")
-    rel = path.relative_to(ROOT)
+    for path in (SKILL_DIR / "SKILL.md", GEN_DIR / "SKILL.md"):
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8")
+        rel = path.relative_to(ROOT)
 
-    for word in VENDOR_TOOL_WORDS:
-        if re.search(rf"\b{re.escape(word)}\b", text):
-            fail(f"{rel}: contains vendor tool name {word!r} — keep this file vendor-neutral")
-    for phrase in VENDOR_TOOL_PHRASES:
-        if phrase in text:
-            fail(f"{rel}: contains vendor tool reference {phrase!r} — keep this file vendor-neutral")
-    for pattern in ABS_PATH_PATTERNS:
-        if pattern.search(text):
-            fail(f"{rel}: appears to contain an absolute or Windows-specific path")
+        for word in VENDOR_TOOL_WORDS:
+            if re.search(rf"\b{re.escape(word)}\b", text):
+                fail(f"{rel}: contains vendor tool name {word!r} — keep this file vendor-neutral")
+        for phrase in VENDOR_TOOL_PHRASES:
+            if phrase in text:
+                fail(f"{rel}: contains vendor tool reference {phrase!r} — keep this file vendor-neutral")
+        for pattern in ABS_PATH_PATTERNS:
+            if pattern.search(text):
+                fail(f"{rel}: appears to contain an absolute or Windows-specific path")
 
 
 # --------------------------------------------------------------------------------------
@@ -177,6 +181,8 @@ def check_no_rule_content():
     targets = [
         SKILL_DIR / "SKILL.md",
         ROOT / ".claude" / "skills" / "onboard" / "SKILL.md",
+        GEN_DIR / "SKILL.md",
+        ROOT / ".claude" / "skills" / "generate" / "SKILL.md",
         ROOT / "CLAUDE.md",
     ]
     for path in targets:
@@ -464,13 +470,12 @@ def check_volume_config_coverage(profile_schema, program_schema):
 
 
 # --------------------------------------------------------------------------------------
-# 7. volume.py self-test
+# 7. Script self-tests
 # --------------------------------------------------------------------------------------
 
-def check_volume_self_test():
-    script = SKILL_DIR / "scripts" / "volume.py"
+def check_script_self_test(script, label):
     if not script.is_file():
-        fail("skills/onboarding/scripts/volume.py not found")
+        fail(f"{script.relative_to(ROOT)} not found")
         return
     try:
         result = subprocess.run(
@@ -478,10 +483,161 @@ def check_volume_self_test():
             capture_output=True, text=True, timeout=60,
         )
     except Exception as e:  # pragma: no cover - defensive
-        fail(f"volume.py --self-test failed to run: {e}")
+        fail(f"{label} --self-test failed to run: {e}")
         return
     if result.returncode != 0:
-        fail(f"volume.py --self-test failed (exit {result.returncode}): {result.stderr.strip()}")
+        fail(f"{label} --self-test failed (exit {result.returncode}): {result.stderr.strip()}")
+
+
+# --------------------------------------------------------------------------------------
+# 8. Generation skill: datasets.json descriptor is complete and internally consistent
+# --------------------------------------------------------------------------------------
+
+DESCRIPTOR_REQUIRED_KEYS = [
+    "repo", "ref", "data_file", "fields", "category_filter",
+    "equipment_tiers", "muscle_map", "muscle_ignore", "benchmark_gates",
+]
+DESCRIPTOR_REQUIRED_FIELDS = [
+    "id", "name", "equipment", "category", "primary_muscle", "movement_group", "volume",
+]
+
+
+def check_datasets_descriptor(program_schema):
+    path = GEN_DIR / "datasets.json"
+    descriptor = load_json(path)
+    if descriptor is None:
+        fail("skills/generation/datasets.json: not valid JSON")
+        return
+
+    datasets = descriptor.get("datasets")
+    if not isinstance(datasets, dict) or not datasets:
+        fail("datasets.json: no datasets defined")
+        return
+    default = descriptor.get("default")
+    if default not in datasets:
+        fail(f"datasets.json: default {default!r} is not a defined dataset")
+
+    canonical = set(
+        program_schema["properties"]["volume"]["oneOf"][1]["properties"]["per_muscle_weekly_sets"]["required"]
+    )
+    profile_schema = load_json(SKILL_DIR / "schema" / "profile.schema.json")
+    benchmark_keys = set(
+        profile_schema["properties"]["strength_benchmarks"]["required"]
+    ) if profile_schema else set()
+
+    for name, ds in datasets.items():
+        missing = [k for k in DESCRIPTOR_REQUIRED_KEYS if k not in ds]
+        if missing:
+            fail(f"datasets.json[{name}]: missing keys {missing}")
+            continue
+        missing_fields = [k for k in DESCRIPTOR_REQUIRED_FIELDS if k not in ds["fields"]]
+        if missing_fields:
+            fail(f"datasets.json[{name}]: fields missing {missing_fields}")
+
+        seen_equipment = {}
+        for tier_str, names in ds["equipment_tiers"].items():
+            if not tier_str.isdigit():
+                fail(f"datasets.json[{name}]: equipment tier key {tier_str!r} is not an integer")
+            for eq in names:
+                if eq in seen_equipment:
+                    fail(f"datasets.json[{name}]: equipment {eq!r} in tiers "
+                         f"{seen_equipment[eq]} and {tier_str}")
+                seen_equipment[eq] = tier_str
+
+        bad_groups = sorted(set(ds["muscle_map"].values()) - canonical)
+        if bad_groups:
+            fail(f"datasets.json[{name}]: muscle_map maps to unknown groups {bad_groups} "
+                 f"— canonical groups come from program.schema.json")
+        overlap = sorted(set(ds["muscle_ignore"]) & set(ds["muscle_map"]))
+        if overlap:
+            fail(f"datasets.json[{name}]: muscles both mapped and ignored: {overlap}")
+
+        for bench_key in ds["benchmark_gates"]:
+            if benchmark_keys and bench_key not in benchmark_keys:
+                fail(f"datasets.json[{name}]: benchmark_gates key {bench_key!r} is not a "
+                     f"profile strength benchmark")
+
+    # The default descriptor must fully cover the bundled fixture's vocabulary — the offline
+    # stand-in for the real dataset. Unmapped real-dataset muscles are refused at run time.
+    fixture = load_json(GEN_DIR / "scripts" / "generate.fixture.json")
+    if fixture is None:
+        fail("skills/generation/scripts/generate.fixture.json: not valid JSON")
+        return
+    if default in datasets:
+        ds = datasets[default]
+        known = set(ds["muscle_map"]) | set(ds["muscle_ignore"])
+        tiered = set(seen for tier in ds["equipment_tiers"].values() for seen in tier)
+        for rec in fixture:
+            muscles = set(rec.get("volume", {})) | (
+                {rec["primary_muscle"]} if rec.get("primary_muscle") else set())
+            unmapped = sorted(muscles - known)
+            if unmapped:
+                fail(f"fixture record {rec.get('id')}: muscles {unmapped} not covered by "
+                     f"datasets.json[{default}] muscle_map/muscle_ignore")
+            if rec.get("equipment") not in tiered:
+                fail(f"fixture record {rec.get('id')}: equipment {rec.get('equipment')!r} "
+                     f"not in any tier of datasets.json[{default}]")
+
+
+# --------------------------------------------------------------------------------------
+# 9. Generation skill: generate.config.json is complete and consistent
+# --------------------------------------------------------------------------------------
+
+GEN_ORDER_RULES = {
+    "must_include_first", "trailer_groups_last", "compound_before_isolation",
+    "focus_muscles_first", "large_groups_before_small",
+}
+
+
+def check_generate_config(program_schema, rules_schema):
+    config = load_json(GEN_DIR / "scripts" / "generate.config.json")
+    if config is None:
+        fail("skills/generation/scripts/generate.config.json: not valid JSON")
+        return
+
+    canonical = set(
+        program_schema["properties"]["volume"]["oneOf"][1]["properties"]["per_muscle_weekly_sets"]["required"]
+    )
+    goals = set(program_schema["properties"]["program"]["properties"]["primary_goal"]["enum"])
+    splits = set(program_schema["properties"]["program"]["properties"]["split"]["enum"])
+
+    default_rules = config.get("default_rules", {})
+    for rule in default_rules.get("order", []):
+        if rule not in GEN_ORDER_RULES:
+            fail(f"generate.config.json[default_rules.order]: unknown rule {rule!r}")
+    errs = []
+    if rules_schema:
+        validate_instance(dict(default_rules, **{"$schema_version": "1.0"}),
+                          rules_schema, "generate.config.json[default_rules]", errs)
+    for e in errs:
+        fail(e)
+
+    split_sessions = config.get("split_sessions", {})
+    missing_splits = splits - set(split_sessions)
+    if missing_splits:
+        fail(f"generate.config.json[split_sessions]: missing entries for {sorted(missing_splits)}")
+    for split, template in split_sessions.items():
+        for focus in template.get("pattern", []):
+            if focus not in template.get("groups", {}):
+                fail(f"generate.config.json[split_sessions.{split}]: pattern focus {focus!r} "
+                     f"has no groups entry")
+        for focus, groups in template.get("groups", {}).items():
+            unknown = sorted(set(groups) - canonical)
+            if unknown:
+                fail(f"generate.config.json[split_sessions.{split}.{focus}]: unknown muscle "
+                     f"groups {unknown}")
+
+    missing_goals = goals - set(config.get("reps_by_goal", {}))
+    if missing_goals:
+        fail(f"generate.config.json[reps_by_goal]: missing entries for {sorted(missing_goals)}")
+    for goal, table in config.get("reps_by_goal", {}).items():
+        for kind in ("compound", "isolation"):
+            if kind not in table:
+                fail(f"generate.config.json[reps_by_goal.{goal}]: missing {kind!r}")
+
+    unknown_trailers = sorted(set(config.get("trailer_groups", [])) - canonical)
+    if unknown_trailers:
+        fail(f"generate.config.json[trailer_groups]: unknown muscle groups {unknown_trailers}")
 
 
 # --------------------------------------------------------------------------------------
@@ -527,7 +683,31 @@ def main():
 
         check_volume_config_coverage(profile_schema, program_schema)
 
-    check_volume_self_test()
+    plan_schema = load_json(GEN_DIR / "schema" / "plan.schema.json")
+    rules_schema = load_json(GEN_DIR / "schema" / "rules.schema.json")
+    if plan_schema is None:
+        fail("skills/generation/schema/plan.schema.json: not valid JSON")
+    if rules_schema is None:
+        fail("skills/generation/schema/rules.schema.json: not valid JSON")
+
+    if program_schema and plan_schema and rules_schema:
+        check_datasets_descriptor(program_schema)
+        check_generate_config(program_schema, rules_schema)
+
+        validate_file_against_schema(
+            GEN_DIR / "examples" / "plan.example.json", plan_schema, "plan example"
+        )
+        validate_file_against_schema(
+            GEN_DIR / "examples" / "rules.example.json", rules_schema, "rules example"
+        )
+
+        for plan_path in sorted((ROOT / "profiles").glob("*/plans/*.json")):
+            validate_file_against_schema(plan_path, plan_schema, str(plan_path))
+        for rules_path in sorted((ROOT / "profiles").glob("*/rules.json")):
+            validate_file_against_schema(rules_path, rules_schema, str(rules_path))
+
+    check_script_self_test(SKILL_DIR / "scripts" / "volume.py", "volume.py")
+    check_script_self_test(GEN_DIR / "scripts" / "generate.py", "generate.py")
 
     if FAILURES:
         for f in FAILURES:

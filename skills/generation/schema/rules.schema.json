@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/smyrdev/samy-workout-skills/skills/generation/schema/rules.schema.json",
+  "title": "Personal generation rules",
+  "description": "profiles/<slug>/rules.json — hand-written by the person, read (never written) by the generation skill. Every section is optional: anything absent falls back to default_rules in skills/generation/scripts/generate.config.json, and present sections override the default key-by-key.",
+  "type": "object",
+  "required": ["$schema_version"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema_version": { "const": "1.0" },
+    "exclude": {
+      "description": "Filtered out before any exercise is picked. Unknown names are reported as warnings, never silently skipped.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "exercises": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Exact dataset exercise names, case-insensitive."
+        },
+        "equipment": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Dataset equipment values to avoid even when the gym tier allows them."
+        },
+        "movement_groups": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Dataset movement-group values to avoid entirely."
+        },
+        "muscles": {
+          "type": "array",
+          "items": {
+            "enum": ["chest", "back", "shoulders", "biceps", "triceps",
+                     "quads", "hamstrings", "glutes", "calves", "core"]
+          },
+          "description": "Muscle groups to drop from the plan entirely (injury, personal choice)."
+        }
+      }
+    },
+    "focus": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "muscles": {
+          "type": "array",
+          "items": {
+            "enum": ["chest", "back", "shoulders", "biceps", "triceps",
+                     "quads", "hamstrings", "glutes", "calves", "core"]
+          },
+          "description": "Groups this program biases toward when picking exercises."
+        },
+        "must_include": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Exact dataset exercise names guaranteed a slot when equipment and gates allow."
+        }
+      }
+    },
+    "order": {
+      "type": "array",
+      "items": {
+        "enum": ["must_include_first", "trailer_groups_last", "compound_before_isolation",
+                 "focus_muscles_first", "large_groups_before_small"]
+      },
+      "description": "Session ordering rules, applied top-down: the first rule is the primary sort key, each later rule breaks remaining ties."
+    }
+  }
+}

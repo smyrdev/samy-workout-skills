@@ -1,0 +1,51 @@
+{
+  "_comment": "Every dataset-independent number and default rule the generation algorithm uses. Retune here — never in generate.py, SKILL.md, or CLAUDE.md. Dataset-specific knowledge (field names, tiers, muscle mapping) lives in ../datasets.json instead. Prose rationale: docs/generation.md.",
+
+  "default_rules": {
+    "exclude": { "exercises": [], "equipment": [], "movement_groups": [], "muscles": [] },
+    "focus": { "muscles": [], "must_include": [] },
+    "order": [
+      "must_include_first",
+      "trailer_groups_last",
+      "compound_before_isolation",
+      "focus_muscles_first",
+      "large_groups_before_small"
+    ]
+  },
+
+  "split_sessions": {
+    "full_body": {
+      "pattern": ["full_body"],
+      "groups": {
+        "full_body": ["chest", "back", "shoulders", "biceps", "triceps",
+                      "quads", "hamstrings", "glutes", "calves", "core"]
+      }
+    },
+    "upper_lower": {
+      "pattern": ["upper", "lower"],
+      "groups": {
+        "upper": ["chest", "back", "shoulders", "biceps", "triceps"],
+        "lower": ["quads", "hamstrings", "glutes", "calves", "core"]
+      }
+    }
+  },
+
+  "max_per_movement_group_per_session": 2,
+  "max_per_volume_profile_per_session": 1,
+  "repeat_penalty": 0.25,
+  "focus_bonus": 0.5,
+  "name_length_penalty": 0.02,
+  "indirect_discount": 0.5,
+  "sets_max": 5,
+  "short_tolerance_sets": 1.0,
+  "compound_min_muscles": 3,
+  "trailer_groups": ["core", "calves"],
+
+  "reps_by_goal": {
+    "hypertrophy": { "compound": "8-12", "isolation": "10-15" },
+    "strength": { "compound": "3-6", "isolation": "6-10" },
+    "both": { "compound": "6-10", "isolation": "8-12" }
+  },
+
+  "deload_sets_multiplier": 0.5
+}
