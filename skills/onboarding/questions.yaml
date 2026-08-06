@@ -1,0 +1,290 @@
+# The onboarding interview. Edit this file to change what is asked, in what order, and what
+# counts as a valid answer. SKILL.md never changes when this file changes.
+#
+# Field meanings:
+#   id       - unique key, used only within this file
+#   scope    - profile | program: which file the answer belongs to
+#   batch    - questions with the same batch number are asked together (max 4 per batch)
+#   prompt   - what to ask, verbatim or close to it
+#   stores   - dotted path the value is written to in the target file
+#   type     - choice | multi_select | text
+#   options  - offered choices. "value: null" means the option narrows down further and does
+#              not store anything by itself (follow up before storing). An option with its own
+#              "store"/"value" overrides the top-level `stores` field, for questions that write
+#              more than one field.
+#   escape   - always present on choice/multi_select questions: the offered options are a
+#              shortcut, never a limit, and free text answering outside them is always accepted.
+#   notes    - validation and phrasing rules that apply only to this question.
+#
+# "Plus an escape" applies to every choice and multi_select question below, even where not
+# repeated: an agent with a structured question tool exposes it as that tool's free-text option;
+# an agent without one is already taking free text and gets this for free.
+
+- id: name
+  scope: profile
+  batch: 1
+  prompt: What should I call you?
+  stores: user.name
+  type: text
+  notes: |
+    Skip this question if the profile was already resolved (rules.md § Resolving a profile) —
+    do not ask twice. Store verbatim, including case and accents. Also derive user.slug from it
+    (rules.md § Slug rules).
+
+- id: sex
+  scope: profile
+  batch: 1
+  prompt: Sex?
+  stores: basics.sex
+  type: choice
+  options:
+    - { label: "Male", value: male }
+    - { label: "Female", value: female }
+  escape: an exact answer in their own words, if neither fits
+
+- id: date_of_birth
+  scope: profile
+  batch: 1
+  prompt: Which year were you born?
+  stores: basics.date_of_birth
+  type: choice
+  options:
+    - { label: "1980s", value: null }
+    - { label: "1990s", value: null }
+    - { label: "2000s", value: null }
+  escape: an exact date
+  notes: |
+    A decade is not an answer — it only narrows things down. If someone picks one, follow up for
+    the year ("1990s — which year?"). Store "YYYY-MM-DD" when they give a full date, or bare
+    "YYYY" when they give only a year — always a quoted string, never a bare number, and never
+    padded out to a January 1st they did not say. Never store a decade and never pick a year for
+    them. Plausible range: birth year 1920-2015; outside that, treat as a typo and ask again.
+
+- id: units
+  scope: profile
+  batch: 1
+  prompt: Units — metric or imperial?
+  stores: units
+  type: choice
+  options:
+    - { label: "Metric (cm / kg)", value: metric }
+    - { label: "Imperial (in / lb)", value: imperial }
+  notes: |
+    Ask this before any measurement so the height/weight batch can be phrased in the person's own
+    units. The unit inside basics.height and basics.weight must always agree with this value:
+    metric means cm and kg, imperial means in and lb.
+
+- id: height
+  scope: profile
+  batch: 2
+  prompt: Height?
+  stores: basics.height
+  type: choice
+  options:
+    - { label: "160-170 cm", value: null }
+    - { label: "170-180 cm", value: null }
+    - { label: "180-190 cm", value: null }
+    - { label: "190 cm+", value: null }
+  options_imperial:
+    - { label: "5'3\"-5'7\"", value: null }
+    - { label: "5'7\"-5'11\"", value: null }
+    - { label: "5'11\"-6'3\"", value: null }
+    - { label: "6'3\"+", value: null }
+  escape: an exact number
+  notes: |
+    Height must end up as an exact number: { "value": <number>, "unit": "cm" | "in" }. The
+    buckets exist only to save typing for agents with a clickable question tool — if you are
+    asking in plain text, skip the buckets and ask for the number directly. When someone does
+    pick a bucket, follow up ("180-190 cm — what's your actual height?") and store the number.
+    Never store a range in height.value. The buckets deliberately do not span the full accepted
+    range — a 150 cm answer is valid, that is what the escape is for. Plausible range: 120-230 cm
+    (47-91 in); outside that, treat as a typo and ask again.
+
+- id: weight
+  scope: profile
+  batch: 2
+  prompt: Weight?
+  stores: basics.weight
+  type: choice
+  options:
+    - { label: "60-70 kg", value: null }
+    - { label: "70-85 kg", value: null }
+    - { label: "85-100 kg", value: null }
+    - { label: "100 kg+", value: null }
+  options_imperial:
+    - { label: "130-155 lb", value: null }
+    - { label: "155-190 lb", value: null }
+    - { label: "190-220 lb", value: null }
+    - { label: "220 lb+", value: null }
+  escape: an exact number
+  notes: |
+    Same rules as height: always an exact number, { "value": <number>, "unit": "kg" | "lb" },
+    never a stored range. Plausible range: 35-250 kg (77-550 lb); outside that, treat as a typo
+    and ask again.
+
+- id: bodyfat
+  scope: profile
+  batch: 2
+  prompt: Bodyfat?
+  stores: basics.bodyfat_bracket
+  type: choice
+  options:
+    - { label: "Lean (8-12%)", value: "8-12" }
+    - { label: "Average (13-17%)", value: "13-17" }
+    - { label: "Above average (18-23%)", value: "18-23" }
+    - { label: "Higher (24%+)", value: null }
+  escape: the full bracket list, for someone leaner than 8%
+  notes: |
+    Stored as a bracket, not a number — nobody knows their bodyfat to the percent. The nine valid
+    strings are exactly: 3-4, 5-7, 8-12, 13-17, 18-23, 24-29, 30-34, 35-39, 40+ — plain hyphens,
+    no percent sign, no label text. "Higher (24%+)" spans four brackets; if picked, ask which one.
+    The escape reaches the leaner brackets (3-4, 5-7) that have no offered option. Store one of
+    the nine strings, never a number and never a display label.
+
+- id: lifting_experience
+  scope: profile
+  batch: 2
+  prompt: Experience level with lifting?
+  stores: experience.lifting
+  type: choice
+  options:
+    - { label: "None", value: none }
+    - { label: "Beginner (under 1 year)", value: beginner }
+    - { label: "Intermediate (1-4 years)", value: intermediate }
+    - { label: "Advanced (4+ years)", value: advanced }
+
+- id: cardio_experience
+  scope: profile
+  batch: 3
+  prompt: Experience level with cardio?
+  stores: experience.cardio
+  type: choice
+  options:
+    - { label: "None", value: none }
+    - { label: "Beginner (under 1 year)", value: beginner }
+    - { label: "Intermediate (1-4 years)", value: intermediate }
+    - { label: "Advanced (4+ years)", value: advanced }
+  notes: |
+    Rides along in the same batch as gym type and program shape purely to keep batches at four
+    questions each — it is still a `basics`-adjacent, profile-scope answer.
+
+- id: gym_type
+  scope: profile
+  batch: 3
+  prompt: Where do you work out?
+  stores: gym.type
+  type: choice
+  options:
+    - { label: "Commercial gym", value: commercial_gym }
+    - { label: "Local gym", value: local_gym }
+    - { label: "Garage gym", value: garage_gym }
+    - { label: "Warehouse gym", value: warehouse_gym }
+  escape: "\"Everything gym\" (value: everything_gym), for a full commercial-plus-specialty setup"
+  notes: |
+    Gym type is the entire equipment model in v1. There is no item-level equipment checklist — do
+    not invent one, and do not ask which machines they have.
+
+- id: primary_goal
+  scope: program
+  batch: 3
+  prompt: Primary goal?
+  stores: program.primary_goal
+  type: choice
+  options:
+    - { label: "Muscle size (hypertrophy)", value: hypertrophy }
+    - { label: "Strength", value: strength }
+    - { label: "Both", value: both }
+
+- id: days_per_week
+  scope: program
+  batch: 3
+  prompt: How many times per week do you train?
+  stores: program.days_per_week
+  type: choice
+  options:
+    - { label: "3", value: 3 }
+    - { label: "4", value: 4 }
+    - { label: "5", value: 5 }
+    - { label: "6", value: 6 }
+  escape: "7, for someone training every day"
+  notes: Store as an integer 3-7, never a string.
+
+- id: session_minutes
+  scope: program
+  batch: 4
+  prompt: How much time do you budget per session?
+  stores: program.session_minutes
+  type: choice
+  options:
+    - { label: "Up to 40 min", value: null }
+    - { label: "40-60 min", value: "40-60" }
+    - { label: "60-90 min", value: "60-90" }
+    - { label: "90+ min", value: null }
+  escape: the full range list (up_to_20, 20-40, 40-60, 60-90, 90-120, over_120)
+  notes: |
+    Stored as a range string, not a number — the person answered a range. The six valid strings
+    are exactly: up_to_20, 20-40, 40-60, 60-90, 90-120, over_120. Two offered options are
+    deliberately wide: "Up to 40 min" splits into up_to_20 or 20-40, and "90+ min" splits into
+    90-120 or over_120 — ask which one when either is picked.
+
+- id: split
+  scope: program
+  batch: 4
+  prompt: How do you prefer the split?
+  stores: program.split
+  type: choice
+  options:
+    - { label: "Full body (recommended)", value: full_body }
+    - { label: "Upper/Lower", value: upper_lower }
+
+- id: deload
+  scope: program
+  batch: 4
+  prompt: Add a deload week?
+  stores: program.deload
+  type: choice
+  options:
+    - { label: "Yes - end the program with a lighter week (recommended)", value: true }
+    - { label: "No", value: false }
+
+- id: strength_benchmarks
+  scope: profile
+  batch: 5
+  prompt: "Which of these can you do right now? Select all that apply."
+  stores: strength_benchmarks
+  type: multi_select
+  options:
+    - { label: "5+ strict, unassisted pull-ups or chin-ups", store: strength_benchmarks.pullups_5 }
+    - { label: "10+ strict, unassisted pull-ups or chin-ups", store: strength_benchmarks.pullups_10 }
+    - { label: "10+ bodyweight dips", store: strength_benchmarks.dips_10 }
+    - { label: "15+ strict bodyweight push-ups", store: strength_benchmarks.pushups_15 }
+    - { label: "Barbell bench press for 10 reps", store: strength_benchmarks.bench_press_10 }
+    - { label: "Barbell incline press for 10 reps", store: strength_benchmarks.incline_press_10 }
+    - { label: "Barbell overhead press for 10 reps", store: strength_benchmarks.overhead_press_10 }
+  notes: |
+    All seven keys are always written: true for selected, false for the rest. None is ever
+    omitted. The two pull-up options are nested — 10+ implies 5+. If someone selects 10+ without
+    5+, that is not a contradiction to reject: set both to true and move on. An empty selection
+    means "none of these", a valid answer, not a skip — confirm it in plain text ("So none of
+    those yet — got it") before storing seven false values.
+
+- id: program_name
+  scope: program
+  batch: 6
+  prompt: What do you want to call this program?
+  stores: program.name
+  type: text
+  notes: |
+    Ask together with program_emoji, in one message. Free text, 1-60 characters, no offered
+    options — inventing three names to reject would waste their time. If they do not care, offer
+    a default derived from their answers ("Full Body Hypertrophy") and confirm it before using it.
+
+- id: program_emoji
+  scope: program
+  batch: 6
+  prompt: Pick an emoji for it?
+  stores: program.emoji
+  type: text
+  notes: |
+    A single emoji. Same default-and-confirm rule as program_name — a reasonable default ("💪") is
+    fine if they do not care, but confirm it first.
