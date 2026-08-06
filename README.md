@@ -1,7 +1,7 @@
 # samy-workout-skills
 
-A portable onboarding skill that interviews you once about your training situation and saves it as a
-profile, so a workout generator can read it instead of asking you twenty questions every time.
+A portable onboarding skill that interviews you once about your training situation and saves it,
+so a workout generator can read it instead of asking you twenty questions every time.
 
 It is a **skill**, not an app — a markdown file of instructions any capable LLM agent can follow.
 There is no server, no account, and no install. The repository is the whole thing.
@@ -21,24 +21,27 @@ There is no server, no account, and no install. The repository is the whole thin
 
 > Read `skills/onboarding/SKILL.md` and follow it.
 
-Either way you answer about twenty questions in five or six rounds, see a summary before anything is
-saved, and end up with `profiles/<your-name>/profile.json`.
+Either way you answer about twenty questions in five or six rounds, see a summary before anything
+is saved, and end up with two files: `profiles/<your-name>/profile.json` and
+`profiles/<your-name>/programs/program-<today>.json`.
 
 ## What it asks
 
-Three groups:
+Two groups, because they change on a different schedule — see
+[Where your data lives](#where-your-data-lives):
 
-- **Basics** — name, sex, date of birth, height, weight, bodyfat bracket, lifting and cardio
-  experience
-- **Gym** — where you train, as one of five gym types
-- **Program** — goal, days per week, session length, split, deload, seven strength benchmarks, and a
-  name and emoji for your program
+- **Profile** (asked once) — name, sex, date of birth, height, weight, bodyfat bracket, lifting
+  and cardio experience, where you train, seven strength benchmarks
+- **Program** (asked every cycle) — goal, days per week, session length, split, deload, a name and
+  emoji for this training block
 
 The program answers are saved even though they change from cycle to cycle. They are defaults, not
 commitments: the generator shows them back and lets you change any of them for one cycle without
-redoing the interview.
+redoing the interview — or you can just run onboarding again, which writes a new dated program
+file alongside the old one.
 
-Nothing is written until you have seen a summary of every answer and the exact path it is going to.
+Nothing is written until you have seen a summary of every answer and the exact paths it is about
+to write.
 
 ## Several people, one repository
 
@@ -47,9 +50,13 @@ Each person gets a directory:
 ```
 profiles/
 ├── samy/
-│   └── profile.json
+│   ├── profile.json
+│   └── programs/
+│       └── program-2026-08-06.json
 └── sara/
-    └── profile.json
+    ├── profile.json
+    └── programs/
+        └── program-2026-09-01.json
 ```
 
 Run `/onboard sara` to go straight to a profile. Run `/onboard` with no name and it asks who you
@@ -62,44 +69,85 @@ To change something later:
 /onboard sara --update
 ```
 
-That asks only about the fields you name, and leaves everything else byte-for-byte identical.
+That asks only about the fields you name. A change to a profile field (body stats, gym,
+experience) edits `profile.json` in place; a change to a program field (goal, days, split, ...)
+writes a new dated file under `programs/` instead of touching the old one.
+
+## Hand-fill path — no interview
+
+You can skip the interview entirely: copy the samples, edit them by hand using
+[`skills/onboarding/FIELDS.md`](skills/onboarding/FIELDS.md) as a guide, and validate.
+
+```bash
+mkdir -p profiles/samy/programs
+cp skills/onboarding/examples/profile.example.json profiles/samy/profile.json
+cp skills/onboarding/examples/program.example.json profiles/samy/programs/program-2026-08-06.json
+# edit both by hand
+python scripts/validate-skills.py
+```
+
+That's a complete, schema-valid pair of files on its own — `volume` is optional. To fill it in:
+
+```bash
+python skills/onboarding/scripts/volume.py --profile profiles/samy/profile.json \
+  --write profiles/samy/programs/program-2026-08-06.json
+```
 
 ## Where your data lives
 
-`profiles/` is gitignored in full. Your body stats are never committed, even by accident. The schema
-lives at [`skills/onboarding/profile.example.json`](skills/onboarding/profile.example.json), with
-every field documented in [`docs/schema.md`](docs/schema.md).
+`profiles/` is gitignored in full. Your body stats are never committed, even by accident.
 
-Your profile is a plain JSON file you can read, edit, back up, or delete. Nothing else touches it.
+- `profiles/<slug>/profile.json` — who you are: body stats, experience, gym. Written once,
+  updated in place when something about you changes.
+- `profiles/<slug>/programs/program-<date>.json` — what you want this cycle: goal, days, split,
+  and (once `volume.py` has run) a computed weekly per-muscle set allocation. One file per
+  training block; the highest-dated filename is the current one.
+
+The schema lives at
+[`skills/onboarding/schema/profile.schema.json`](skills/onboarding/schema/profile.schema.json) and
+[`skills/onboarding/schema/program.schema.json`](skills/onboarding/schema/program.schema.json),
+with every field documented in [`docs/schema.md`](docs/schema.md).
+
+Your files are plain JSON you can read, edit, back up, or delete. Nothing else touches them.
 
 ## Honest limitations
 
 - **Gym type is a coarse proxy for equipment.** Five tiers, no item-level checklist. The original
-  spec left that list unwritten and it is deliberately deferred until there is an exercise database
-  to validate it against — so "commercial gym" assumes a machine selection you may not actually
-  have.
+  spec left that list unwritten and it is deliberately deferred until there is an exercise
+  database to validate it against — so "commercial gym" assumes a machine selection you may not
+  actually have.
 - **The seven strength benchmarks are self-reported.** Nothing verifies them.
 - **Bodyfat is a self-estimated bracket**, not a measurement, and it is stored as a range for
   exactly that reason.
-- **Nothing is generated yet.** This repository records a profile. The workout generator is
-  specified — the contract is at the end of
+- **The volume model computes set counts, not an exercise list.** It tells you how many weekly
+  sets per muscle group to aim for; it does not pick exercises, weights, or reps yet.
+- **Nothing is generated yet.** This repository records a profile and a per-cycle volume target.
+  The workout generator is specified — the contract is at the end of
   [`skills/onboarding/SKILL.md`](skills/onboarding/SKILL.md) — but not built.
 
 ## Roadmap
 
-- Workout generation reading these profiles
+- Workout generation reading `profile.json` and the latest `programs/*.json`, writing under
+  `profiles/<slug>/plans/`
 - Item-level equipment selection, seeded by gym type
-- Session logging and progression under `profiles/<slug>/`
+- Session logging and progression
 
 ## Layout
 
 ```
-skills/onboarding/SKILL.md          the skill — vendor-neutral, the source of truth
-skills/onboarding/profile.example.json   the schema, by example
-.claude/skills/onboard/SKILL.md     thin wrapper so /onboard works in Claude Code
-docs/schema.md                      every field, enum, and derivation explained
-docs/onboarding.md                  the original hand-written spec, kept as-is
-profiles/                           your data, gitignored
+skills/onboarding/SKILL.md              the skill flow — vendor-neutral, pointers only
+skills/onboarding/questions.yaml         the interview content
+skills/onboarding/rules.md               resolution, validation, updating rules
+skills/onboarding/FIELDS.md              hand-editing guide
+skills/onboarding/schema/                the schema, machine-readable
+skills/onboarding/examples/              copy-to-start samples
+skills/onboarding/scripts/volume.py      the volume algorithm
+skills/onboarding/scripts/volume.config.json   every number the volume model uses
+.claude/skills/onboard/SKILL.md          thin wrapper so /onboard works in Claude Code
+scripts/validate-skills.py               validates the whole skill against its own schemas
+docs/schema.md                           every field, and the "why" behind the schema
+docs/onboarding.md                       the original hand-written spec, kept as-is
+profiles/                                your data, gitignored
 ```
 
 ## License
