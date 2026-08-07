@@ -1,0 +1,74 @@
+{
+  "_comment": "Dataset registry for the generation skill. ALL dataset-specific knowledge lives here — field names, equipment tiers, muscle vocabulary mapping, benchmark gates. scripts/generate.py contains none of it, so adding a dataset means adding an entry, never editing code. Rationale and field reference: docs/generation.md.",
+
+  "$schema_version": "1.0",
+  "default": "exercises-dataset",
+
+  "datasets": {
+    "exercises-dataset": {
+      "repo": "https://github.com/smyrdev/exercises-dataset",
+      "ref": "main",
+      "data_file": "data/exercises.json",
+      "schema_file": "data/exercises.schema.json",
+
+      "fields": {
+        "id": "id",
+        "name": "name",
+        "equipment": "equipment",
+        "category": "category",
+        "primary_muscle": "primary_muscle",
+        "movement_group": "movement_group",
+        "volume_profile": "volume_profile",
+        "volume": "volume"
+      },
+
+      "category_filter": ["strength"],
+
+      "equipment_tiers": {
+        "1": ["body weight", "barbell", "olympic barbell", "ez barbell", "trap bar",
+              "dumbbell", "band", "resistance band", "kettlebell", "weighted",
+              "roller", "rope", "wheel roller", "medicine ball", "stability ball", "bosu ball"],
+        "2": ["smith machine", "cable", "leverage machine", "assisted"],
+        "3": ["sled machine", "elliptical machine", "stationary bike", "stepmill machine",
+              "skierg machine", "upper body ergometer", "hammer", "tire"],
+        "4": []
+      },
+
+      "muscle_map": {
+        "Chest": "chest",
+        "Serratus": "chest",
+        "Lats": "back",
+        "Upper Back": "back",
+        "Upper Traps": "back",
+        "Front Delts": "shoulders",
+        "Side Delts": "shoulders",
+        "Rear Delts": "shoulders",
+        "Biceps": "biceps",
+        "Forearms": "biceps",
+        "Triceps": "triceps",
+        "Quads": "quads",
+        "Hamstrings": "hamstrings",
+        "Glutes": "glutes",
+        "Abductors": "glutes",
+        "Adductors": "glutes",
+        "Calves": "calves",
+        "Tibialis": "calves",
+        "Abs": "core",
+        "Obliques": "core",
+        "Lower Back": "core"
+      },
+      "muscle_ignore": ["Neck"],
+
+      "benchmark_gates": {
+        "pullups_5": {
+          "false_excludes_names_matching": ["pull-up", "pull up", "chin-up", "chin up", "muscle up"],
+          "unless_equipment": ["assisted", "leverage machine", "band"]
+        },
+        "dips_10": {
+          "false_excludes_names_matching": ["\\bdips?\\b"],
+          "unless_equipment": ["assisted", "leverage machine", "band"]
+        }
+      }
+    }
+  }
+}

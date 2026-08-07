@@ -1,10 +1,12 @@
 # samy-workout-skills
 
-A portable onboarding skill that interviews you once about your training situation and saves it,
-so a workout generator can read it instead of asking you twenty questions every time.
+Two portable skills: **onboarding** interviews you once about your training situation and saves
+it; **generation** turns that into a concrete week of exercises, fitted to a per-muscle weekly
+volume target using a real exercise dataset.
 
-It is a **skill**, not an app — a markdown file of instructions any capable LLM agent can follow.
-There is no server, no account, and no install. The repository is the whole thing.
+They are **skills**, not an app — markdown files of instructions any capable LLM agent can
+follow, plus two small dependency-free Python scripts for the arithmetic. There is no server, no
+account, and no install. The repository is the whole thing.
 
 > Not medical advice. Everything here is self-reported and unverified — if you have an injury or a
 > medical condition, talk to someone qualified before training around it.
@@ -14,16 +16,23 @@ There is no server, no account, and no install. The repository is the whole thin
 **In Claude Code**, from the repository root:
 
 ```
-/onboard
+/onboard      # once: the interview
+/generate     # every cycle: the workout plan
 ```
 
-**With any other agent**, point it at the skill file and let it run:
+**With any other agent**, point it at the skill files and let it run:
 
 > Read `skills/onboarding/SKILL.md` and follow it.
+> Read `skills/generation/SKILL.md` and follow it.
 
-Either way you answer about twenty questions in five or six rounds, see a summary before anything
-is saved, and end up with two files: `profiles/<your-name>/profile.json` and
+Onboarding asks about twenty questions in five or six rounds, shows a summary before anything is
+saved, and ends up with two files: `profiles/<your-name>/profile.json` and
 `profiles/<your-name>/programs/program-<today>.json`.
+
+Generation re-confirms your program answers ("same as last time" is one click), clones the
+exercise dataset into a local cache, fits exercises to your computed weekly per-muscle set
+allocation, shows you the week and the volume math before writing, and saves
+`profiles/<your-name>/plans/plan-<today>.json` plus a readable `plan-<today>.md`.
 
 ## What it asks
 
@@ -93,6 +102,30 @@ python skills/onboarding/scripts/volume.py --profile profiles/samy/profile.json 
   --write profiles/samy/programs/program-2026-08-06.json
 ```
 
+## The exercise dataset
+
+Plans are built from
+[smyrdev/exercises-dataset](https://github.com/smyrdev/exercises-dataset) — ~1,300 exercises
+where most carry a per-muscle volume map (1.0 for prime movers, 0.5 for meaningful synergists).
+Each set of an exercise adds its coefficients to your weekly per-muscle totals, and the generator
+picks exercises until every muscle group's allocation is met — or tells you honestly which group
+falls short with your equipment.
+
+The dataset is cloned into a gitignored `datasets/` cache on first use. Everything the generator
+knows about it — field names, equipment tiers, how its 22-muscle vocabulary maps onto the volume
+model's 10 groups — lives in
+[`skills/generation/datasets.json`](skills/generation/datasets.json). Point that file at a
+different dataset and nothing else changes.
+
+## Your rules
+
+`profiles/<slug>/rules.json` is a hand-written file of standing preferences the generator reads
+on every run: exercises or equipment to never use, muscle groups to focus or drop, how sessions
+are ordered. Copy
+[`skills/generation/examples/rules.example.json`](skills/generation/examples/rules.example.json)
+and edit — [`skills/generation/FIELDS.md`](skills/generation/FIELDS.md) explains every field.
+Typos are reported as warnings in the plan, never silently ignored.
+
 ## Where your data lives
 
 `profiles/` is gitignored in full. Your body stats are never committed, even by accident.
@@ -102,6 +135,9 @@ python skills/onboarding/scripts/volume.py --profile profiles/samy/profile.json 
 - `profiles/<slug>/programs/program-<date>.json` — what you want this cycle: goal, days, split,
   and (once `volume.py` has run) a computed weekly per-muscle set allocation. One file per
   training block; the highest-dated filename is the current one.
+- `profiles/<slug>/rules.json` — your standing generation preferences, written by you alone.
+- `profiles/<slug>/plans/plan-<date>.json` + `.md` — generated plans, one dated pair per run,
+  never overwritten. The `.md` is yours to scribble on.
 
 The schema lives at
 [`skills/onboarding/schema/profile.schema.json`](skills/onboarding/schema/profile.schema.json) and
@@ -119,23 +155,22 @@ Your files are plain JSON you can read, edit, back up, or delete. Nothing else t
 - **The seven strength benchmarks are self-reported.** Nothing verifies them.
 - **Bodyfat is a self-estimated bracket**, not a measurement, and it is stored as a range for
   exactly that reason.
-- **The volume model computes set counts, not an exercise list.** It tells you how many weekly
-  sets per muscle group to aim for; it does not pick exercises, weights, or reps yet.
-- **Nothing is generated yet.** This repository records a profile and a per-cycle volume target.
-  The workout generator is specified — the contract is at the end of
-  [`skills/onboarding/SKILL.md`](skills/onboarding/SKILL.md) — but not built.
+- **No weights or progression yet.** A plan says movements, sets and rep ranges; picking loads
+  and progressing them week to week is the session-logging feature's job, when it exists.
+- **Benchmark gates are name-pattern based.** "Can't do five pull-ups" removes exercises whose
+  names match pull-up patterns; a dataset with unusual naming could slip past them.
 
 ## Roadmap
 
-- Workout generation reading `profile.json` and the latest `programs/*.json`, writing under
-  `profiles/<slug>/plans/`
+- ~~Workout generation reading `profile.json` and the latest `programs/*.json`, writing under
+  `profiles/<slug>/plans/`~~ — built, see `/generate`
 - Item-level equipment selection, seeded by gym type
 - Session logging and progression
 
 ## Layout
 
 ```
-skills/onboarding/SKILL.md              the skill flow — vendor-neutral, pointers only
+skills/onboarding/SKILL.md              the interview flow — vendor-neutral, pointers only
 skills/onboarding/questions.yaml         the interview content
 skills/onboarding/rules.md               resolution, validation, updating rules
 skills/onboarding/FIELDS.md              hand-editing guide
@@ -143,11 +178,22 @@ skills/onboarding/schema/                the schema, machine-readable
 skills/onboarding/examples/              copy-to-start samples
 skills/onboarding/scripts/volume.py      the volume algorithm
 skills/onboarding/scripts/volume.config.json   every number the volume model uses
+skills/generation/SKILL.md              the generation flow — vendor-neutral, pointers only
+skills/generation/rules.md               dataset cache, personal rules, echo-before-write
+skills/generation/FIELDS.md              hand-editing guide for rules.json and plans
+skills/generation/datasets.json          dataset registry — all dataset-specific knowledge
+skills/generation/schema/                plan and rules contracts, machine-readable
+skills/generation/examples/              copy-to-start samples
+skills/generation/scripts/generate.py    the fitting algorithm
+skills/generation/scripts/generate.config.json   every number the generator uses
 .claude/skills/onboard/SKILL.md          thin wrapper so /onboard works in Claude Code
-scripts/validate-skills.py               validates the whole skill against its own schemas
-docs/schema.md                           every field, and the "why" behind the schema
+.claude/skills/generate/SKILL.md         thin wrapper so /generate works in Claude Code
+scripts/validate-skills.py               validates both skills against their own schemas
+docs/schema.md                           profile/program fields, and the "why"
+docs/generation.md                       the generator's "why": descriptor, fit, cache
 docs/onboarding.md                       the original hand-written spec, kept as-is
 profiles/                                your data, gitignored
+datasets/                                cloned exercise datasets, gitignored cache
 ```
 
 ## License
