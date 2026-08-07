@@ -9,8 +9,7 @@ each. When this document and a schema disagree, the schema wins and this documen
 "what do I literally type in this field", see
 [`skills/onboarding/FIELDS.md`](../skills/onboarding/FIELDS.md) instead — this file is the *why*.
 
-[`onboarding.md`](onboarding.md) is the original hand-written spec and is kept as-is for
-provenance, typos included.
+[`onboarding.md`](onboarding.md) onboarding questions.
 
 ---
 
@@ -36,9 +35,9 @@ overwriting the last one, so the answers a person gave for last summer's cutting
 silently lost when they set up a bulk. The **latest** program is whichever filename sorts highest;
 a same-day re-run suffixes `-2`.
 
-`profiles/<slug>/plans/` is reserved for a future workout-generation skill's output — never
-written by onboarding, and named differently from `programs/` on purpose so the two kinds of file
-(*answers* vs. *generated output*) are never confused by directory alone.
+`profiles/<slug>/plans/` holds the generation skill's output — never written by onboarding, and
+named differently from `programs/` on purpose so the two kinds of file (*answers* vs. *generated
+output*) are never confused by directory alone.
 
 ### Slug rules
 
@@ -92,10 +91,14 @@ invented midpoint. The bracket-to-midpoint and range-to-exercise-count mappings 
 `scripts/volume.config.json` (machine form) and the tables below (prose form) — the consumer's
 job, not the schema's.
 
-**Why measurements keep the user's own unit** rather than normalising to metric on disk.
-Round-tripping a conversion on every update introduces float drift, and shows people numbers they
-do not recognise when they open their own file. The unit travels on the value, so no consumer can
-misread it.
+**Why measurements are no longer asked for.** `height`, `weight`, `sex`, `units`,
+`experience.cardio` and `gym.notes` were collected from the first version onward and read by
+nothing: the volume model works from age, bodyfat bracket, lifting experience and gym type, and
+the generator works from the volume block. Height and weight were also the interview's two most
+laborious questions — bucket, follow-up, plausible-range check, and a whole unit-conversion rule
+for changing them later. They are now optional in the schema rather than deleted, so profiles
+written before the trim stay valid and anyone who wants the record can fill them in by hand.
+When a measurement does appear, the unit travels on the value, so no consumer can misread it.
 
 **Why there is no `derived` block on disk.** An earlier version of this schema kept an
 all-`null` `derived` object as documentation of what a consumer computes. That job is now done by
@@ -128,24 +131,24 @@ neither key is ever missing, rather than pushing that check onto every consumer.
 | `updated_at` | string | Same format. Bumped on every write. |
 | `user.name` | string | Verbatim as the person typed it, including case and accents. |
 | `user.slug` | string | Matches the containing directory name. Both stored so a profile is self-describing if moved, and so `profiles/` can be listed without opening every file. |
-| `units` | enum | `metric` \| `imperial`. A display preference for everything, which is why it is top-level rather than nested under a measurement. |
+| `units` | enum | *Optional, not asked.* `metric` \| `imperial`. |
 
 ### `basics`
 
 | Field | Type | Rule |
 |---|---|---|
-| `sex` | enum | `male` \| `female`. Unused by v1 math; it exists because bodyfat brackets read differently by sex. |
 | `date_of_birth` | string | `YYYY-MM-DD`, or bare `YYYY` if only a year was given. |
-| `height` | object | `{ "value": <number>, "unit": "cm" \| "in" }`. Always an exact number, never a range. |
-| `weight` | object | `{ "value": <number>, "unit": "kg" \| "lb" }`. Always an exact number, never a range. |
 | `bodyfat_bracket` | enum | One of `3-4`, `5-7`, `8-12`, `13-17`, `18-23`, `24-29`, `30-34`, `35-39`, `40+`. A string, not a number. |
+| `sex` | enum | *Optional, not asked.* `male` \| `female`. |
+| `height` | object | *Optional, not asked.* `{ "value": <number>, "unit": "cm" \| "in" }`. Always an exact number, never a range. |
+| `weight` | object | *Optional, not asked.* `{ "value": <number>, "unit": "kg" \| "lb" }`. Always an exact number, never a range. |
 
 ### `experience`
 
 | Field | Type | Rule |
 |---|---|---|
 | `lifting` | enum | `none` \| `beginner` \| `intermediate` \| `advanced` |
-| `cardio` | enum | Same four values. |
+| `cardio` | enum | *Optional, not asked.* Same four values. |
 
 Bands: beginner is under 1 year, intermediate 1-4 years, advanced over 4 years.
 
@@ -154,14 +157,14 @@ Bands: beginner is under 1 year, intermediate 1-4 years, advanced over 4 years.
 | Field | Type | Rule |
 |---|---|---|
 | `type` | enum | `everything_gym` \| `commercial_gym` \| `warehouse_gym` \| `local_gym` \| `garage_gym` |
-| `notes` | string \| null | Free text for volunteered extras ("I also have a cable machine"). Never a structured list in v1. |
+| `notes` | string \| null | *Optional, not asked.* Free text for volunteered extras ("I also have a cable machine"). Never a structured list. |
 
 #### Gym type → equipment tier
 
 Consumed as `volume.equipment_tier`. Kept here rather than in the profile so the tiering can be
-revised without rewriting anyone's saved data. This value rides along in `volume.py`'s output
-unused by the arithmetic in v1 — see [Volume model](#volume-model) — reserved for a future
-exercise-selection step.
+revised without rewriting anyone's saved data. The value rides along in `volume.py`'s output
+unused by its arithmetic — see [Volume model](#volume-model) — and is read by the generation
+skill, which filters the dataset to exercises at or below the tier.
 
 | Type | Tier | Means |
 |---|---|---|
@@ -251,17 +254,23 @@ way as `equipment_tier`.
 it uses lives in `skills/onboarding/scripts/volume.config.json` next to it, so retuning the model
 never touches Python, `SKILL.md`, or `CLAUDE.md`.
 
-**Five inputs drive the math**: `experience.lifting`, `primary_goal`, `days_per_week`,
-`session_minutes`, `split`. Four values ride along computed but unused by v1's arithmetic, so two
-future consumers cannot disagree about how to compute them: `age`, `bodyfat_midpoint`,
-`equipment_tier`, `benchmarks_cleared`. `deload`, `experience.cardio`, and the benchmark booleans
-do not affect volume in v1 — benchmarks gate exercise *selection*, a future generation-skill
-concern.
+**Six inputs drive the math**: `experience.lifting`, `primary_goal`, `days_per_week`,
+`session_minutes`, `split`, `style`. Four values ride along computed but unused by the arithmetic itself,
+so two consumers cannot disagree about how to compute them: `age`, `bodyfat_midpoint`,
+`equipment_tier`, `benchmarks_cleared`. Of those, generation reads `equipment_tier`; the other
+three, along with `weekly_set_capacity`, `weekly_sets_allocated`, `unallocated_sets`,
+`target_weekly_sets_per_muscle` and `scale_factor`, are the audit trail — the record of how the
+allocation was derived, kept so the one number both skills depend on can be checked by hand.
+`deload` and the benchmark booleans do not affect volume — benchmarks gate exercise *selection*,
+which is generation's concern.
 
 ```
-C     = days * exercises_per_session[session] * sets_per_exercise[goal]     # weekly capacity
+d     = goal_exercise_density[goal] * style_multipliers[style].exercise_density
+E     = max(1, round(exercises_per_session[session] * d))
+C     = days * E * sets_per_exercise[goal]                                  # weekly capacity
 w[m]  = base_weights[m] * goal_multipliers[goal][m] * split_multipliers[split][m]
-T     = target_weekly_sets_per_muscle[lifting] * sum(w)
+t     = max(1, round(target_weekly_sets_per_muscle[lifting] * style_multipliers[style].target_sets))
+T     = t * sum(w)
 s     = min(C / T, max_scale_factor)                                        # 1.5 caps degenerate inputs
 total = C if C/T <= max_scale_factor else round(T * max_scale_factor)
 alloc = hamilton(w, total)                                                  # largest-remainder rounding, proportional to w
@@ -277,6 +286,43 @@ Starting values, grounded in the commonly cited ~10-20 hard-sets-per-muscle-per-
 | `experience.lifting` | target sets/muscle | | `primary_goal` | sets/exercise |
 |---|---|---|---|---|
 | `none` / `beginner` / `intermediate` / `advanced` | 8 / 10 / 14 / 18 | | `hypertrophy` · `both` / `strength` | 3 / 4 |
+
+`goal_exercise_density` is the only place the goal touches the *time* budget, and it applies to
+exercise slots, not sets. A strength exercise is four sets at three to five minutes of rest; a
+hypertrophy exercise is three sets at around two. Fewer strength exercises fit the same clock, so
+the density runs `strength` 0.8 · `both` 1.0 · `hypertrophy` 1.1, and `exercises_per_session` in
+the volume block is the *adjusted* count. The spread is deliberately narrower than rest-interval
+guidance alone would suggest: the short-rest-for-hypertrophy premise has weakened, with two-minute
+minimums now recommended for size as well.
+
+Keeping the ratio here rather than on `sets_per_exercise` is what lets each field mean one thing.
+`sets_per_exercise` is a prescription, written verbatim onto every exercise by generation;
+`exercises_per_session` is a budget, used there as a per-session cap. A ratio on the former would
+make `weekly_set_capacity` claim sets the generator could never place.
+
+### Style
+
+`program.style` is the one place the model admits the evidence disagrees with itself. Weekly
+volume is the training variable with the widest spread of credible positions, so rather than
+bake one school in as a constant, the interview asks and `style_multipliers` applies it:
+
+| `style` | target sets | exercise density | reps in reserve |
+|---|---|---|---|
+| `balanced` | ×1.0 | ×1.0 | 2 |
+| `high_volume` | ×1.3 | ×1.1 | 2 |
+| `high_intensity` | ×0.6 | ×0.9 | 0 |
+
+`high_volume` is the Renaissance Periodization tradition, `high_intensity` the HIT one. The
+labels stay descriptive rather than naming a coach: the plan is not anyone's published program,
+and public positions on volume have moved over the years in ways a person's name would not track.
+
+It is **one multiplier layer over the tables above, never a parallel copy of them.** Three styles
+× nine tables is how a config becomes unmaintainable; three styles × three multipliers is a row.
+
+`reps_in_reserve` and `rest_seconds` ride along in the volume block but change nothing —
+generation prints them at the top of the plan. Effort is what makes a set count comparable across
+styles, and rest is what the density ratio is already implicitly pricing, so both are worth
+stating out loud. Keeping them display-only means a bad number there cannot move an allocation.
 
 Base priority weights favor the largest muscle groups (`back` 1.2, `quads` 1.1) down to the
 smallest (`calves`, `core` 0.6). Goal multipliers in `volume.config.json` push volume toward

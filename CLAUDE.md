@@ -77,3 +77,5 @@ cp skills/onboarding/examples/profile.example.json profiles/<slug>/profile.json 
 same for the generation side. `docs/onboarding.md` is the original hand-written spec, kept
 byte-identical to the copy in the sibling `samy-workouts` repository — left alone on purpose,
 typos included.
+- anything left to be done for later write in .todos, give it a short title, and a description, confirm with me first
+- keep scripts, docs, comments simple and short, human readable always

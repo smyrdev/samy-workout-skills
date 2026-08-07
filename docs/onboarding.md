@@ -65,7 +65,4 @@ onboarding has 3 main steps:
    * Can you bench press a barbell for at least 10 reps?
    * Can you incline press a barbell for at least 10 reps?
    * Can you overhead press (shoulder press) a barbell for at least 10 reps?
-7. You program name?
-8. program Emoji?
-
-## Overwire and toturial
+7. You program name and emoji?

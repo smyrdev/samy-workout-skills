@@ -6,21 +6,15 @@
     "name": "Samy",
     "slug": "samy"
   },
-  "units": "metric",
   "basics": {
-    "sex": "male",
     "date_of_birth": "1994-06-15",
-    "height": { "value": 178, "unit": "cm" },
-    "weight": { "value": 80, "unit": "kg" },
     "bodyfat_bracket": "13-17"
   },
   "experience": {
-    "lifting": "advanced",
-    "cardio": "beginner"
+    "lifting": "advanced"
   },
   "gym": {
-    "type": "commercial_gym",
-    "notes": null
+    "type": "commercial_gym"
   },
   "strength_benchmarks": {
     "pullups_5": true,

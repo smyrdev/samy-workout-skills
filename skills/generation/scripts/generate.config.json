@@ -1,6 +1,14 @@
 {
   "_comment": "Every dataset-independent number and default rule the generation algorithm uses. Retune here — never in generate.py, SKILL.md, or CLAUDE.md. Dataset-specific knowledge (field names, tiers, muscle mapping) lives in ../datasets.json instead. Prose rationale: docs/generation.md.",
 
+  "order_rules": [
+    "must_include_first",
+    "trailer_groups_last",
+    "compound_before_isolation",
+    "focus_muscles_first",
+    "large_groups_before_small"
+  ],
+
   "default_rules": {
     "exclude": { "exercises": [], "equipment": [], "movement_groups": [], "muscles": [] },
     "focus": { "muscles": [], "must_include": [] },
@@ -10,7 +18,8 @@
       "compound_before_isolation",
       "focus_muscles_first",
       "large_groups_before_small"
-    ]
+    ],
+    "notes": []
   },
 
   "split_sessions": {
@@ -38,6 +47,7 @@
   "indirect_discount": 0.5,
   "sets_max": 5,
   "short_tolerance_sets": 1.0,
+  "over_tolerance_ratio": 1.5,
   "compound_min_muscles": 3,
   "trailer_groups": ["core", "calves"],
 

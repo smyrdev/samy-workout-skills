@@ -1,6 +1,6 @@
 {
   "$schema_version": "1.0",
-  "created_at": "2026-08-06T00:00:00Z",
+  "created_at": "2026-08-07T00:00:00Z",
   "profile_slug": "samy",
   "program": {
     "name": "Summer Build",
@@ -9,13 +9,14 @@
     "days_per_week": 6,
     "session_minutes": "60-90",
     "split": "upper_lower",
+    "style": "balanced",
     "deload": true
   },
   "dataset": {
     "name": "exercises-dataset",
     "repo": "https://github.com/smyrdev/exercises-dataset",
     "ref": "main",
-    "commit": null
+    "commit": "caa12623b8b469aaa9d85a0601442a4622c71103"
   },
   "rules_applied": {
     "exclude": {
@@ -38,44 +39,64 @@
   },
   "targets": {
     "chest": {
-      "allocated": 14,
-      "planned": 15.8
+      "allocated": 16,
+      "planned": 26.2,
+      "direct": 21.0,
+      "balance": 0.79
     },
     "back": {
-      "allocated": 17,
-      "planned": 18.0
+      "allocated": 19,
+      "planned": 33.0,
+      "direct": 33.0,
+      "balance": 1.04
     },
     "shoulders": {
-      "allocated": 16,
-      "planned": 16.5
+      "allocated": 18,
+      "planned": 30.8,
+      "direct": 30.0,
+      "balance": 1.0
     },
     "biceps": {
-      "allocated": 17,
-      "planned": 17.2
+      "allocated": 19,
+      "planned": 30.0,
+      "direct": 30.0,
+      "balance": 0.95
     },
     "triceps": {
-      "allocated": 16,
-      "planned": 18.0
+      "allocated": 18,
+      "planned": 27.8,
+      "direct": 27.0,
+      "balance": 0.9
     },
     "quads": {
-      "allocated": 16,
-      "planned": 18.0
+      "allocated": 18,
+      "planned": 27.0,
+      "direct": 27.0,
+      "balance": 0.9
     },
     "hamstrings": {
-      "allocated": 13,
-      "planned": 15.0
+      "allocated": 14,
+      "planned": 15.0,
+      "direct": 15.0,
+      "balance": 0.64
     },
     "glutes": {
-      "allocated": 13,
-      "planned": 18.0
+      "allocated": 14,
+      "planned": 33.0,
+      "direct": 33.0,
+      "balance": 1.41
     },
     "calves": {
-      "allocated": 12,
-      "planned": 14.2
+      "allocated": 14,
+      "planned": 31.5,
+      "direct": 27.0,
+      "balance": 1.16
     },
     "core": {
-      "allocated": 10,
-      "planned": 12.0
+      "allocated": 12,
+      "planned": 29.2,
+      "direct": 27.0,
+      "balance": 1.35
     }
   },
   "sessions": [
@@ -84,37 +105,55 @@
       "focus": "upper",
       "exercises": [
         {
-          "id": "9012",
-          "name": "barbell bent over row",
-          "equipment": "barbell",
+          "id": "1326",
+          "name": "chin-up",
+          "equipment": "body weight",
           "movement_group": "Pulls",
           "primary": "back",
           "sets": 3,
           "reps": "8-12",
           "volume": {
             "back": 1.0,
-            "biceps": 0.5,
-            "core": 0.5,
-            "shoulders": 0.5
-          }
+            "biceps": 1.0,
+            "chest": 0.5,
+            "shoulders": 1.0
+          },
+          "deload_sets": 1
         },
         {
-          "id": "9002",
-          "name": "push-up",
-          "equipment": "body weight",
-          "movement_group": "Chest",
-          "primary": "chest",
+          "id": "2285",
+          "name": "lever pullover",
+          "equipment": "leverage machine",
+          "movement_group": "Pull-overs",
+          "primary": "back",
           "sets": 3,
           "reps": "8-12",
           "volume": {
-            "chest": 1.0,
-            "core": 0.5,
+            "back": 1.0,
+            "chest": 0.5,
             "shoulders": 1.0,
             "triceps": 1.0
-          }
+          },
+          "deload_sets": 1
         },
         {
-          "id": "9001",
+          "id": "0652",
+          "name": "pull-up",
+          "equipment": "body weight",
+          "movement_group": "Pulls",
+          "primary": "back",
+          "sets": 3,
+          "reps": "8-12",
+          "volume": {
+            "back": 1.0,
+            "biceps": 1.0,
+            "chest": 0.5,
+            "shoulders": 0.5
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0025",
           "name": "barbell bench press",
           "equipment": "barbell",
           "movement_group": "Chest",
@@ -125,44 +164,75 @@
             "chest": 1.0,
             "shoulders": 1.0,
             "triceps": 1.0
-          }
+          },
+          "deload_sets": 1
         },
         {
-          "id": "9010",
-          "name": "pull-up",
+          "id": "0662",
+          "name": "push-up",
           "equipment": "body weight",
-          "movement_group": "Pulls",
+          "movement_group": "Chest",
+          "primary": "chest",
+          "sets": 3,
+          "reps": "8-12",
+          "volume": {
+            "chest": 1.0,
+            "shoulders": 1.0,
+            "triceps": 0.5
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "1018",
+          "name": "band shrug",
+          "equipment": "band",
+          "movement_group": "Shrugs",
           "primary": "back",
           "sets": 3,
           "reps": "10-15",
           "volume": {
-            "back": 1.0,
-            "biceps": 0.5
-          }
+            "back": 1.0
+          },
+          "deload_sets": 1
         },
         {
-          "id": "9030",
-          "name": "barbell curl",
-          "equipment": "barbell",
-          "movement_group": "Biceps curls",
-          "primary": "biceps",
+          "id": "3012",
+          "name": "scapula dips",
+          "equipment": "body weight",
+          "movement_group": "Scapular work",
+          "primary": "back",
           "sets": 3,
           "reps": "10-15",
           "volume": {
-            "biceps": 1.0
-          }
+            "back": 1.0
+          },
+          "deload_sets": 1
         },
         {
-          "id": "9031",
-          "name": "dumbbell hammer curl",
-          "equipment": "dumbbell",
-          "movement_group": "Biceps curls",
-          "primary": "biceps",
+          "id": "0018",
+          "name": "assisted standing triceps extension (with towel)",
+          "equipment": "assisted",
+          "movement_group": "Triceps extensions",
+          "primary": "triceps",
           "sets": 3,
           "reps": "10-15",
           "volume": {
-            "biceps": 1.0
-          }
+            "triceps": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "3011",
+          "name": "incline scapula push up",
+          "equipment": "body weight",
+          "movement_group": "Scapular work",
+          "primary": "chest",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "chest": 1.0
+          },
+          "deload_sets": 1
         }
       ]
     },
@@ -171,9 +241,9 @@
       "focus": "lower",
       "exercises": [
         {
-          "id": "9050",
-          "name": "barbell squat",
-          "equipment": "barbell",
+          "id": "0809",
+          "name": "suspended split squat",
+          "equipment": "body weight",
           "movement_group": "Squat movements",
           "primary": "quads",
           "sets": 3,
@@ -182,27 +252,43 @@
             "calves": 0.5,
             "core": 0.5,
             "glutes": 1.0,
-            "hamstrings": 0.5,
             "quads": 1.0
-          }
+          },
+          "deload_sets": 1
         },
         {
-          "id": "9051",
-          "name": "dumbbell lunge",
-          "equipment": "dumbbell",
+          "id": "1004",
+          "name": "band squat",
+          "equipment": "band",
           "movement_group": "Squat movements",
-          "primary": "quads",
+          "primary": "glutes",
           "sets": 3,
           "reps": "8-12",
           "volume": {
             "calves": 0.5,
+            "core": 1.0,
             "glutes": 1.0,
             "quads": 1.0
-          }
+          },
+          "deload_sets": 1
         },
         {
-          "id": "9052",
-          "name": "leg extension",
+          "id": "0586",
+          "name": "lever lying leg curl",
+          "equipment": "leverage machine",
+          "movement_group": "Leg curls",
+          "primary": "hamstrings",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "calves": 1.0,
+            "hamstrings": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0585",
+          "name": "lever leg extension",
           "equipment": "leverage machine",
           "movement_group": "Leg extensions",
           "primary": "quads",
@@ -210,31 +296,75 @@
           "reps": "10-15",
           "volume": {
             "quads": 1.0
-          }
+          },
+          "deload_sets": 1
         },
         {
-          "id": "9080",
-          "name": "standing calf raise",
+          "id": "0597",
+          "name": "lever seated hip abduction",
+          "equipment": "leverage machine",
+          "movement_group": "Hip adduction & abduction",
+          "primary": "glutes",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "glutes": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0598",
+          "name": "lever seated hip adduction",
+          "equipment": "leverage machine",
+          "movement_group": "Hip adduction & abduction",
+          "primary": "glutes",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "glutes": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0489",
+          "name": "hyperextension",
           "equipment": "body weight",
+          "movement_group": "Hip hinges",
+          "primary": "core",
+          "sets": 3,
+          "reps": "8-12",
+          "volume": {
+            "core": 1.0,
+            "glutes": 1.0,
+            "hamstrings": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0999",
+          "name": "band single leg calf raise",
+          "equipment": "band",
           "movement_group": "Calf raises/jumps",
           "primary": "calves",
           "sets": 3,
           "reps": "10-15",
           "volume": {
             "calves": 1.0
-          }
+          },
+          "deload_sets": 1
         },
         {
-          "id": "9091",
-          "name": "plank",
-          "equipment": "body weight",
-          "movement_group": "Core",
-          "primary": "core",
+          "id": "1371",
+          "name": "barbell seated calf raise",
+          "equipment": "barbell",
+          "movement_group": "Calf raises/jumps",
+          "primary": "calves",
           "sets": 3,
           "reps": "10-15",
           "volume": {
-            "core": 1.0
-          }
+            "calves": 1.0
+          },
+          "deload_sets": 1
         }
       ]
     },
@@ -243,23 +373,40 @@
       "focus": "upper",
       "exercises": [
         {
-          "id": "9002",
-          "name": "push-up",
+          "id": "0073",
+          "name": "barbell pullover",
+          "equipment": "barbell",
+          "movement_group": "Pull-overs",
+          "primary": "back",
+          "sets": 3,
+          "reps": "8-12",
+          "volume": {
+            "back": 1.0,
+            "chest": 0.5,
+            "shoulders": 1.0,
+            "triceps": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0140",
+          "name": "biceps pull-up",
           "equipment": "body weight",
-          "movement_group": "Chest",
-          "primary": "chest",
+          "movement_group": "Pulls",
+          "primary": "biceps",
           "sets": 3,
           "reps": "8-12",
           "volume": {
-            "chest": 1.0,
-            "core": 0.5,
-            "shoulders": 1.0,
-            "triceps": 1.0
-          }
+            "back": 1.0,
+            "biceps": 1.0,
+            "chest": 0.5,
+            "shoulders": 1.0
+          },
+          "deload_sets": 1
         },
         {
-          "id": "9001",
-          "name": "barbell bench press",
+          "id": "0122",
+          "name": "barbell wide bench press",
           "equipment": "barbell",
           "movement_group": "Chest",
           "primary": "chest",
@@ -269,45 +416,86 @@
             "chest": 1.0,
             "shoulders": 1.0,
             "triceps": 1.0
-          }
+          },
+          "deload_sets": 1
         },
         {
-          "id": "9014",
-          "name": "band pull-up",
-          "equipment": "band",
-          "movement_group": "Pulls",
-          "primary": "back",
-          "sets": 3,
-          "reps": "10-15",
-          "volume": {
-            "back": 1.0,
-            "biceps": 0.5
-          }
-        },
-        {
-          "id": "9013",
-          "name": "one arm dumbbell row",
-          "equipment": "dumbbell",
-          "movement_group": "Pulls",
-          "primary": "back",
-          "sets": 3,
-          "reps": "10-15",
-          "volume": {
-            "back": 1.0,
-            "biceps": 0.5
-          }
-        },
-        {
-          "id": "9030",
-          "name": "barbell curl",
+          "id": "1411",
+          "name": "barbell palms down wrist curl over a bench",
           "equipment": "barbell",
+          "movement_group": "Forearm exercises",
+          "primary": "biceps",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "biceps": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0095",
+          "name": "barbell shrug",
+          "equipment": "barbell",
+          "movement_group": "Shrugs",
+          "primary": "back",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "back": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0868",
+          "name": "cable curl",
+          "equipment": "cable",
           "movement_group": "Biceps curls",
           "primary": "biceps",
           "sets": 3,
           "reps": "10-15",
           "volume": {
             "biceps": 1.0
-          }
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0455",
+          "name": "finger curls",
+          "equipment": "barbell",
+          "movement_group": "Forearm exercises",
+          "primary": "biceps",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "biceps": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0019",
+          "name": "assisted triceps dip (kneeling)",
+          "equipment": "leverage machine",
+          "movement_group": "Triceps extensions",
+          "primary": "triceps",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "triceps": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "3011",
+          "name": "incline scapula push up",
+          "equipment": "body weight",
+          "movement_group": "Scapular work",
+          "primary": "chest",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "chest": 1.0
+          },
+          "deload_sets": 1
         }
       ]
     },
@@ -316,9 +504,9 @@
       "focus": "lower",
       "exercises": [
         {
-          "id": "9050",
-          "name": "barbell squat",
-          "equipment": "barbell",
+          "id": "2368",
+          "name": "split squats",
+          "equipment": "body weight",
           "movement_group": "Squat movements",
           "primary": "quads",
           "sets": 3,
@@ -327,199 +515,96 @@
             "calves": 0.5,
             "core": 0.5,
             "glutes": 1.0,
-            "hamstrings": 0.5,
             "quads": 1.0
-          }
+          },
+          "deload_sets": 1
         },
         {
-          "id": "9053",
-          "name": "sled leg press",
-          "equipment": "sled machine",
+          "id": "0514",
+          "name": "jump squat",
+          "equipment": "body weight",
           "movement_group": "Squat movements",
-          "primary": "quads",
+          "primary": "glutes",
           "sets": 3,
           "reps": "8-12",
           "volume": {
+            "calves": 0.5,
+            "core": 1.0,
             "glutes": 1.0,
-            "hamstrings": 0.5,
             "quads": 1.0
-          }
+          },
+          "deload_sets": 1
         },
         {
-          "id": "9061",
-          "name": "lying leg curl",
-          "equipment": "leverage machine",
-          "movement_group": "Leg curls",
-          "primary": "hamstrings",
-          "sets": 3,
-          "reps": "10-15",
-          "volume": {
-            "calves": 0.5,
-            "hamstrings": 1.0
-          }
-        },
-        {
-          "id": "9062",
-          "name": "nordic hamstring curl",
-          "equipment": "body weight",
-          "movement_group": "Leg curls",
-          "primary": "hamstrings",
-          "sets": 3,
-          "reps": "10-15",
-          "volume": {
-            "calves": 0.5,
-            "hamstrings": 1.0
-          }
-        },
-        {
-          "id": "9081",
-          "name": "weighted seated calf raise",
-          "equipment": "weighted",
-          "movement_group": "Calf raises/jumps",
-          "primary": "calves",
-          "sets": 3,
-          "reps": "10-15",
-          "volume": {
-            "calves": 1.0
-          }
-        }
-      ]
-    },
-    {
-      "day": 5,
-      "focus": "upper",
-      "exercises": [
-        {
-          "id": "9002",
-          "name": "push-up",
-          "equipment": "body weight",
-          "movement_group": "Chest",
-          "primary": "chest",
-          "sets": 3,
-          "reps": "8-12",
-          "volume": {
-            "chest": 1.0,
-            "core": 0.5,
-            "shoulders": 1.0,
-            "triceps": 1.0
-          }
-        },
-        {
-          "id": "9040",
-          "name": "bench dip",
-          "equipment": "body weight",
-          "movement_group": "Triceps extensions",
-          "primary": "triceps",
-          "sets": 3,
-          "reps": "8-12",
-          "volume": {
-            "chest": 0.5,
-            "shoulders": 0.5,
-            "triceps": 1.0
-          }
-        },
-        {
-          "id": "9011",
-          "name": "assisted pull-up",
-          "equipment": "leverage machine",
-          "movement_group": "Pulls",
-          "primary": "back",
-          "sets": 3,
-          "reps": "10-15",
-          "volume": {
-            "back": 1.0,
-            "biceps": 0.5
-          }
-        },
-        {
-          "id": "9010",
-          "name": "pull-up",
-          "equipment": "body weight",
-          "movement_group": "Pulls",
-          "primary": "back",
-          "sets": 3,
-          "reps": "10-15",
-          "volume": {
-            "back": 1.0,
-            "biceps": 0.5
-          }
-        },
-        {
-          "id": "9031",
-          "name": "dumbbell hammer curl",
-          "equipment": "dumbbell",
-          "movement_group": "Biceps curls",
-          "primary": "biceps",
-          "sets": 3,
-          "reps": "10-15",
-          "volume": {
-            "biceps": 1.0
-          }
-        }
-      ]
-    },
-    {
-      "day": 6,
-      "focus": "lower",
-      "exercises": [
-        {
-          "id": "9050",
-          "name": "barbell squat",
-          "equipment": "barbell",
-          "movement_group": "Squat movements",
-          "primary": "quads",
-          "sets": 3,
-          "reps": "8-12",
-          "volume": {
-            "calves": 0.5,
-            "core": 0.5,
-            "glutes": 1.0,
-            "hamstrings": 0.5,
-            "quads": 1.0
-          }
-        },
-        {
-          "id": "9060",
-          "name": "barbell romanian deadlift",
+          "id": "0044",
+          "name": "barbell good morning",
           "equipment": "barbell",
           "movement_group": "Hip hinges",
           "primary": "hamstrings",
           "sets": 3,
           "reps": "8-12",
           "volume": {
-            "biceps": 0.5,
-            "core": 0.5,
+            "core": 1.0,
             "glutes": 1.0,
             "hamstrings": 1.0
-          }
+          },
+          "deload_sets": 1
         },
         {
-          "id": "9061",
-          "name": "lying leg curl",
-          "equipment": "leverage machine",
+          "id": "3193",
+          "name": "glute-ham raise",
+          "equipment": "body weight",
           "movement_group": "Leg curls",
           "primary": "hamstrings",
           "sets": 3,
           "reps": "10-15",
           "volume": {
-            "calves": 0.5,
+            "calves": 1.0,
             "hamstrings": 1.0
-          }
+          },
+          "deload_sets": 1
         },
         {
-          "id": "9080",
-          "name": "standing calf raise",
-          "equipment": "body weight",
+          "id": "3007",
+          "name": "resistance band leg extension",
+          "equipment": "resistance band",
+          "movement_group": "Leg extensions",
+          "primary": "quads",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "quads": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "1000",
+          "name": "band single leg reverse calf raise",
+          "equipment": "band",
           "movement_group": "Calf raises/jumps",
           "primary": "calves",
           "sets": 3,
           "reps": "10-15",
           "volume": {
             "calves": 1.0
-          }
+          },
+          "deload_sets": 1
         },
         {
-          "id": "9090",
+          "id": "1379",
+          "name": "dumbbell seated calf raise",
+          "equipment": "dumbbell",
+          "movement_group": "Calf raises/jumps",
+          "primary": "calves",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "calves": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0001",
           "name": "3/4 sit-up",
           "equipment": "body weight",
           "movement_group": "Core",
@@ -528,14 +613,296 @@
           "reps": "10-15",
           "volume": {
             "core": 1.0
-          }
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0002",
+          "name": "45° side bend",
+          "equipment": "body weight",
+          "movement_group": "Core",
+          "primary": "core",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "core": 1.0
+          },
+          "deload_sets": 1
+        }
+      ]
+    },
+    {
+      "day": 5,
+      "focus": "upper",
+      "exercises": [
+        {
+          "id": "0198",
+          "name": "cable pulldown",
+          "equipment": "cable",
+          "movement_group": "Pulls",
+          "primary": "back",
+          "sets": 3,
+          "reps": "8-12",
+          "volume": {
+            "back": 1.0,
+            "biceps": 1.0,
+            "chest": 0.5,
+            "shoulders": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0375",
+          "name": "dumbbell pullover",
+          "equipment": "dumbbell",
+          "movement_group": "Pull-overs",
+          "primary": "chest",
+          "sets": 3,
+          "reps": "8-12",
+          "volume": {
+            "back": 1.0,
+            "chest": 0.5,
+            "shoulders": 1.0,
+            "triceps": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0033",
+          "name": "barbell decline bench press",
+          "equipment": "barbell",
+          "movement_group": "Chest",
+          "primary": "chest",
+          "sets": 3,
+          "reps": "8-12",
+          "volume": {
+            "chest": 1.0,
+            "shoulders": 1.0,
+            "triceps": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0994",
+          "name": "band reverse wrist curl",
+          "equipment": "band",
+          "movement_group": "Forearm exercises",
+          "primary": "biceps",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "biceps": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "1016",
+          "name": "band wrist curl",
+          "equipment": "band",
+          "movement_group": "Forearm exercises",
+          "primary": "biceps",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "biceps": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0031",
+          "name": "barbell curl",
+          "equipment": "barbell",
+          "movement_group": "Biceps curls",
+          "primary": "biceps",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "biceps": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0220",
+          "name": "cable shrug",
+          "equipment": "cable",
+          "movement_group": "Shrugs",
+          "primary": "back",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "back": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0975",
+          "name": "band close-grip push-up",
+          "equipment": "band",
+          "movement_group": "Triceps extensions",
+          "primary": "triceps",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "triceps": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "3021",
+          "name": "scapula push-up",
+          "equipment": "body weight",
+          "movement_group": "Scapular work",
+          "primary": "chest",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "chest": 1.0
+          },
+          "deload_sets": 1
+        }
+      ]
+    },
+    {
+      "day": 6,
+      "focus": "lower",
+      "exercises": [
+        {
+          "id": "0786",
+          "name": "squat jerk",
+          "equipment": "barbell",
+          "movement_group": "Squat movements",
+          "primary": "quads",
+          "sets": 3,
+          "reps": "8-12",
+          "volume": {
+            "calves": 0.5,
+            "core": 1.0,
+            "glutes": 1.0,
+            "quads": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "1008",
+          "name": "band step-up",
+          "equipment": "band",
+          "movement_group": "Squat movements",
+          "primary": "glutes",
+          "sets": 3,
+          "reps": "8-12",
+          "volume": {
+            "calves": 0.5,
+            "core": 0.5,
+            "glutes": 1.0,
+            "quads": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0599",
+          "name": "lever seated leg curl",
+          "equipment": "leverage machine",
+          "movement_group": "Leg curls",
+          "primary": "hamstrings",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "calves": 1.0,
+            "hamstrings": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0585",
+          "name": "lever leg extension",
+          "equipment": "leverage machine",
+          "movement_group": "Leg extensions",
+          "primary": "quads",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "quads": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0168",
+          "name": "cable hip adduction",
+          "equipment": "cable",
+          "movement_group": "Hip adduction & abduction",
+          "primary": "glutes",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "glutes": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0088",
+          "name": "barbell seated calf raise",
+          "equipment": "barbell",
+          "movement_group": "Calf raises/jumps",
+          "primary": "calves",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "calves": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "1383",
+          "name": "hack calf raise",
+          "equipment": "sled machine",
+          "movement_group": "Calf raises/jumps",
+          "primary": "calves",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "calves": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0003",
+          "name": "air bike",
+          "equipment": "body weight",
+          "movement_group": "Core",
+          "primary": "core",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "core": 1.0
+          },
+          "deload_sets": 1
+        },
+        {
+          "id": "0006",
+          "name": "alternate heel touchers",
+          "equipment": "body weight",
+          "movement_group": "Core",
+          "primary": "core",
+          "sets": 3,
+          "reps": "10-15",
+          "volume": {
+            "core": 1.0
+          },
+          "deload_sets": 1
         }
       ]
     }
   ],
   "deload_week": {
     "sets_multiplier": 0.5,
-    "note": "Final week: same sessions with sets scaled down to promote recovery."
+    "note": "Final week: same sessions at the deload set counts shown with each exercise."
   },
-  "warnings": []
+  "effort": {
+    "style": "balanced",
+    "reps_in_reserve": 2,
+    "rest_seconds": "120-180"
+  },
+  "warnings": [
+    "under:hamstrings"
+  ]
 }
