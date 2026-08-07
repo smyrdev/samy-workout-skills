@@ -1,58 +1,49 @@
 # Working in this repository
 
-## The skill is portable — keep it that way
+## Where things are
 
-`skills/onboarding/SKILL.md` is the source of truth and must stay runnable by **any** LLM agent, not
-just Claude Code. In that file:
+```
+skills/onboarding/
+  SKILL.md                    the flow, as pointers. Rarely edited.
+  questions.yaml               the interview — edit to change what is asked
+  rules.md                     profile resolution, validation, updating, echo-before-write
+  FIELDS.md                    "what do I type here", for hand-editing a profile
+  schema/profile.schema.json   machine contract for profile.json
+  schema/program.schema.json   machine contract for programs/program-*.json
+  examples/profile.example.json  copy-to-start sample
+  examples/program.example.json  copy-to-start sample
+  scripts/volume.py            the volume algorithm — ~120 lines, no numbers
+  scripts/volume.config.json   every number the volume model uses — edit to retune it
+.claude/skills/onboard/SKILL.md  Claude Code pointer + environment bindings, not a fork
+scripts/validate-skills.py     validates the whole skill against its own schemas
+docs/schema.md                 rationale: why the schema looks the way it does
+docs/onboarding.md             original hand-written spec — left untouched, see below
+profiles/                      user data — gitignored, written only by the onboarding skill
+```
 
-- No vendor tool names. Write "ask the person, offering these options" — not "call
-  `AskUserQuestion`". Write "save the file" — not "use the Write tool".
-- No absolute or Windows-specific paths. Everything is relative to the repository root.
-- Frontmatter carries `name` and `description` only. Vendor-specific keys belong in the wrapper.
+`profiles/<slug>/profile.json` is written once. `profiles/<slug>/programs/program-YYYY-MM-DD.json`
+holds one file per training block — the onboarding skill's answers. `profiles/<slug>/plans/` is
+where a future generation skill writes what it produces; the two directories never blur.
 
-`.claude/skills/onboard/SKILL.md` is a **pointer, not a fork**. It carries the Claude Code
-frontmatter and the environment bindings, and nothing else. The moment someone copies the flow steps
-into it, the two versions start drifting and the bug is invisible. If a change is needed in the
-flow, it goes in the portable file.
+## Commands
 
-## Profiles
+```
+python scripts/validate-skills.py                                    # validate everything, exit 0 clean
+python skills/onboarding/scripts/volume.py --self-test                # volume model self-test
+cp skills/onboarding/examples/profile.example.json profiles/<slug>/profile.json   # hand-fill path
+```
 
-- `profiles/<slug>/profile.json` is written by the onboarding skill and by nothing else.
-- `profiles/` is gitignored in full except `.gitkeep`. Never commit a real profile, never suggest
-  force-adding one.
-- `skills/onboarding/profile.example.json` is the schema of record. Any field change updates the
-  example, `docs/schema.md`, and the interview in the same commit, and a breaking change bumps
-  `$schema_version`.
-- Never merge two people into one profile. A slug collision with a different name gets suffixed and
-  announced.
+## Rules
 
-## Design rules that look like mistakes
+- `profiles/` is user data. It is gitignored in full except `.gitkeep` — never commit a real
+  profile, never suggest force-adding one.
+- Only the onboarding skill writes under `profiles/`. A future generation skill reads
+  `profile.json` and the latest `programs/*.json` and writes only under `plans/`.
+- `skills/onboarding/SKILL.md` is portable: no vendor tool names, no absolute or Windows paths,
+  frontmatter carries only `name` and `description`. `.claude/skills/onboard/SKILL.md` is a
+  pointer to it, not a fork — a change to the flow goes in the portable file, never copied into
+  the wrapper.
 
-These are deliberate. Do not "fix" them without a reason that survives the explanation below.
-
-- **The profile stores per-cycle answers** — goal, days per week, session length, split, deload.
-  They are defaults the generation skill re-confirms, not commitments. Do not clean up the schema by
-  moving them out; the whole point is that a returning person clicks "same as last time".
-- **Age is never stored, only `date_of_birth`.** A stored age is wrong the year after it is written.
-- **Bodyfat is a bracket string and `session_minutes` is a range string.** Storing a number would
-  assert a precision the person never gave. The midpoint and exercise-cap mappings live in
-  `docs/schema.md` and are the consumer's job.
-- **Measurements keep the user's own unit** rather than normalising to metric on disk. Round-tripping
-  a conversion on every update introduces float drift.
-- **`derived` is all nulls on disk.** It is documentation naming the four computed values so two
-  skills cannot disagree about how to compute them — not a cache to populate.
-- **v1 models equipment as gym type only.** No item-level checklist without a `$schema_version` bump.
-
-## Docs
-
-- `docs/onboarding.md` is the original hand-written spec, typos and all. **Leave it untouched** — it
-  is byte-identical to a copy in the sibling `samy-workouts` repository, and diverging them creates
-  a "which one is canonical" problem for no runtime gain. Its empty `## Overwire and toturial`
-  heading is a note about a missing overview, satisfied by `README.md`.
-- `docs/schema.md` is the clean, canonical field reference. Changes go there.
-
-## Not in scope yet
-
-Workout generation is specified at the end of `skills/onboarding/SKILL.md` but not built. When it
-lands: it resolves profiles the same way, never writes to `profile.json`, and puts its output under
-`profiles/<slug>/plans/`.
+`docs/schema.md` has the "why" behind the schema. `docs/onboarding.md` is the original
+hand-written spec, kept byte-identical to the copy in the sibling `samy-workouts` repository —
+left alone on purpose, typos included.

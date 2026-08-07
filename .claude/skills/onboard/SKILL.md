@@ -1,22 +1,23 @@
 ---
 name: onboard
-description: >
-  Use when someone is setting up a training profile for the first time, says they are new here, or
-  asks to change their body stats, bodyfat, lifting or cardio experience, gym type, training goal,
-  days per week, session length, split preference, deload preference, strength benchmarks, or
-  program name. Also use when another skill reports that a training profile is missing.
+description: "Use when someone is setting up a training profile for the first time, says they are new here, or asks to change body stats, experience, gym, goal, days per week, session length, split, deload, benchmarks, or program name/emoji. Also use when another skill reports a training profile is missing."
 allowed-tools: Read, Write, Bash, AskUserQuestion
 argument-hint: "[name] [--update]"
 ---
 
-Read `skills/onboarding/SKILL.md` and follow it exactly.
+Read `skills/onboarding/SKILL.md` and follow it exactly, then its pointers into `questions.yaml`,
+`rules.md`, `schema/*.json` and `scripts/volume.config.json`.
 
 That file is the source of truth and is deliberately vendor-neutral. Do not duplicate, paraphrase,
 or summarise its steps here — a second copy of the flow will drift from the first.
 
-Two bindings for this environment:
+Three bindings for this environment:
 
-- Use `AskUserQuestion` wherever it says to offer choices, batching as its Flow section describes.
-  Its "free-text escape" is the **Other** option, which that tool always provides.
-- A bare name argument selects the profile (`/onboard sara`). `--update` means go to its
-  **Updating** section instead of the full interview.
+- Use `AskUserQuestion` wherever `questions.yaml` offers `options`, batching as `SKILL.md`'s Flow
+  section describes. Each question's `escape` is the **Other** option, which that tool always
+  provides.
+- Run `scripts/volume.py` with the `Bash` tool for step 5 (fill the volume block). If `Bash` is
+  unavailable in this session, fall back to `rules.md` § No Python rather than computing it by
+  hand.
+- A bare name argument selects the profile (`/onboard sara`). `--update` means go to
+  `rules.md` § Updating an existing profile instead of the full interview.

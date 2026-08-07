@@ -1,0 +1,94 @@
+{
+  "_comment": "Every number the volume model uses. Retune here — never in volume.py, SKILL.md, or CLAUDE.md. Prose copy of these tables lives in docs/schema.md.",
+
+  "canonical_muscle_order": [
+    "chest", "back", "shoulders", "biceps", "triceps",
+    "quads", "hamstrings", "glutes", "calves", "core"
+  ],
+
+  "exercises_per_session": {
+    "up_to_20": 3,
+    "20-40": 4,
+    "40-60": 6,
+    "60-90": 8,
+    "90-120": 10,
+    "over_120": 12
+  },
+
+  "sets_per_exercise": {
+    "hypertrophy": 3,
+    "both": 3,
+    "strength": 4
+  },
+
+  "target_weekly_sets_per_muscle": {
+    "none": 8,
+    "beginner": 10,
+    "intermediate": 14,
+    "advanced": 18
+  },
+
+  "base_weights": {
+    "chest": 1.0,
+    "back": 1.2,
+    "shoulders": 1.0,
+    "biceps": 0.8,
+    "triceps": 0.8,
+    "quads": 1.1,
+    "hamstrings": 0.9,
+    "glutes": 0.9,
+    "calves": 0.6,
+    "core": 0.6
+  },
+
+  "goal_multipliers": {
+    "strength": {
+      "chest": 1.10, "back": 1.15, "shoulders": 1.05, "biceps": 0.80, "triceps": 0.85,
+      "quads": 1.15, "hamstrings": 1.10, "glutes": 1.10, "calves": 0.80, "core": 0.90
+    },
+    "hypertrophy": {
+      "chest": 0.95, "back": 0.95, "shoulders": 1.00, "biceps": 1.15, "triceps": 1.15,
+      "quads": 0.95, "hamstrings": 0.95, "glutes": 0.95, "calves": 1.15, "core": 1.05
+    },
+    "both": {
+      "chest": 1.0, "back": 1.0, "shoulders": 1.0, "biceps": 1.0, "triceps": 1.0,
+      "quads": 1.0, "hamstrings": 1.0, "glutes": 1.0, "calves": 1.0, "core": 1.0
+    }
+  },
+
+  "split_multipliers": {
+    "full_body": {
+      "chest": 1.0, "back": 1.0, "shoulders": 1.0, "biceps": 0.8, "triceps": 0.8,
+      "quads": 1.0, "hamstrings": 1.0, "glutes": 1.0, "calves": 0.8, "core": 0.8
+    },
+    "upper_lower": {
+      "chest": 1.0, "back": 1.0, "shoulders": 1.05, "biceps": 1.2, "triceps": 1.2,
+      "quads": 1.0, "hamstrings": 1.0, "glutes": 1.0, "calves": 1.2, "core": 1.1
+    }
+  },
+
+  "equipment_tier": {
+    "everything_gym": 4,
+    "commercial_gym": 3,
+    "warehouse_gym": 3,
+    "local_gym": 2,
+    "garage_gym": 1
+  },
+
+  "bodyfat_midpoint": {
+    "3-4": 3.5, "5-7": 6, "8-12": 10, "13-17": 15, "18-23": 20.5,
+    "24-29": 26.5, "30-34": 32, "35-39": 37, "40+": 42
+  },
+
+  "muscle_benchmarks": {
+    "chest": ["bench_press_10", "incline_press_10", "pushups_15", "dips_10"],
+    "back": ["pullups_5", "pullups_10"],
+    "shoulders": ["overhead_press_10", "incline_press_10"],
+    "biceps": ["pullups_5", "pullups_10"],
+    "triceps": ["dips_10", "overhead_press_10", "bench_press_10"]
+  },
+
+  "max_scale_factor": 1.5,
+  "mev_sets_per_muscle": 6,
+  "full_body_high_frequency_days": 5
+}

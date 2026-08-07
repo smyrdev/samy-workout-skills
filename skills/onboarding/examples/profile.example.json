@@ -15,7 +15,7 @@
     "bodyfat_bracket": "13-17"
   },
   "experience": {
-    "lifting": "intermediate",
+    "lifting": "advanced",
     "cardio": "beginner"
   },
   "gym": {
@@ -30,22 +30,5 @@
     "bench_press_10": true,
     "incline_press_10": true,
     "overhead_press_10": false
-  },
-  "program": {
-    "name": "Summer Build",
-    "emoji": "💪",
-    "primary_goal": "hypertrophy",
-    "days_per_week": 4,
-    "session_minutes": "60-90",
-    "split": "full_body",
-    "deload": true
-  },
-  "derived": {
-    "note": "Computed at read time by consuming skills. Never authoritative, never hand-edited.",
-    "age": null,
-    "bodyfat_midpoint": null,
-    "equipment_tier": null,
-    "benchmarks_cleared": null
-  },
-  "history": []
+  }
 }
