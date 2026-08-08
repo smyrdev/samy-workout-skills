@@ -196,6 +196,9 @@ profiles/                                your data, gitignored
 datasets/                                cloned exercise datasets, gitignored cache
 ```
 
+## Sources
+https://mennohenselmans.com/optimal-program-design/
+
 ## License
 
 MIT.
