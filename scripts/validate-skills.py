@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validates the onboarding skill against its own schemas and rules.
+"""Validates the onboarding and generation skills against their own schemas and rules.
 
 Stdlib only. Run from the repository root:
 
@@ -201,7 +201,7 @@ def check_no_rule_content():
 
 def parse_flow_map(line):
     inner = line.strip()
-    inner = re.sub(r"^-\s*\{", "", inner)
+    inner = re.sub(r"^(?:-\s*)?\{", "", inner)
     inner = re.sub(r"\}\s*$", "", inner)
     result = {}
     parts = re.findall(r'(?:[^,"]|"(?:[^"\\]|\\.)*")+', inner)
@@ -239,9 +239,30 @@ def parse_questions_yaml(text):
             if key in ("options", "options_imperial"):
                 items = []
                 j = i + 1
-                while j < len(lines) and re.match(r"^\s{4}- \{.*\}\s*$", lines[j]):
-                    items.append(parse_flow_map(lines[j]))
+                while j < len(lines):
+                    # An option is either a one-line flow map, or a block whose keys are
+                    # indented under it — the block form is what carries a `stores:` map.
+                    if re.match(r"^\s{4}- \{.*\}\s*$", lines[j]):
+                        items.append(parse_flow_map(lines[j]))
+                        j += 1
+                        continue
+                    m_opt = re.match(r"^\s{4}- ([a-zA-Z_]+):\s?(.*)$", lines[j])
+                    if not m_opt:
+                        break
+                    option = {}
+                    option[m_opt.group(1)] = m_opt.group(2).strip().strip('"').strip("'")
                     j += 1
+                    while j < len(lines):
+                        m_kv = re.match(r"^\s{6}([a-zA-Z_]+):\s?(.*)$", lines[j])
+                        if not m_kv:
+                            break
+                        k2, v2 = m_kv.group(1), m_kv.group(2).strip()
+                        if v2.startswith("{"):
+                            option[k2] = parse_flow_map(v2)
+                        else:
+                            option[k2] = v2.strip('"').strip("'")
+                        j += 1
+                    items.append(option)
                 current[key] = items
                 i = j
                 continue
@@ -304,8 +325,14 @@ def check_questions_yaml(profile_schema, program_schema):
         if qtype not in ("choice", "multi_select", "text"):
             fail(f"questions.yaml[{qid}]: type must be choice/multi_select/text, got {qtype!r}")
 
-        # multi_select entries may store per-option instead of via a single `stores:` path.
-        option_stores = [o["store"] for o in entry.get("options", []) if "store" in o]
+        # Entries may store per-option instead of via a single `stores:` path — one path via an
+        # option's `store`, or several at once via an option's `stores` map.
+        option_stores = []
+        for o in entry.get("options", []):
+            if "store" in o:
+                option_stores.append(o["store"])
+            if isinstance(o.get("stores"), dict):
+                option_stores.extend(o["stores"].keys())
         if option_stores:
             for store_path in option_stores:
                 if not resolve_schema_path(schema, store_path):
@@ -353,10 +380,15 @@ def validate_instance(instance, schema, path, errors):
             if key not in instance:
                 errors.append(f"{path}: missing required key {key!r}")
         props = schema.get("properties", {})
-        if schema.get("additionalProperties") is False:
-            extra = set(instance.keys()) - set(props.keys())
+        extra = sorted(set(instance.keys()) - set(props.keys()))
+        additional = schema.get("additionalProperties")
+        if additional is False:
             if extra:
-                errors.append(f"{path}: unexpected keys {sorted(extra)}")
+                errors.append(f"{path}: unexpected keys {extra}")
+        elif isinstance(additional, dict):
+            # Open-keyed map with a fixed value shape — targets in plan.schema.json.
+            for key in extra:
+                validate_instance(instance[key], additional, f"{path}.{key}", errors)
         for key, subschema in props.items():
             if key in instance:
                 validate_instance(instance[key], subschema, f"{path}.{key}", errors)
@@ -378,6 +410,10 @@ def validate_instance(instance, schema, path, errors):
             errors.append(f"{path}: {instance} not above exclusiveMinimum {schema['exclusiveMinimum']}")
 
     if schema.get("type") == "array" and isinstance(instance, list):
+        if "minItems" in schema and len(instance) < schema["minItems"]:
+            errors.append(f"{path}: fewer than minItems {schema['minItems']}")
+        if "maxItems" in schema and len(instance) > schema["maxItems"]:
+            errors.append(f"{path}: more than maxItems {schema['maxItems']}")
         item_schema = schema.get("items")
         if item_schema:
             for idx, item in enumerate(instance):
@@ -434,6 +470,7 @@ def check_volume_config_coverage(profile_schema, program_schema):
     session_enum = set(prog_props["session_minutes"]["enum"])
     goal_enum = set(prog_props["primary_goal"]["enum"])
     split_enum = set(prog_props["split"]["enum"])
+    style_enum = set(prog_props["style"]["enum"])
     lifting_enum = set(profile_schema["properties"]["experience"]["properties"]["lifting"]["enum"])
     bracket_enum = set(profile_schema["properties"]["basics"]["properties"]["bodyfat_bracket"]["enum"])
     gym_enum = set(profile_schema["properties"]["gym"]["properties"]["type"]["enum"])
@@ -453,6 +490,9 @@ def check_volume_config_coverage(profile_schema, program_schema):
 
     need("exercises_per_session", session_enum)
     need("sets_per_exercise", goal_enum)
+    need("goal_exercise_density", goal_enum)
+    need("style_multipliers", style_enum)
+    need("rest_seconds_by_goal", goal_enum)
     need("target_weekly_sets_per_muscle", lifting_enum)
     need("equipment_tier", gym_enum)
     need("bodyfat_midpoint", bracket_enum)
@@ -583,12 +623,6 @@ def check_datasets_descriptor(program_schema):
 # 9. Generation skill: generate.config.json is complete and consistent
 # --------------------------------------------------------------------------------------
 
-GEN_ORDER_RULES = {
-    "must_include_first", "trailer_groups_last", "compound_before_isolation",
-    "focus_muscles_first", "large_groups_before_small",
-}
-
-
 def check_generate_config(program_schema, rules_schema):
     config = load_json(GEN_DIR / "scripts" / "generate.config.json")
     if config is None:
@@ -601,9 +635,21 @@ def check_generate_config(program_schema, rules_schema):
     goals = set(program_schema["properties"]["program"]["properties"]["primary_goal"]["enum"])
     splits = set(program_schema["properties"]["program"]["properties"]["split"]["enum"])
 
+    # order_rules is the single source for the ordering vocabulary: generate.py reads it,
+    # rules.schema.json's enum must equal it, and the shipped default must draw from it.
+    order_rules = config.get("order_rules")
+    if not isinstance(order_rules, list) or not order_rules:
+        fail("generate.config.json[order_rules]: missing or empty")
+        order_rules = []
+    if rules_schema:
+        schema_rules = rules_schema["properties"]["order"]["items"]["enum"]
+        if sorted(schema_rules) != sorted(order_rules):
+            fail(f"rules.schema.json[order.items.enum] {sorted(schema_rules)} does not match "
+                 f"generate.config.json[order_rules] {sorted(order_rules)}")
+
     default_rules = config.get("default_rules", {})
     for rule in default_rules.get("order", []):
-        if rule not in GEN_ORDER_RULES:
+        if rule not in order_rules:
             fail(f"generate.config.json[default_rules.order]: unknown rule {rule!r}")
     errs = []
     if rules_schema:

@@ -25,6 +25,7 @@ are read from the program file's volume block, which volume.py owns.
 
 import argparse
 import datetime
+import io
 import json
 import re
 import subprocess
@@ -49,7 +50,9 @@ def load_json(path, what):
     if not p.is_file():
         fail_input(f"{what} not found: {path}")
     try:
-        with p.open("r", encoding="utf-8") as f:
+        # utf-8-sig, not utf-8: rules.json is hand-written, and a Windows editor
+        # will happily save it with a BOM. Reads plain UTF-8 identically.
+        with p.open("r", encoding="utf-8-sig") as f:
             return json.load(f)
     except json.JSONDecodeError as e:
         fail_input(f"{what} is not valid JSON: {path} ({e})")
@@ -70,11 +73,12 @@ def default_descriptor_path():
 def load_config(path):
     cfg = load_json(path, "config")
     required = [
-        "default_rules", "split_sessions", "max_per_movement_group_per_session",
+        "order_rules", "default_rules", "split_sessions",
+        "max_per_movement_group_per_session",
         "max_per_volume_profile_per_session", "repeat_penalty", "focus_bonus",
         "name_length_penalty", "indirect_discount", "sets_max",
-        "short_tolerance_sets", "compound_min_muscles", "trailer_groups",
-        "reps_by_goal", "deload_sets_multiplier",
+        "short_tolerance_sets", "over_tolerance_ratio", "compound_min_muscles",
+        "trailer_groups", "reps_by_goal", "deload_sets_multiplier",
     ]
     missing = [k for k in required if k not in cfg]
     if missing:
@@ -156,9 +160,13 @@ def build_rows(records, ds):
         if not muscles:
             continue
         vp_field = fields.get("volume_profile")
+        name = rec.get(fields["name"])
         rows.append({
             "id": rec.get(fields["id"]),
-            "name": rec.get(fields["name"]),
+            "name": name,
+            # Every name comparison against a rules file goes through name_key —
+            # a dataset with capitalized names must behave like this one.
+            "name_key": (name or "").lower(),
             "equipment": equipment,
             "tier": tier_of[equipment],
             "movement_group": rec.get(fields["movement_group"]),
@@ -177,14 +185,24 @@ def build_rows(records, ds):
     return rows
 
 
+RULES_TOP_LEVEL_KEYS = frozenset({"$schema_version", "exclude", "focus", "order", "notes"})
+
+
 def merge_rules(default_rules, personal):
     merged = {
         "exclude": dict(default_rules["exclude"]),
         "focus": dict(default_rules["focus"]),
         "order": list(default_rules["order"]),
+        "notes": list(default_rules.get("notes", [])),
     }
     if personal is None:
         return merged
+    # Mirrors additionalProperties:false in rules.schema.json. A typo'd section
+    # name ("excludes") must not silently disable the whole section.
+    unknown = sorted(k for k in personal if k not in RULES_TOP_LEVEL_KEYS)
+    if unknown:
+        fail_input(f"rules file has unknown top-level key(s): {', '.join(unknown)}; "
+                   f"valid: exclude, focus, order, notes")
     for section in ("exclude", "focus"):
         for key, value in personal.get(section, {}).items():
             if key not in merged[section]:
@@ -192,13 +210,9 @@ def merge_rules(default_rules, personal):
             merged[section][key] = value
     if "order" in personal:
         merged["order"] = list(personal["order"])
+    if "notes" in personal:
+        merged["notes"] = list(personal["notes"])
     return merged
-
-
-ORDER_RULES = (
-    "must_include_first", "trailer_groups_last", "compound_before_isolation",
-    "focus_muscles_first", "large_groups_before_small",
-)
 
 
 def benchmark_exclusions(rows, ds, benchmarks):
@@ -221,7 +235,7 @@ def benchmark_exclusions(rows, ds, benchmarks):
 
 
 def apply_filters(rows, rules, tier, gate_excluded, warnings):
-    all_names = {r["name"] for r in rows}
+    all_names = {r["name_key"] for r in rows}
     all_equipment = {r["equipment"] for r in rows}
     all_movement_groups = {r["movement_group"] for r in rows if r["movement_group"]}
 
@@ -246,7 +260,7 @@ def apply_filters(rows, rules, tier, gate_excluded, warnings):
             continue
         if row["id"] in gate_excluded:
             continue
-        if row["name"] in excluded_names:
+        if row["name_key"] in excluded_names:
             continue
         if row["equipment"] in excluded_equipment:
             continue
@@ -303,11 +317,22 @@ def marginal_score(row, remaining, groups, sets, rules, uses, config):
     return score
 
 
+def surplus_score(row, remaining, targets):
+    """How much room a row's groups have left, relative to their allocation.
+    Used only once every target is met, so a surplus slot lands where it
+    overshoots proportionally least."""
+    score = 0.0
+    for group, coeff in row["effective"].items():
+        if targets.get(group):
+            score += (remaining[group] / targets[group]) * coeff
+    return score
+
+
 def fill_sessions(sessions, rows, targets, volume_block, rules, config, warnings):
     remaining = {g: float(v) for g, v in targets.items()}
     uses = {}
     chosen = {s["day"]: [] for s in sessions}
-    rows_by_name = {r["name"]: r for r in rows}
+    rows_by_name = {r["name_key"]: r for r in rows}
 
     pinned = place_must_include(sessions, rows_by_name, rules, chosen, uses, warnings)
 
@@ -317,12 +342,46 @@ def fill_sessions(sessions, rows, targets, volume_block, rules, config, warnings
     vp_cap = config["max_per_volume_profile_per_session"]
 
     sets_of = {}  # (day, id) -> sets
+
+    def take(day, row):
+        chosen[day].append(row)
+        uses[row["id"]] = uses.get(row["id"], 0) + 1
+        sets_of[(day, row["id"])] = sets_default
+        for group, coeff in row["effective"].items():
+            if group in remaining:
+                remaining[group] -= sets_default * coeff
+
     for session in sessions:
-        for row in chosen[session["day"]]:
+        for row in list(chosen[session["day"]]):
             sets_of[(session["day"], row["id"])] = sets_default
             for group, coeff in row["effective"].items():
                 if group in remaining:
                     remaining[group] -= sets_default * coeff
+
+    def eligible_rows(day, groups):
+        """Rows this day can still take: not already picked, on-split, and
+        within the movement-group and volume-profile variety caps."""
+        picked_ids, mg_count, vp_count = set(), {}, {}
+        for row in chosen[day]:
+            picked_ids.add(row["id"])
+            if row["movement_group"]:
+                mg_count[row["movement_group"]] = mg_count.get(row["movement_group"], 0) + 1
+            if row["volume_profile"]:
+                vp_count[row["volume_profile"]] = vp_count.get(row["volume_profile"], 0) + 1
+        pool = []
+        for row in rows:
+            if row["id"] in picked_ids:
+                continue
+            if row["primary"] not in groups:
+                continue
+            mg = row["movement_group"]
+            if mg and mg_count.get(mg, 0) >= mg_cap:
+                continue
+            vp = row["volume_profile"]
+            if vp and vp_count.get(vp, 0) >= vp_cap:
+                continue
+            pool.append(row)
+        return pool
 
     # Fill round-robin — slot 1 on every day, then slot 2, and so on — so the
     # week comes out balanced instead of front-loaded with empty final days.
@@ -332,50 +391,46 @@ def fill_sessions(sessions, rows, targets, volume_block, rules, config, warnings
             if len(chosen[day]) >= cap:
                 continue
             groups = [g for g in session["groups"] if g in remaining]
-            mg_count, vp_count = {}, {}
-            picked_ids = set()
-            for row in chosen[day]:
-                picked_ids.add(row["id"])
-                if row["movement_group"]:
-                    mg_count[row["movement_group"]] = mg_count.get(row["movement_group"], 0) + 1
-                if row["volume_profile"]:
-                    vp_count[row["volume_profile"]] = vp_count.get(row["volume_profile"], 0) + 1
-
-            def eligible(row):
-                if row["id"] in picked_ids:
-                    return False
-                if row["primary"] not in groups:
-                    return False
-                mg = row["movement_group"]
-                if mg and mg_count.get(mg, 0) >= mg_cap:
-                    return False
-                vp = row["volume_profile"]
-                if vp and vp_count.get(vp, 0) >= vp_cap:
-                    return False
-                return True
-
-            candidates = [r for r in rows if eligible(r) and remaining.get(r["primary"], 0.0) > 0]
+            pool = eligible_rows(day, groups)
+            candidates = [r for r in pool if remaining.get(r["primary"], 0.0) > 0]
             if not candidates:  # secondary-need fallback: any exercise still moving a needle
                 candidates = [
-                    r for r in rows
-                    if eligible(r)
-                    and marginal_score(r, remaining, groups, sets_default, rules, uses, config) > 0
+                    r for r in pool
+                    if marginal_score(r, remaining, groups, sets_default, rules, uses, config) > 0
                 ]
             if not candidates:
                 continue
-            best = min(
+            take(day, min(
                 candidates,
                 key=lambda r: (
                     -marginal_score(r, remaining, groups, sets_default, rules, uses, config),
                     uses.get(r["id"], 0), r["name"], r["id"],
                 ),
-            )
-            chosen[day].append(best)
-            uses[best["id"]] = uses.get(best["id"], 0) + 1
-            sets_of[(day, best["id"])] = sets_default
-            for group, coeff in best["effective"].items():
-                if group in remaining:
-                    remaining[group] -= sets_default * coeff
+            ))
+
+    # Session length is a floor as well as a ceiling: the person answered how
+    # long they train, so a day with slots left keeps filling even once every
+    # target is met — toward whichever group still has the most relative room.
+    for _slot in range(cap):
+        for session in sessions:
+            day = session["day"]
+            if len(chosen[day]) >= cap:
+                continue
+            groups = [g for g in session["groups"] if g in remaining]
+            pool = eligible_rows(day, groups)
+            if not pool:
+                continue
+            take(day, min(
+                pool,
+                key=lambda r: (
+                    -surplus_score(r, remaining, targets),
+                    uses.get(r["id"], 0), r["name"], r["id"],
+                ),
+            ))
+
+    for session in sessions:
+        if len(chosen[session["day"]]) < cap:
+            warnings.append(f"session_underfilled:{session['day']}")
 
     repair_shortfalls(sessions, chosen, sets_of, remaining, config)
 
@@ -384,7 +439,7 @@ def fill_sessions(sessions, rows, targets, volume_block, rules, config, warnings
         if remaining[group] > tolerance:
             warnings.append(f"short:{group}")
 
-    return chosen, sets_of, pinned, remaining
+    return chosen, sets_of, pinned
 
 
 def repair_shortfalls(sessions, chosen, sets_of, remaining, config):
@@ -416,10 +471,11 @@ def repair_shortfalls(sessions, chosen, sets_of, remaining, config):
             progress = True
 
 
-def order_session(rows, sets_of, day, pinned, rules, targets, config):
+def order_session(rows, day, pinned, rules, targets, config):
+    known = config["order_rules"]
     for rule in rules["order"]:
-        if rule not in ORDER_RULES:
-            fail_input(f"unknown order rule {rule!r}; valid rules: {', '.join(ORDER_RULES)}")
+        if rule not in known:
+            fail_input(f"unknown order rule {rule!r}; valid rules: {', '.join(known)}")
 
     def key(row):
         parts = []
@@ -472,10 +528,16 @@ def generate_plan(profile, program_data, records, ds_name, ds, rules, config,
             "  python skills/onboarding/scripts/volume.py --profile <profile.json> "
             "--write <program.json>"
         )
+    vol_version = volume_block.get("model_version")
+    if vol_version is not None and vol_version != MODEL_VERSION:
+        fail_input(f"program volume block was written by volume model {vol_version!r}, "
+                   f"but this generator speaks {MODEL_VERSION!r} — rerun volume.py")
     slug = program_data.get("profile_slug")
     benchmarks = profile.get("strength_benchmarks", {})
 
-    warnings = []
+    # volume.py's own warnings are part of the honest picture — a plan fitted to
+    # a below-MEV allocation should say so, not just report how it fitted it.
+    warnings = [f"volume:{w}" for w in volume_block.get("warnings", [])]
     rows = build_rows(records, ds)
     gate_excluded = benchmark_exclusions(rows, ds, benchmarks)
     tier = volume_block["equipment_tier"]
@@ -498,22 +560,35 @@ def generate_plan(profile, program_data, records, ds_name, ds, rules, config,
                        f"valid groups: {', '.join(targets)}")
         targets.pop(group)
 
+    # The one rules field with no validation path until now: a typo'd focus
+    # group used to be echoed back verbatim as though it had been honored.
+    for group in rules["focus"]["muscles"]:
+        if group not in targets:
+            warnings.append(f"unknown_focus_muscle:{group}")
+
     sessions = session_plan(program, config)
-    chosen, sets_of, pinned, remaining = fill_sessions(
+    chosen, sets_of, pinned = fill_sessions(
         sessions, rows, targets, volume_block, rules, config, warnings)
 
+    deload = bool(program.get("deload"))
+    deload_multiplier = config["deload_sets_multiplier"]
+
     planned = {g: 0.0 for g in targets}
+    direct = {g: 0.0 for g in targets}
     session_objects = []
     for session in sessions:
         day = session["day"]
-        ordered = order_session(chosen[day], sets_of, day, pinned, rules, targets, config)
+        ordered = order_session(chosen[day], day, pinned, rules, targets, config)
         exercises = []
         for row in ordered:
             sets = sets_of[(day, row["id"])]
             for group, coeff in row["effective"].items():
                 if group in planned:
                     planned[group] += sets * coeff
-            exercises.append({
+            for group, coeff in row["muscles"].items():
+                if group in direct and coeff >= 1.0:
+                    direct[group] += sets * coeff
+            exercise = {
                 "id": row["id"],
                 "name": row["name"],
                 "equipment": row["equipment"],
@@ -522,14 +597,40 @@ def generate_plan(profile, program_data, records, ds_name, ds, rules, config,
                 "sets": sets,
                 "reps": reps_for(row, program["primary_goal"], config),
                 "volume": row["muscles"],
-            })
+            }
+            if deload:
+                exercise["deload_sets"] = max(1, int(sets * deload_multiplier))
+            exercises.append(exercise)
         session_objects.append({"day": day, "focus": session["focus"], "exercises": exercises})
 
+    # Balance, not absolute overshoot. volume.py budgets exercise-sets as though
+    # one set trained one muscle; a real set trains close to two directly, so
+    # every group's direct total runs above its allocation and an absolute test
+    # would flag all of them. What is actually informative is each group's share
+    # of the delivered work against its share of the allocation — 1.0 is exactly
+    # proportional, and that comparison is free of the units mismatch.
+    total_allocated = sum(targets.values())
+    total_direct = sum(direct.values())
+    balance = {}
+    for group in targets:
+        if total_allocated and total_direct and targets[group]:
+            balance[group] = round(
+                (direct[group] / total_direct) / (targets[group] / total_allocated), 2)
+        else:
+            balance[group] = 0.0
+
+    over_ratio = config["over_tolerance_ratio"]
+    for group in targets:
+        if balance[group] > over_ratio:
+            warnings.append(f"over:{group}")
+        elif balance[group] and balance[group] < 1 / over_ratio:
+            warnings.append(f"under:{group}")
+
     deload_week = None
-    if program.get("deload"):
+    if deload:
         deload_week = {
-            "sets_multiplier": config["deload_sets_multiplier"],
-            "note": "Final week: same sessions with sets scaled down to promote recovery.",
+            "sets_multiplier": deload_multiplier,
+            "note": "Final week: same sessions at the deload set counts shown with each exercise.",
         }
 
     return {
@@ -540,10 +641,21 @@ def generate_plan(profile, program_data, records, ds_name, ds, rules, config,
         "dataset": {"name": ds_name, "repo": ds["repo"], "ref": ds["ref"], "commit": commit},
         "rules_applied": rules,
         "targets": {
-            g: {"allocated": targets[g], "planned": round(planned[g], 1)} for g in targets
+            g: {
+                "allocated": targets[g],
+                "planned": round(planned[g], 1),
+                "direct": round(direct[g], 1),
+                "balance": balance[g],
+            }
+            for g in targets
         },
         "sessions": session_objects,
         "deload_week": deload_week,
+        "effort": {
+            k: volume_block[k]
+            for k in ("style", "reps_in_reserve", "rest_seconds")
+            if k in volume_block
+        },
         "warnings": warnings,
     }
 
@@ -557,6 +669,21 @@ def render_markdown(plan):
                  f"· {program['split']} · goal: {program['primary_goal']}"
                  + (" · ends with a deload week" if plan["deload_week"] else ""))
     lines.append("")
+    # Effort and rest come from the volume block already computed by onboarding — printed, never
+    # recomputed. Absent on program files written before those fields existed.
+    effort = plan.get("effort") or {}
+    if effort:
+        bits = []
+        if effort.get("style"):
+            bits.append(f"style: {effort['style'].replace('_', ' ')}")
+        if effort.get("reps_in_reserve") is not None:
+            rir = effort["reps_in_reserve"]
+            bits.append("take every working set to failure" if rir == 0
+                        else f"leave {rir} rep{'s' if rir != 1 else ''} in reserve")
+        if effort.get("rest_seconds"):
+            bits.append(f"rest {effort['rest_seconds'].replace('-', '–')}s between sets")
+        lines.append(" · ".join(bits))
+        lines.append("")
     lines.append(f"Generated {plan['created_at'][:10]} for `{plan['profile_slug']}` "
                  f"from dataset `{plan['dataset']['name']}`"
                  + (f" @ `{plan['dataset']['commit'][:9]}`" if plan["dataset"]["commit"] else "")
@@ -564,26 +691,39 @@ def render_markdown(plan):
     lines.append("")
     lines.append("## Weekly volume")
     lines.append("")
-    lines.append("| Muscle group | Allocated sets | Planned sets | |")
-    lines.append("|---|---|---|---|")
+    lines.append("| Muscle group | Allocated sets | Direct sets | Balance | |")
+    lines.append("|---|---|---|---|---|")
     for group, t in plan["targets"].items():
-        flag = "⚠️ short" if f"short:{group}" in plan["warnings"] else ""
-        lines.append(f"| {group} | {t['allocated']} | {t['planned']} | {flag} |")
+        flags = []
+        for kind in ("short", "under", "over"):
+            if f"{kind}:{group}" in plan["warnings"]:
+                flags.append(f"⚠️ {kind}")
+        lines.append(f"| {group} | {t['allocated']} | {t['direct']} | {t['balance']}× "
+                     f"| {' '.join(flags)} |")
     lines.append("")
+    lines.append("Balance is this group's share of the week's direct sets divided by its share "
+                 "of the allocation — 1.0 is exactly proportional.")
+    lines.append("")
+    deload = plan["deload_week"] is not None
     for session in plan["sessions"]:
         lines.append(f"## Day {session['day']} — {session['focus'].replace('_', ' ')}")
         lines.append("")
-        lines.append("| Exercise | Equipment | Sets × Reps |")
-        lines.append("|---|---|---|")
+        lines.append("| Exercise | Equipment | Sets × Reps |" + (" Deload sets |" if deload else ""))
+        lines.append("|---|---|---|" + ("---|" if deload else ""))
         for ex in session["exercises"]:
-            lines.append(f"| {ex['name']} | {ex['equipment']} | {ex['sets']} × {ex['reps']} |")
+            row = f"| {ex['name']} | {ex['equipment']} | {ex['sets']} × {ex['reps']} |"
+            if deload:
+                row += f" {ex['deload_sets']} × {ex['reps']} |"
+            lines.append(row)
         lines.append("")
-    if plan["deload_week"]:
+    if deload:
         mult = plan["deload_week"]["sets_multiplier"]
         lines.append(f"**Deload:** {plan['deload_week']['note']} "
-                     f"(sets × {mult}, rounded down, minimum 1)")
+                     f"Deload sets are {mult}× the working sets, rounded down, minimum 1.")
         lines.append("")
-    other_warnings = [w for w in plan["warnings"] if not w.startswith("short:")]
+    shown_in_table = ("short:", "under:", "over:")
+    other_warnings = [w for w in plan["warnings"]
+                      if not w.startswith(shown_in_table)]
     if other_warnings:
         lines.append("## Warnings")
         lines.append("")
@@ -614,8 +754,11 @@ def fixture_profile(pullups=True):
 def fixture_volume_block(tier=3, cap=6, sets=3):
     return {
         "equipment_tier": tier,
+        "style": "balanced",
         "exercises_per_session": cap,
         "sets_per_exercise": sets,
+        "reps_in_reserve": 2,
+        "rest_seconds": "120-180",
         "per_muscle_weekly_sets": {
             "chest": 10, "back": 12, "shoulders": 8, "biceps": 6, "triceps": 6,
             "quads": 10, "hamstrings": 8, "glutes": 8, "calves": 6, "core": 6,
@@ -631,7 +774,7 @@ def fixture_program_data(split="full_body", days=4, deload=True, volume=None):
         "program": {
             "name": "Fixture Block", "emoji": "🧪", "primary_goal": "hypertrophy",
             "days_per_week": days, "session_minutes": "60-90", "split": split,
-            "deload": deload,
+            "style": "balanced", "deload": deload,
         },
         "volume": volume or fixture_volume_block(),
     }
@@ -652,6 +795,19 @@ def run_self_test(config, descriptor):
     def check(cond, label):
         if not cond:
             failures.append(label)
+
+    def expect_refusal(label, fn):
+        """Run something that must exit 3, swallowing the message it prints —
+        the refusal is the assertion, not output the test run should show."""
+        stderr, sys.stderr = sys.stderr, io.StringIO()
+        try:
+            fn()
+        except SystemExit as e:
+            check(e.code == 3, f"{label} exited {e.code}, expected 3")
+        else:
+            failures.append(f"{label} was accepted")
+        finally:
+            sys.stderr = stderr
 
     # 1. Category filter and muscle_ignore: cardio, stretch and neck-only rows never appear.
     plan = plan_for(fixture_profile(), fixture_program_data())
@@ -723,16 +879,112 @@ def run_self_test(config, descriptor):
             check(ex["primary"] in allowed,
                   f"day {s['day']} ({s['focus']}): {ex['name']} targets {ex['primary']}")
 
-    # 10. Deload flag round-trips.
+    # 10. Deload: the flag round-trips and every exercise carries a scaled set count.
     check(plan["deload_week"] is not None, "deload requested but deload_week missing")
+    mult = config["deload_sets_multiplier"]
+    for s in plan["sessions"]:
+        for ex in s["exercises"]:
+            want = max(1, int(ex["sets"] * mult))
+            check(ex.get("deload_sets") == want,
+                  f"{ex['name']}: deload_sets {ex.get('deload_sets')!r}, expected {want}")
     no_deload = plan_for(fixture_profile(), fixture_program_data(deload=False))
     check(no_deload["deload_week"] is None, "deload_week present without deload")
+    check(all("deload_sets" not in ex for s in no_deload["sessions"] for ex in s["exercises"]),
+          "deload_sets written for a program with no deload")
+
+    # 11. Session length is a floor: days fill to exercises_per_session, or say why not.
+    for s in plan["sessions"]:
+        if len(s["exercises"]) < 6:
+            check(f"session_underfilled:{s['day']}" in plan["warnings"],
+                  f"day {s['day']} left short of the cap without a warning")
+
+    # 12. The remaining exclude sections, none of which were exercised before.
+    by_equipment = plan_for(fixture_profile(), fixture_program_data(),
+                            rules={"exclude": {"equipment": ["dumbbell", "flying equipment"]}})
+    check(not any(ex["equipment"] == "dumbbell"
+                  for s in by_equipment["sessions"] for ex in s["exercises"]),
+          "exclude.equipment did not remove dumbbell work")
+    check("unknown_exclude_equipment:flying equipment" in by_equipment["warnings"],
+          "unknown exclude.equipment value not warned about")
+
+    by_group = plan_for(fixture_profile(), fixture_program_data(),
+                        rules={"exclude": {"movement_groups": ["Core", "Flying"]}})
+    check(not any(ex["movement_group"] == "Core"
+                  for s in by_group["sessions"] for ex in s["exercises"]),
+          "exclude.movement_groups did not remove the Core group")
+    check("unknown_exclude_movement_group:Flying" in by_group["warnings"],
+          "unknown exclude.movement_groups value not warned about")
+
+    by_muscle = plan_for(fixture_profile(), fixture_program_data(),
+                         rules={"exclude": {"muscles": ["calves"]}})
+    check("calves" not in by_muscle["targets"], "exclude.muscles left the group in targets")
+    check(not any(ex["primary"] == "calves"
+                  for s in by_muscle["sessions"] for ex in s["exercises"]),
+          "exclude.muscles left calves-primary work in the plan")
+
+    # 13. Name matching is case-insensitive in both directions — the fixture carries one
+    #     capitalized row precisely so this cannot pass by accident.
+    cased = plan_for(fixture_profile(), fixture_program_data(), rules={
+        "exclude": {"exercises": ["ZERCHER squat"]},
+        "focus": {"must_include": ["bArBeLl CuRl"]},
+    })
+    cased_names = [ex["name"] for s in cased["sessions"] for ex in s["exercises"]]
+    check("Zercher Squat" not in cased_names,
+          "a differently-cased exclude did not match a capitalized dataset name")
+    check("barbell curl" in cased_names, "a differently-cased must_include did not match")
+    check(not [w for w in cased["warnings"] if w.startswith("unknown_exclude_exercise")],
+          "a differently-cased exclude was reported as an unknown name")
+
+    # 14. A typo'd focus muscle is reported, not silently honored.
+    typo = plan_for(fixture_profile(), fixture_program_data(),
+                    rules={"focus": {"muscles": ["shoulderz"]}})
+    check("unknown_focus_muscle:shoulderz" in typo["warnings"],
+          "unknown focus muscle not warned about")
+
+    # 15. A typo'd top-level rules section is refused outright — the alternative is
+    #     silently dropping every rule the person wrote under it.
+    expect_refusal("unknown top-level rules section",
+                   lambda: merge_rules(default_rules,
+                                       {"excludes": {"exercises": ["barbell squat"]}}))
+
+    # 16. Order rules: a custom list reorders, an unknown one fails loudly.
+    reordered = plan_for(fixture_profile(), fixture_program_data(),
+                         rules={"order": ["large_groups_before_small"]})
+    for s in reordered["sessions"]:
+        allocated = [reordered["targets"][ex["primary"]]["allocated"] for ex in s["exercises"]]
+        check(allocated == sorted(allocated, reverse=True),
+              f"day {s['day']}: large_groups_before_small did not order by allocation")
+    expect_refusal("unknown order rule",
+                   lambda: plan_for(fixture_profile(), fixture_program_data(),
+                                    rules={"order": ["by_vibes"]}))
+
+    # 17. The dips_10 gate and its \bdips?\b pattern — only pullups_5 was covered before.
+    no_dips = dict(fixture_profile()["strength_benchmarks"], dips_10=False)
+    dipless = plan_for({"strength_benchmarks": no_dips}, fixture_program_data())
+    dipless_names = [ex["name"] for s in dipless["sessions"] for ex in s["exercises"]]
+    check("bench dip" not in dipless_names, "dips_10 gate did not remove bodyweight dips")
+
+    # 18. Balance is reported for every group, and flags fire symmetrically.
+    for group, t in plan["targets"].items():
+        check("direct" in t and "balance" in t, f"targets.{group} missing direct/balance")
+        ratio = config["over_tolerance_ratio"]
+        if t["balance"] > ratio:
+            check(f"over:{group}" in plan["warnings"], f"{group} balance {t['balance']} unflagged")
+        elif t["balance"] and t["balance"] < 1 / ratio:
+            check(f"under:{group}" in plan["warnings"], f"{group} balance {t['balance']} unflagged")
+
+    # 19. volume.py's own warnings reach the plan instead of stopping at the program file.
+    noisy = fixture_volume_block()
+    noisy["warnings"] = ["capacity_below_mev"]
+    carried = plan_for(fixture_profile(), fixture_program_data(volume=noisy))
+    check("volume:capacity_below_mev" in carried["warnings"],
+          "a volume.py warning did not reach the plan")
 
     if failures:
         for f in failures:
             print(f"FAIL: {f}", file=sys.stderr)
         return False
-    print(f"OK: {ds_name} fixture — 10 invariant groups hold")
+    print(f"OK: {ds_name} fixture — 19 invariant groups hold")
     return True
 
 

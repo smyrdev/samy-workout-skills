@@ -14,8 +14,9 @@ or summarise its steps here — a second copy of the flow will drift from the fi
 Three bindings for this environment:
 
 - Use `AskUserQuestion` for step 3 (the pre-filled re-confirm batch — offer "same as last time"
-  as the first option) and for the veto/adjust loop in step 7. Free-text answers arrive through
-  that tool's **Other** option.
+  as the first option) and for the veto/adjust loop in step 8. Free-text answers arrive through
+  that tool's **Other** option. Step 7's coach review needs no tool — it happens in-conversation,
+  on the generator's output, before anything is written.
 - Use `Bash` for the dataset clone (`rules.md` § Dataset cache) and to run
   `scripts/generate.py` (`rules.md` § Running the generator). If `Bash` is unavailable in this
   session, fall back to `rules.md` § No Python rather than fitting exercises by hand.

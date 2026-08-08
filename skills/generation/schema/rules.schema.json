@@ -64,6 +64,11 @@
                  "focus_muscles_first", "large_groups_before_small"]
       },
       "description": "Session ordering rules, applied top-down: the first rule is the primary sort key, each later rule breaks remaining ties."
+    },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Freeform coaching guidance, one note per string — read by the review step after the fitter runs, ignored by the fitting algorithm itself. E.g. \"prefer supersets when short on time\", \"never superset legs\", \"keep the first exercise heavy\"."
     }
   }
 }

@@ -24,46 +24,35 @@ Lowercase, hyphenated version of the name, and must match the directory it lives
 (`profiles/<slug>/`). Spaces and underscores become hyphens; anything outside `a-z0-9-` is
 dropped. `Jean Luc` → `jean-luc`.
 
-### `units`
-`"metric"` or `"imperial"`. Controls what `unit` is expected inside `height` and `weight` below —
-metric means `cm`/`kg`, imperial means `in`/`lb`. Changing this after the fact means converting the
-numbers yourself (1 in = 2.54 cm, 1 lb = 0.45359237 kg) — the field is not auto-converted just by
-editing the label.
-
-### `basics.sex`
-One of `"male"` or `"female"`.
-
 ### `basics.date_of_birth`
 `"YYYY-MM-DD"` if you know the full date, or bare `"YYYY"` if you only know the year. Always
 quoted. Never a decade, never padded to January 1st. This field exists instead of an age field on
 purpose — a stored age goes stale, a birth date does not.
-
-### `basics.height`, `basics.weight`
-`{ "value": <number>, "unit": "cm" | "in" }` and `{ "value": <number>, "unit": "kg" | "lb" }`.
-Always an exact number — no ranges, no strings like `"170-180"`.
 
 ### `basics.bodyfat_bracket`
 One of these nine, as a quoted string:
 `"3-4"` `"5-7"` `"8-12"` `"13-17"` `"18-23"` `"24-29"` `"30-34"` `"35-39"` `"40+"`
 Not a number, not `"15%"`. Guess the closest bracket — nobody knows this to the percent.
 
-### `experience.lifting`, `experience.cardio`
-One of `"none"`, `"beginner"`, `"intermediate"`, `"advanced"` for each. Beginner is under 1 year,
+### `experience.lifting`
+One of `"none"`, `"beginner"`, `"intermediate"`, `"advanced"`. Beginner is under 1 year,
 intermediate 1-4 years, advanced 4+ years.
 
 ### `gym.type`
 One of `"everything_gym"`, `"commercial_gym"`, `"warehouse_gym"`, `"local_gym"`, `"garage_gym"`.
 This is the entire equipment model — there is no item-level checklist to fill in alongside it.
 
-### `gym.notes`
-`null`, or a short free-text string for something worth knowing that the gym type doesn't capture
-("also has a cable machine"). Never a list or object.
-
 ### `strength_benchmarks.*`
 Seven keys, every one of them `true` or `false`, none omitted:
 `pullups_5`, `pullups_10`, `dips_10`, `pushups_15`, `bench_press_10`, `incline_press_10`,
 `overhead_press_10`. If `pullups_10` is `true`, `pullups_5` should be too — nobody clears 10 without
 clearing 5.
+
+### Optional fields nothing reads
+The schema still accepts `units`, `basics.sex`, `basics.height`, `basics.weight`,
+`experience.cardio` and `gym.notes`, and a profile written before they were dropped keeps them.
+The interview no longer asks, and neither the volume model nor the generator reads any of them —
+leave them out unless you want the record for yourself.
 
 ## `programs/program-YYYY-MM-DD.json`
 
@@ -94,6 +83,16 @@ stores a range.
 
 ### `program.split`
 One of `"full_body"` or `"upper_lower"`.
+
+### `program.style`
+One of `"balanced"`, `"high_volume"`, `"high_intensity"` — which school of training volume the
+plan follows. `balanced` is the no-op default and what to write if you have no opinion.
+`high_volume` raises the per-muscle target by about a third and stops sets short of failure;
+`high_intensity` cuts it to roughly 60% and takes them to failure. It is a program field, not a
+profile one, so changing it means a new dated program file and a `volume.py` re-run.
+
+A program file written before this field existed still computes — `volume.py` falls back to
+`balanced` — but the schema requires it on anything written now.
 
 ### `program.deload`
 `true` or `false` — whether the program ends with a lighter recovery week.

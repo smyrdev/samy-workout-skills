@@ -29,6 +29,7 @@ import sys
 from pathlib import Path
 
 MODEL_VERSION = "1.0"
+DEFAULT_STYLE = "balanced"
 DATE_RE_FULL = None  # not used; validated by simple parsing below
 
 
@@ -61,6 +62,7 @@ def load_config(path):
     cfg = load_json(path, "config")
     required = [
         "canonical_muscle_order", "exercises_per_session", "sets_per_exercise",
+        "goal_exercise_density", "style_multipliers", "rest_seconds_by_goal",
         "target_weekly_sets_per_muscle", "base_weights", "goal_multipliers",
         "split_multipliers", "equipment_tier", "bodyfat_midpoint",
         "muscle_benchmarks", "max_scale_factor", "mev_sets_per_muscle",
@@ -115,7 +117,7 @@ def hamilton(weights, total, order):
     return result
 
 
-def compute_volume(profile, goal, days, session, split, today, config):
+def compute_volume(profile, goal, days, session, split, style, today, config):
     order = config["canonical_muscle_order"]
 
     lifting = profile.get("experience", {}).get("lifting")
@@ -126,10 +128,16 @@ def compute_volume(profile, goal, days, session, split, today, config):
 
     if goal not in config["sets_per_exercise"]:
         fail_input(f"unknown goal: {goal!r}")
+    if goal not in config["goal_exercise_density"]:
+        fail_input(f"goal missing from goal_exercise_density: {goal!r}")
     if session not in config["exercises_per_session"]:
         fail_input(f"unknown session: {session!r}")
     if split not in config["split_multipliers"]:
         fail_input(f"unknown split: {split!r}")
+    if style not in config["style_multipliers"]:
+        fail_input(f"unknown style: {style!r}")
+    if goal not in config["rest_seconds_by_goal"]:
+        fail_input(f"goal missing from rest_seconds_by_goal: {goal!r}")
     if not isinstance(days, int) or not (3 <= days <= 7):
         fail_input(f"days must be an integer 3-7, got {days!r}")
     if lifting not in config["target_weekly_sets_per_muscle"]:
@@ -149,9 +157,18 @@ def compute_volume(profile, goal, days, session, split, today, config):
     if missing_benchmarks:
         fail_input(f"profile strength_benchmarks missing keys: {', '.join(missing_benchmarks)}")
 
-    exercises_per_session = config["exercises_per_session"][session]
+    # Session length buys exercise slots; the goal decides how many of them the clock affords,
+    # because rest between sets is longer for strength. `sets_per_exercise` stays the
+    # prescription — one meaning per field, so generation can write it onto an exercise as-is.
+    style_mult = config["style_multipliers"][style]
+
+    slots = config["exercises_per_session"][session]
+    density = config["goal_exercise_density"][goal] * style_mult["exercise_density"]
+    exercises_per_session = max(1, math.floor(slots * density + 0.5))
     sets_per_exercise = config["sets_per_exercise"][goal]
-    target = config["target_weekly_sets_per_muscle"][lifting]
+    target = max(1, math.floor(
+        config["target_weekly_sets_per_muscle"][lifting] * style_mult["target_sets"] + 0.5
+    ))
     max_scale = config["max_scale_factor"]
 
     weights = {
@@ -198,8 +215,11 @@ def compute_volume(profile, goal, days, session, split, today, config):
         "bodyfat_midpoint": bodyfat_midpoint,
         "equipment_tier": equipment_tier,
         "benchmarks_cleared": benchmarks_cleared,
+        "style": style,
         "exercises_per_session": exercises_per_session,
         "sets_per_exercise": sets_per_exercise,
+        "reps_in_reserve": style_mult["reps_in_reserve"],
+        "rest_seconds": config["rest_seconds_by_goal"][goal],
         "weekly_set_capacity": capacity,
         "weekly_sets_allocated": allocated_total,
         "unallocated_sets": unallocated,
@@ -217,6 +237,7 @@ def run_self_test(config):
     sessions = list(config["exercises_per_session"].keys())
     splits = list(config["split_multipliers"].keys())
     liftings = list(config["target_weekly_sets_per_muscle"].keys())
+    styles = list(config["style_multipliers"].keys())
 
     base_profile = {
         "basics": {"date_of_birth": "1994-06-15", "bodyfat_bracket": "13-17"},
@@ -236,44 +257,72 @@ def run_self_test(config):
             for days in days_range:
                 for session in sessions:
                     for split in splits:
-                        v = compute_volume(profile, goal, days, session, split, today, config)
-                        combos += 1
-                        allocated_sum = sum(v["per_muscle_weekly_sets"].values())
-                        if allocated_sum != v["weekly_sets_allocated"]:
-                            print(
-                                f"FAIL: per-muscle sum {allocated_sum} != "
-                                f"weekly_sets_allocated {v['weekly_sets_allocated']} "
-                                f"for lifting={lifting} goal={goal} days={days} "
-                                f"session={session} split={split}",
-                                file=sys.stderr,
+                        for style in styles:
+                            v = compute_volume(
+                                profile, goal, days, session, split, style, today, config
                             )
-                            return False
-    expected_combos = len(liftings) * len(goals) * len(list(days_range)) * len(sessions) * len(splits)
-    if combos != expected_combos or expected_combos != 720:
-        print(f"FAIL: expected 720 combinations, ran {combos}", file=sys.stderr)
+                            combos += 1
+                            allocated_sum = sum(v["per_muscle_weekly_sets"].values())
+                            if allocated_sum != v["weekly_sets_allocated"]:
+                                print(
+                                    f"FAIL: per-muscle sum {allocated_sum} != "
+                                    f"weekly_sets_allocated {v['weekly_sets_allocated']} "
+                                    f"for lifting={lifting} goal={goal} days={days} "
+                                    f"session={session} split={split} style={style}",
+                                    file=sys.stderr,
+                                )
+                                return False
+    expected_combos = (
+        len(liftings) * len(goals) * len(list(days_range))
+        * len(sessions) * len(splits) * len(styles)
+    )
+    if combos != expected_combos or expected_combos != 2160:
+        print(f"FAIL: expected 2160 combinations, ran {combos}", file=sys.stderr)
         return False
 
-    # Two worked cases, pinned so a code change that shifts the algorithm is caught.
+    # Worked cases pinned by value, not just by balance — a config retune or an algorithm shift
+    # has to be acknowledged here rather than sliding through green. Update the expected numbers
+    # deliberately when you retune, never to make the test pass.
     worked = [
         (
+            "advanced/hypertrophy/6d/60-90/upper_lower/balanced",
             dict(base_profile, experience={"lifting": "advanced"}),
-            dict(goal="hypertrophy", days=6, session="60-90", split="upper_lower"),
+            dict(goal="hypertrophy", days=6, session="60-90", split="upper_lower",
+                 style="balanced"),
+            dict(exercises_per_session=9, sets_per_exercise=3, weekly_set_capacity=162,
+                 weekly_sets_allocated=162, target_weekly_sets_per_muscle=18,
+                 reps_in_reserve=2, rest_seconds="120-180"),
         ),
         (
+            "beginner/strength/3d/20-40/full_body/high_intensity",
             dict(base_profile, experience={"lifting": "beginner"}),
-            dict(goal="strength", days=3, session="20-40", split="full_body"),
+            dict(goal="strength", days=3, session="20-40", split="full_body",
+                 style="high_intensity"),
+            dict(exercises_per_session=3, sets_per_exercise=4, weekly_set_capacity=36,
+                 weekly_sets_allocated=36, target_weekly_sets_per_muscle=6,
+                 reps_in_reserve=0, rest_seconds="180-300"),
         ),
     ]
-    for profile, args in worked:
-        v = compute_volume(profile, args["goal"], args["days"], args["session"], args["split"], today, config)
+    for label, profile, args, expected in worked:
+        v = compute_volume(
+            profile, args["goal"], args["days"], args["session"], args["split"],
+            args["style"], today, config,
+        )
         if sum(v["per_muscle_weekly_sets"].values()) != v["weekly_sets_allocated"]:
-            print(f"FAIL: worked case did not balance: {v}", file=sys.stderr)
+            print(f"FAIL: worked case {label} did not balance: {v}", file=sys.stderr)
             return False
         if list(v["per_muscle_weekly_sets"].keys()) != order:
             print("FAIL: per_muscle_weekly_sets is not in canonical order", file=sys.stderr)
             return False
+        for key, want in expected.items():
+            if v[key] != want:
+                print(
+                    f"FAIL: worked case {label}: {key} is {v[key]!r}, expected {want!r}",
+                    file=sys.stderr,
+                )
+                return False
 
-    print(f"OK: {combos} enum combinations balanced, 2 worked cases reproduced")
+    print(f"OK: {combos} enum combinations balanced, 2 worked cases reproduced by value")
     return True
 
 
@@ -289,6 +338,7 @@ def build_parser():
         choices=["up_to_20", "20-40", "40-60", "60-90", "90-120", "over_120"],
     )
     p.add_argument("--split", choices=["full_body", "upper_lower"])
+    p.add_argument("--style", choices=["balanced", "high_volume", "high_intensity"])
     p.add_argument("--today", help="YYYY-MM-DD, for deterministic age. Defaults to the real date.")
     p.add_argument("--write", help="merge the volume block into this program.json in place")
     p.add_argument("--config", help="path to volume.config.json (default: alongside this script)")
@@ -316,7 +366,8 @@ def main(argv=None):
         program_data = load_json(args.write, "program file")
 
     goal, days, session, split = args.goal, args.days, args.session, args.split
-    if None in (goal, days, session, split):
+    style = args.style
+    if None in (goal, days, session, split, style):
         if program_data is None:
             fail_usage(
                 "--goal, --days, --session and --split are required unless "
@@ -329,6 +380,10 @@ def main(argv=None):
         days = days if days is not None else existing.get("days_per_week")
         session = session or existing.get("session_minutes")
         split = split or existing.get("split")
+        # `style` post-dates the other four. A program file written before it existed gets the
+        # documented default rather than a refusal — an absent optional field is not an
+        # unknown value, and DEFAULT_STYLE is the no-op multiplier row.
+        style = style or existing.get("style") or DEFAULT_STYLE
         if None in (goal, days, session, split):
             fail_input(f"{args.write} program block is missing goal/days/session/split")
 
@@ -341,7 +396,7 @@ def main(argv=None):
     else:
         today = datetime.date.today()
 
-    volume = compute_volume(profile, goal, days, session, split, today, config)
+    volume = compute_volume(profile, goal, days, session, split, style, today, config)
 
     if args.write:
         program_data["volume"] = volume

@@ -1,24 +1,13 @@
 # The onboarding interview. Edit this file to change what is asked, in what order, and what
 # counts as a valid answer. SKILL.md never changes when this file changes.
 #
-# Field meanings:
-#   id       - unique key, used only within this file
-#   scope    - profile | program: which file the answer belongs to
-#   batch    - questions with the same batch number are asked together (max 4 per batch)
-#   prompt   - what to ask, verbatim or close to it
-#   stores   - dotted path the value is written to in the target file
-#   type     - choice | multi_select | text
-#   options  - offered choices. "value: null" means the option narrows down further and does
-#              not store anything by itself (follow up before storing). An option with its own
-#              "store"/"value" overrides the top-level `stores` field, for questions that write
-#              more than one field.
-#   escape   - always present on choice/multi_select questions: the offered options are a
-#              shortcut, never a limit, and free text answering outside them is always accepted.
-#   notes    - validation and phrasing rules that apply only to this question.
-#
-# "Plus an escape" applies to every choice and multi_select question below, even where not
-# repeated: an agent with a structured question tool exposes it as that tool's free-text option;
-# an agent without one is already taking free text and gets this for free.
+# batch   - asked together in one message, max 4 per batch
+# escape  - free text outside the offered options, always accepted, on every choice question
+#           even where no `escape` line is written
+# options - `value: null` narrows down only: follow up, store nothing. An option carrying its
+#           own `store`/`value` overrides the entry's top-level `stores`; an option carrying a
+#           `stores` map writes several fields at once, and the entry then has no top-level
+#           `stores` of its own.
 
 - id: name
   scope: profile
@@ -30,17 +19,6 @@
     Skip this question if the profile was already resolved (rules.md § Resolving a profile) —
     do not ask twice. Store verbatim, including case and accents. Also derive user.slug from it
     (rules.md § Slug rules).
-
-- id: sex
-  scope: profile
-  batch: 1
-  prompt: Sex?
-  stores: basics.sex
-  type: choice
-  options:
-    - { label: "Male", value: male }
-    - { label: "Female", value: female }
-  escape: an exact answer in their own words, if neither fits
 
 - id: date_of_birth
   scope: profile
@@ -60,71 +38,9 @@
     padded out to a January 1st they did not say. Never store a decade and never pick a year for
     them. Plausible range: birth year 1920-2015; outside that, treat as a typo and ask again.
 
-- id: units
-  scope: profile
-  batch: 1
-  prompt: Units — metric or imperial?
-  stores: units
-  type: choice
-  options:
-    - { label: "Metric (cm / kg)", value: metric }
-    - { label: "Imperial (in / lb)", value: imperial }
-  notes: |
-    Ask this before any measurement so the height/weight batch can be phrased in the person's own
-    units. The unit inside basics.height and basics.weight must always agree with this value:
-    metric means cm and kg, imperial means in and lb.
-
-- id: height
-  scope: profile
-  batch: 2
-  prompt: Height?
-  stores: basics.height
-  type: choice
-  options:
-    - { label: "160-170 cm", value: null }
-    - { label: "170-180 cm", value: null }
-    - { label: "180-190 cm", value: null }
-    - { label: "190 cm+", value: null }
-  options_imperial:
-    - { label: "5'3\"-5'7\"", value: null }
-    - { label: "5'7\"-5'11\"", value: null }
-    - { label: "5'11\"-6'3\"", value: null }
-    - { label: "6'3\"+", value: null }
-  escape: an exact number
-  notes: |
-    Height must end up as an exact number: { "value": <number>, "unit": "cm" | "in" }. The
-    buckets exist only to save typing for agents with a clickable question tool — if you are
-    asking in plain text, skip the buckets and ask for the number directly. When someone does
-    pick a bucket, follow up ("180-190 cm — what's your actual height?") and store the number.
-    Never store a range in height.value. The buckets deliberately do not span the full accepted
-    range — a 150 cm answer is valid, that is what the escape is for. Plausible range: 120-230 cm
-    (47-91 in); outside that, treat as a typo and ask again.
-
-- id: weight
-  scope: profile
-  batch: 2
-  prompt: Weight?
-  stores: basics.weight
-  type: choice
-  options:
-    - { label: "60-70 kg", value: null }
-    - { label: "70-85 kg", value: null }
-    - { label: "85-100 kg", value: null }
-    - { label: "100 kg+", value: null }
-  options_imperial:
-    - { label: "130-155 lb", value: null }
-    - { label: "155-190 lb", value: null }
-    - { label: "190-220 lb", value: null }
-    - { label: "220 lb+", value: null }
-  escape: an exact number
-  notes: |
-    Same rules as height: always an exact number, { "value": <number>, "unit": "kg" | "lb" },
-    never a stored range. Plausible range: 35-250 kg (77-550 lb); outside that, treat as a typo
-    and ask again.
-
 - id: bodyfat
   scope: profile
-  batch: 2
+  batch: 1
   prompt: Bodyfat?
   stores: basics.bodyfat_bracket
   type: choice
@@ -143,7 +59,7 @@
 
 - id: lifting_experience
   scope: profile
-  batch: 2
+  batch: 1
   prompt: Experience level with lifting?
   stores: experience.lifting
   type: choice
@@ -153,24 +69,9 @@
     - { label: "Intermediate (1-4 years)", value: intermediate }
     - { label: "Advanced (4+ years)", value: advanced }
 
-- id: cardio_experience
-  scope: profile
-  batch: 3
-  prompt: Experience level with cardio?
-  stores: experience.cardio
-  type: choice
-  options:
-    - { label: "None", value: none }
-    - { label: "Beginner (under 1 year)", value: beginner }
-    - { label: "Intermediate (1-4 years)", value: intermediate }
-    - { label: "Advanced (4+ years)", value: advanced }
-  notes: |
-    Rides along in the same batch as gym type and program shape purely to keep batches at four
-    questions each — it is still a `basics`-adjacent, profile-scope answer.
-
 - id: gym_type
   scope: profile
-  batch: 3
+  batch: 2
   prompt: Where do you work out?
   stores: gym.type
   type: choice
@@ -186,7 +87,7 @@
 
 - id: primary_goal
   scope: program
-  batch: 3
+  batch: 2
   prompt: Primary goal?
   stores: program.primary_goal
   type: choice
@@ -197,7 +98,7 @@
 
 - id: days_per_week
   scope: program
-  batch: 3
+  batch: 2
   prompt: How many times per week do you train?
   stores: program.days_per_week
   type: choice
@@ -211,7 +112,7 @@
 
 - id: session_minutes
   scope: program
-  batch: 4
+  batch: 2
   prompt: How much time do you budget per session?
   stores: program.session_minutes
   type: choice
@@ -229,7 +130,7 @@
 
 - id: split
   scope: program
-  batch: 4
+  batch: 3
   prompt: How do you prefer the split?
   stores: program.split
   type: choice
@@ -237,9 +138,28 @@
     - { label: "Full body (recommended)", value: full_body }
     - { label: "Upper/Lower", value: upper_lower }
 
+- id: style
+  scope: program
+  batch: 3
+  prompt: How much volume do you like?
+  stores: program.style
+  type: choice
+  options:
+    - { label: "Balanced — the mainstream default (recommended)", value: balanced }
+    - { label: "High volume — more sets, stopped short of failure", value: high_volume }
+    - { label: "Low volume, high effort — fewer sets, taken to failure", value: high_intensity }
+  notes: |
+    Volume is the one training variable the evidence genuinely disagrees on, so it is a choice
+    rather than a hidden constant. Do not attribute a style to a named coach in the question —
+    the plan is not their program. If someone asks, "high volume" is the Renaissance
+    Periodization tradition and "low volume, high effort" is the HIT tradition.
+
+    Unsure → say balanced is the safe pick and let them take it. Offered and accepted, never
+    filled in silently.
+
 - id: deload
   scope: program
-  batch: 4
+  batch: 3
   prompt: Add a deload week?
   stores: program.deload
   type: choice
@@ -249,7 +169,7 @@
 
 - id: strength_benchmarks
   scope: profile
-  batch: 5
+  batch: 4
   prompt: "Which of these can you do right now? Select all that apply."
   stores: strength_benchmarks
   type: multi_select
@@ -268,23 +188,25 @@
     means "none of these", a valid answer, not a skip — confirm it in plain text ("So none of
     those yet — got it") before storing seven false values.
 
-- id: program_name
+- id: program_identity
   scope: program
-  batch: 6
+  batch: 5
   prompt: What do you want to call this program?
-  stores: program.name
-  type: text
+  type: choice
+  options:
+    - label: "Full Body Hypertrophy 💪"
+      stores: { program.name: "Full Body Hypertrophy", program.emoji: "💪" }
+    - label: "Upper/Lower Strength ⚡"
+      stores: { program.name: "Upper/Lower Strength", program.emoji: "⚡" }
+    - label: "The Grind 🔥"
+      stores: { program.name: "The Grind", program.emoji: "🔥" }
+  escape: a name and emoji of their own
   notes: |
-    Ask together with program_emoji, in one message. Free text, 1-60 characters, no offered
-    options — inventing three names to reject would waste their time. If they do not care, offer
-    a default derived from their answers ("Full Body Hypertrophy") and confirm it before using it.
+    Name and emoji are one question, answered in one pick. Rewrite the first two labels to match
+    the split and goal they actually chose — "Upper/Lower Hypertrophy 🏋️" for upper_lower plus
+    hypertrophy — and store the label as shown, minus the emoji, in program.name. The third is a
+    fixed bit of character, left as-is.
 
-- id: program_emoji
-  scope: program
-  batch: 6
-  prompt: Pick an emoji for it?
-  stores: program.emoji
-  type: text
-  notes: |
-    A single emoji. Same default-and-confirm rule as program_name — a reasonable default ("💪") is
-    fine if they do not care, but confirm it first.
+    Store the name as 1-60 characters and the emoji as exactly one emoji. If they write their own
+    name with no emoji, offer one and confirm it before storing; never store a name without an
+    emoji or an emoji without a name.

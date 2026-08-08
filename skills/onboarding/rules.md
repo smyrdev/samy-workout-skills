@@ -1,177 +1,109 @@
 # Onboarding rules
 
-Everything from the interview that is not a question: how to find whose profile this is, how to
-validate an answer, what to say before writing, how updates work, and what to do without Python.
-`questions.yaml` holds the questions; this file holds the rules around them.
+`questions.yaml` holds the questions. This holds the rules around them.
 
 ## Resolving a profile
 
-Several people can share this repository, one directory each — `profiles/<slug>/`. Resolve which
-profile is in play **before asking anything else**, and never guess:
+One directory per person — `profiles/<slug>/`. Resolve it before asking anything else. Never guess.
 
-- **A name was supplied** (the skill was run with a name, or someone said "update Sara's
-  profile"). Slugify it (see below) and look for `profiles/<slug>/profile.json`. Not found → say
-  so and offer to create it. Found → check `user.name` inside before using it. Same person → that
-  is the profile. Different person (`sara` holding "Sarah") → do not open it and do not overwrite
-  it; say whose profile that slug holds and ask whether they meant that person or a new one.
-- **No name, no profiles exist** → this is a new profile; the interview asks for the name.
-- **No name, exactly one profile exists** → confirm rather than assume: "This is Samy's profile —
-  continuing as Samy?" Cheap to ask, and it stops a housemate silently overwriting someone.
-- **No name, several profiles exist** → list them and ask who this is, with an option for someone
-  new.
+* Name supplied → slugify, look for `profiles/<slug>/profile.json`
+  * missing → offer to create it
+  * `user.name` matches → use it
+  * `user.name` is someone else → say whose it is, ask which they meant. Do not open or overwrite
+* No name, no profiles → new profile, the interview asks for the name
+* No name, one profile → confirm it ("continuing as Samy?"), never assume
+* No name, several → list them, ask, offer "someone new"
+* Profile exists and this is not an update → summarise it in two lines (name, emoji, goal,
+  days/week, from the latest program file) and ask: change a few fields
+  ([Updating](#updating-an-existing-profile)) or start over. Only proceed on an explicit answer
 
-There is no default profile and no last-used memory, on purpose. Writing to the wrong person's
-profile is the main hazard of supporting more than one, and it fails silently.
-
-If a profile already exists and this is not explicitly an update, stop and ask what they want:
-summarise it in two lines (program name and emoji, goal, days per week — read from the latest file
-under `programs/`, see below) and offer **change a few fields** (go to
-[Updating](#updating-an-existing-profile)) or **start over** (full re-interview, overwriting
-`profile.json` and creating a new dated program file). Proceed only on an explicit answer.
+No default profile, no last-used memory — writing to the wrong person fails silently.
 
 ### Slug rules
 
-Lowercase, trim, spaces and underscores to hyphens, drop anything outside `a-z0-9-`, collapse
-repeated hyphens, strip leading and trailing hyphens. `Anna-Maria` → `anna-maria`, `Jean Luc` →
-`jean-luc`. If the result is empty, ask for something usable instead of inventing one.
-
-**When creating a profile**, if the slug is already taken by a different person, suffix it —
-`sam-2`, then `sam-3` if that is taken too — and say so out loud. Never merge two people into one
-file. Checking this means reading the existing `profile.json` to compare `user.name`; reading
-another profile is fine, writing to one is not.
+* Lowercase, trim, spaces and underscores → hyphens, drop anything outside `a-z0-9-`, collapse
+  repeats, strip leading and trailing. `Jean Luc` → `jean-luc`
+* Empty result → ask for something usable, never invent one
+* Slug taken by someone else → suffix `-2`, then `-3`, and say so. Never merge two people
+* Reading another `profile.json` to check that is fine. Writing to one is not
 
 ## Finding the latest program
 
-`profiles/<slug>/programs/` holds one file per training block, named `program-YYYY-MM-DD.json`.
-The **latest** program is the one whose filename sorts highest. A second run on the same calendar
-day does not overwrite the first — suffix it `program-YYYY-MM-DD-2.json`, then `-3` if that is
-also taken.
+* `programs/program-YYYY-MM-DD.json`, one per training block. Latest = highest-sorting filename
+* Same day twice → `program-YYYY-MM-DD-2.json`, then `-3`. Never overwrite
 
 ## Before writing
 
-Show a compact summary before a single byte is written: name, age, height and weight in their
-units, bodyfat bracket, gym type, goal, days × session length, split, deload, and how many of the
-seven benchmarks they cleared. Age is computed from date of birth for display only and is never
-stored — if only a birth year is known, show it as approximate ("about 32").
-
-**Name the exact paths about to be written** — both `profiles/<slug>/profile.json` and
-`profiles/<slug>/programs/program-<date>.json`.
-
-Then say in plain English what follows from the notable answers:
-
-- Gym type — "Garage gym, so the plan will stick to barbell, dumbbell and bodyweight work."
-- Split and days — "Full body five days a week is a lot of full-body sessions; upper/lower may fit
-  better. Keep full body?"
-- Benchmarks — "You cleared 2 of 7, so the plan will start you on assisted or machine versions of
-  the pressing and pulling patterns."
-
-Let them veto anything before writing. If they change an answer, update the summary and confirm
-again. **If they change units at this point, convert the measurements** (see
-[Unit conversion](#unit-conversion) below) — do not relabel the numbers.
-
-If they abandon the interview here or earlier, write nothing at all. A partial profile is worse
-than no profile.
+* Summarise first: name, age, bodyfat, gym type, goal, days × session length, split, deload,
+  benchmarks cleared out of seven
+* Age is derived for display only, never stored. Birth year only → "about 32"
+* Name both paths: `profiles/<slug>/profile.json` and `programs/program-<date>.json`
+* Say what follows from the notable answers — garage gym → barbell, dumbbell and bodyweight only;
+  full body five days → offer upper/lower; 2 of 7 benchmarks → assisted or machine variants
+* They can veto anything. Changed answer → re-summarise, confirm again
+* They walk away → write nothing. A partial profile is worse than none
 
 ## Writing the files
 
-Create `profiles/<slug>/` and `profiles/<slug>/programs/` if they do not exist. Write both files
-shaped exactly by `schema/profile.schema.json` and `schema/program.schema.json` — key order
-matters for readability even though the schema does not enforce it.
-
-- `profile.json`: `$schema_version`, `created_at`, `updated_at` (both the current UTC time as
-  `YYYY-MM-DDTHH:MM:SSZ` on a first write), `user`, `units`, `basics`, `experience`, `gym`,
-  `strength_benchmarks`.
-- `programs/program-<date>.json`: `$schema_version`, `created_at` (current UTC time),
-  `profile_slug`, `program`. Leave `volume` absent or `null` — filling it is the next step, not
-  this one.
-
-Then run the volume step (`SKILL.md` step 5). Whether or not it succeeds, tell the person where
-both files went, and that the workout-generation skill will use the program answers as defaults
-they can change per cycle without redoing this interview.
+* Create `profiles/<slug>/` and `profiles/<slug>/programs/` if missing
+* Shape both files by `schema/profile.schema.json` and `schema/program.schema.json`. Key order
+  matters for readability, though the schema does not enforce it
+* `profile.json`: `$schema_version`, `created_at`, `updated_at` (both current UTC,
+  `YYYY-MM-DDTHH:MM:SSZ`), `user`, `basics`, `experience`, `gym`, `strength_benchmarks`
+* `units`, `basics.sex`, `basics.height`, `basics.weight`, `experience.cardio`, `gym.notes` are
+  allowed but unasked and unread — write one only if volunteered
+* `programs/program-<date>.json`: `$schema_version`, `created_at`, `profile_slug`, `program`.
+  `volume` stays `null` — the next step fills it
+* Then run the volume step (`SKILL.md` step 5), and either way tell them where both files went and
+  that generation reuses the program answers as per-cycle defaults
 
 ## No Python
 
-If the environment cannot run `skills/onboarding/scripts/volume.py` (no interpreter, no shell
-access, sandboxed), do not hand-compute the volume model — the arithmetic is not something to
-approximate from memory, and a wrong number is worse than a missing one. Instead:
-
-1. Write `profile.json` and the program file exactly as above, with `volume` left `null`.
-2. Tell the person plainly that the volume block could not be computed here, and give them the
-   exact command to run it themselves later:
-   `python skills/onboarding/scripts/volume.py --profile profiles/<slug>/profile.json --write profiles/<slug>/programs/program-<date>.json`
-3. Do not block on this. A program file with `volume: null` is schema-valid and usable.
+* Cannot run `scripts/volume.py` here → do not hand-compute it. A wrong number is worse than a
+  missing one
+* Write both files with `volume: null` — schema-valid and usable. Do not block
+* Give them the command:
+  `python skills/onboarding/scripts/volume.py --profile profiles/<slug>/profile.json --write profiles/<slug>/programs/program-<date>.json`
 
 ## Updating an existing profile
 
-Resolve the profile first, exactly as in [Resolving a profile](#resolving-a-profile). Then ask
-only about what they named — "change my weight to 82" needs no questions at all, just a
-confirmation. If the request is vague ("update my profile"), offer a group picker — Basics · Gym ·
-Program · Benchmarks — and re-run only that batch. This is never a full re-interview.
-
-Fields from `questions.yaml` with `scope: profile` live in `profile.json`; fields with
-`scope: program` live in a program file. **A change to any `scope: program` field always creates a
-new dated program file** (see [Finding the latest program](#finding-the-latest-program)) rather
-than editing the old one — a program answer is a per-cycle default, and the old cycle's file stays
-as a record. A change to a `scope: profile` field edits `profile.json` in place.
-
-Parse the existing file, change only what was asked for, and write the whole thing back in the
-structure and key order the schema implies — do not patch the text in place. Every field that was
-not changed keeps its exact value, including `profile.json`'s `created_at`. Bump `updated_at` on
-`profile.json`. Three rules for fields that interact:
-
-- **Changing `units` converts the measurements, it does not relabel them.** See
-  [Unit conversion](#unit-conversion).
-- **Changing `date_of_birth` touches nothing else** — age is derived at read time, never stored.
-- **Changing the name re-slugs the directory.** Move the whole directory, not just
-  `profile.json` — it also holds `programs/` and, eventually, `plans/`, and copying one file out
-  before deleting the rest destroys the others. Rename `profiles/<old-slug>/` to
-  `profiles/<new-slug>/`, then update `user.name` and `user.slug` inside the file. If the
-  directory cannot be moved, leave it untouched and say plainly that the rename did not happen —
-  never delete the old one first.
+* Resolve the profile first, as above
+* Ask only about what they named. "Change my bodyfat to 18-23" is a confirmation, not a question
+* Vague ask → group picker: Basics · Gym · Program · Benchmarks. Re-run that batch only. Never a
+  full re-interview
+* `scope: profile` → edits `profile.json` in place. `scope: program` → **always a new dated program
+  file**, never an edit to the old one. The old cycle stays as a record
+* Rewrite the whole file in schema key order, never patch text in place. Untouched fields keep
+  their exact values, including `created_at`. Bump `updated_at`
+* `date_of_birth` touches nothing else — age is derived at read time
+* Name change re-slugs the directory: move all of `profiles/<old-slug>/`, not just `profile.json` —
+  it also holds `programs/` and later `plans/`. Then update `user.name` and `user.slug`. If it
+  cannot be moved, say the rename did not happen. Never delete the old one first
 
 ## Validation
 
-- **Plausible ranges.** Height 120-230 cm (47-91 in), weight 35-250 kg (77-550 lb), birth year
-  1920-2015, days per week 3-7. Check against whichever unit they answered in; the bounds are
-  generous enough that rounding at the edges does not matter. Anything outside these is a typo
-  until confirmed — ask again. Never silently clamp a value and never silently store an
-  implausible one.
-- **Never invent an answer.** If someone skips a question or answers ambiguously, ask again. Do
-  not fill in a reasonable-sounding height, a default gym type, or a benchmark result. Exactly two
-  auto-fills are permitted: `pullups_5` from `pullups_10`, and a program name or emoji default
-  that was explicitly offered and accepted.
-- **Bodyfat must be one of the nine bracket strings** in `questions.yaml`'s `bodyfat` entry. Not a
-  number, not an invented range.
-- **Echoing before writing is mandatory**, including both target paths. No first-pass write
-  without the person seeing the summary.
-- **Write only to `profiles/<slug>/profile.json`** and `profiles/<slug>/programs/program-<date>.json`.
-  Never to `docs/`, never to `skills/`, never to another person's directory. Never modify anything
-  under `skills/onboarding/examples/` — those are the shipped schema samples.
-
-## Unit conversion
-
-Used when `units` is changed on an existing profile. Convert the underlying measurement — do not
-relabel the number.
-
-- 1 in = 2.54 cm exactly
-- 1 lb = 0.45359237 kg exactly
-
-Round to one decimal. 178 cm becomes 70.1 in, not 178 in.
+* Birth year 1920-2015, days/week 3-7. Outside that is a typo until confirmed — ask again. Never
+  clamp, never store it silently
+* Never invent an answer. Skipped or ambiguous → ask again
+* Two auto-fills only: `pullups_5` from `pullups_10`, and a program name or emoji default that was
+  offered and accepted
+* Bodyfat is one of the nine bracket strings in `questions.yaml` — not a number, not a new range
+* Echoing before writing is mandatory, both paths included
+* Write only to `profiles/<slug>/`. Never `docs/`, never `skills/`, never someone else's directory,
+  never `examples/`
 
 ## What the generation skill reads
 
-A future workout-generation skill consumes these files. It will:
+`skills/generation/` consumes these files. It:
 
-- **Resolve a profile the same way** this skill does — same name argument, same
-  ask-when-ambiguous rule, same slug derivation.
-- **Read `profile.json` without asking:** `user.name`, `basics.*` (deriving age from
-  `date_of_birth`), `experience.*`, `gym.type`, `strength_benchmarks.*`.
-- **Read the latest `programs/program-*.json` and re-confirm in one pre-filled batch:**
-  `program.primary_goal`, `program.days_per_week`, `program.session_minutes`, `program.split`,
-  `program.deload`. Keeping all of them is one click.
-- **Never write to `profile.json`.** If any `scope: profile` field needs to change, it points the
-  person at this skill's update path instead of doing it itself.
-- **Write its own output under `profiles/<slug>/plans/`** — never under `programs/`, which belongs
-  to this skill's answers.
-- **Fail loudly when no profile exists**, telling the person to run onboarding first rather than
-  interviewing them itself.
+* Resolves a profile exactly the same way
+* Reads `strength_benchmarks.*` from `profile.json` without asking — everything else the volume
+  model needs came through the program file's volume block
+* Reads the latest program file and re-confirms goal, days, session, split and deload in one
+  pre-filled batch
+* Never writes to `profile.json` — it points at this skill's update path instead
+* Writes only under `profiles/<slug>/plans/`, never `programs/`
+* Fails loudly when no profile exists rather than interviewing anyone itself
+
+## User
+* This is a user rule.

@@ -22,6 +22,7 @@
         "days_per_week",
         "session_minutes",
         "split",
+        "style",
         "deload"
       ],
       "additionalProperties": false,
@@ -34,6 +35,7 @@
           "enum": ["up_to_20", "20-40", "40-60", "60-90", "90-120", "over_120"]
         },
         "split": { "enum": ["full_body", "upper_lower"] },
+        "style": { "enum": ["balanced", "high_volume", "high_intensity"] },
         "deload": { "type": "boolean" }
       }
     },
@@ -49,8 +51,11 @@
             "bodyfat_midpoint",
             "equipment_tier",
             "benchmarks_cleared",
+            "style",
             "exercises_per_session",
             "sets_per_exercise",
+            "reps_in_reserve",
+            "rest_seconds",
             "weekly_set_capacity",
             "weekly_sets_allocated",
             "unallocated_sets",
@@ -66,8 +71,17 @@
             "bodyfat_midpoint": { "type": "number" },
             "equipment_tier": { "type": "integer", "minimum": 1, "maximum": 4 },
             "benchmarks_cleared": { "type": "integer", "minimum": 0, "maximum": 7 },
+            "style": { "enum": ["balanced", "high_volume", "high_intensity"] },
             "exercises_per_session": { "type": "integer", "minimum": 1 },
             "sets_per_exercise": { "type": "integer", "minimum": 1 },
+            "reps_in_reserve": {
+              "description": "How many reps to leave in the tank on a working set. Display-only — generation prints it, no arithmetic reads it.",
+              "type": "integer", "minimum": 0, "maximum": 5
+            },
+            "rest_seconds": {
+              "description": "Suggested rest between sets, as a range string. Display-only — the time it implies is already priced into goal_exercise_density.",
+              "type": "string", "pattern": "^\\d+-\\d+$"
+            },
             "weekly_set_capacity": { "type": "integer", "minimum": 0 },
             "weekly_sets_allocated": { "type": "integer", "minimum": 0 },
             "unallocated_sets": { "type": "integer", "minimum": 0 },

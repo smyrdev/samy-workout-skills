@@ -91,6 +91,16 @@ that steer the widest-map oddball variations win every tie. A repair pass then a
 prime movers of any still-short group. Whatever remains short is reported in `warnings` — never
 silently absorbed.
 
+**Reporting the fit honestly needs a ratio, not a difference.** `volume.py` allocates a budget of
+exercise-sets as though one set trained one muscle; a real set trains close to two muscles
+directly. So a filled week delivers far more direct muscle-sets than the sum of the allocation,
+for every group at once, and "planned exceeds allocated" is true everywhere and means nothing.
+What the plan reports instead is `balance`: a group's share of the week's direct sets divided by
+its share of the allocation. 1.0 is exactly proportional, and `over:`/`under:` fire when a group
+falls outside `over_tolerance_ratio` in either direction. On a real plan this correctly singles
+out core — which collects direct work from nearly every compound — while leaving the eight groups
+that land within ten percent of proportional unflagged.
+
 Three deliberate calibrations, all tunable in `generate.config.json`:
 
 - **Indirect volume counts at a discount toward the fit** (`indirect_discount`, default half —
@@ -101,16 +111,23 @@ Three deliberate calibrations, all tunable in `generate.config.json`:
 - **One exercise per movement pattern per session** (`max_per_volume_profile_per_session`,
   using the dataset's fine-grained `volume_profile`) — otherwise two near-identical dip
   variants can land in the same day. The coarser `movement_group` cap still applies on top.
-- **Sessions may come in under the exercises-per-session cap.** The cap is a ceiling derived
-  from the session-length answer, not a quota: compounds deliver several groups per set, so the
-  allocation is often met with fewer exercises than the ceiling allows. Stuffing the session
-  past the allocation would overshoot the volume model's targets — the person can always ask
-  for more via focus rules or a bigger allocation.
+- **Exercises-per-session is a floor as well as a ceiling.** It comes from the session-length
+  answer, so a day that has met every target but still has slots keeps filling rather than
+  handing back a 25-minute session to someone who said they train for 90. The surplus picks go
+  to whichever group has the most room left relative to its allocation. A day that still cannot
+  reach the count — the variety caps can block it — says so with `session_underfilled:<day>`.
 
 The fit is **deterministic**: stable sorts, explicit tie-breaks (name, then id), no randomness,
 no clock except the `--today` override. The same profile, program, rules, dataset and date
 produce a byte-identical plan. Boring on purpose: a surprising plan should always be explainable
 by an input that changed.
+
+The **written** plan may then differ from the fitter's output by exactly the contents of its
+`revisions` array — the coach review step that runs after the fitter (see the generation skill's
+`rules.md` § Reviewing the plan) records every change it makes there, one line each. So the
+guarantee shifts rather than weakens: the fitter's draft is reproducible from the inputs, and
+every departure from it is listed in the plan itself. A plan with no `revisions` is fitter output,
+byte for byte.
 
 Session ordering is a user-visible rule list (`order` in `rules.json`), applied top-down as
 successive sort keys. The default puts pinned exercises first, trailer groups (core, calves)
@@ -128,8 +145,10 @@ auditable after the dataset cache is deleted or the upstream moves on.
 
 - **No weights, no progression.** The plan says movements, sets and rep ranges. Load selection
   and week-to-week progression are the session-logging feature's job, when it exists.
-- **No per-exercise scheduling intelligence** (supersets, rest times, exercise pairing).
-- **No cardio or mobility programming.** The dataset's cardio and stretch categories are
-  filtered out by the descriptor; widening `category_filter` is the extension point when a
-  volume model for them exists.
+- **No scheduling intelligence in the algorithm.** Supersets and exercise pairing exist, but they
+  belong to the review step, guided by the person's `notes` — the fitter itself never pairs.
+- **No cardio, mobility or olympic lifting.** `category_filter: ["strength"]` keeps exactly one
+  of the dataset's four categories — `cardio` and `stretch` are out by intent, and `olympic` is
+  out because the volume model has nothing to say about a snatch. Widening `category_filter` is
+  the extension point when a volume model for any of them exists.
 - **No item-level equipment.** Tiers remain the equipment model, as in onboarding.
