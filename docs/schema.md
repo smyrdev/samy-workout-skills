@@ -112,7 +112,7 @@ neither key is ever missing, rather than pushing that check onto every consumer.
 
 | Field | Type | Rule |
 |---|---|---|
-| `$schema_version` | string | `"2.0"`. Bump the major on any breaking key change. Consumers must refuse an unknown major rather than guessing. |
+| `$schema_version` | string | `"1.0"`. Bump the major on any breaking key change. Consumers must refuse an unknown major rather than guessing. |
 | `created_at` | string | ISO 8601 UTC, `YYYY-MM-DDTHH:MM:SSZ`. Set once, never rewritten. |
 | `updated_at` | string | Same format. Bumped on every write. |
 | `user.name` | string | Verbatim as the person typed it, including case and accents. A display label only — nothing on disk is named after it. |
@@ -184,7 +184,7 @@ future generation-skill concern, not the volume model's.
 
 | Field | Type | Rule |
 |---|---|---|
-| `$schema_version` | string | `"2.0"`. |
+| `$schema_version` | string | `"1.0"`. |
 | `created_at` | string | ISO 8601 UTC. When *this program file* was written — not the profile's `created_at`. |
 | `program` | object | See below. |
 | `volume` | object \| null | Computed by `scripts/volume.py`. Absent or `null` is a valid file — see [Volume model](#volume-model). |
@@ -315,16 +315,7 @@ re-asked, never silently clamped and never silently stored.
 `skills/onboarding/schema/profile.schema.json` and `skills/onboarding/schema/program.schema.json`
 are the schema of record. Any field change updates the relevant schema, its example under
 `skills/onboarding/examples/`, `questions.yaml` or `volume.config.json` as appropriate, and this
-document, in the same commit. A breaking change bumps `$schema_version`.
-
-### `1.0` → `2.0`
-
-Dropping multi-person support removed two required fields, so both schemas went to `"2.0"` (and
-`plan.schema.json` with them):
-
-- `profile.json` — `user.slug` removed; `user` is now just `{ name }`.
-- `programs/*.json` and `plans/*.json` — `profile_slug` removed.
-
-Every schema sets `additionalProperties: false`, so a `1.0` file does not merely lack the version
-bump, it **fails validation** on the leftover key. Migrating by hand: move `profiles/<slug>/*` to
-`profile/`, delete those two keys, set `$schema_version` to `"2.0"`.
+document, in the same commit. A breaking change bumps `$schema_version` — once there is released
+data to break. Nothing has shipped yet, so pre-release breaking changes (such as dropping
+multi-person support, which removed `user.slug` and `profile_slug`) edit the schemas in place and
+everything stays at `"1.0"`.

@@ -10,7 +10,7 @@ Start from `examples/profile.example.json` and `examples/program.example.json`, 
 ## `profile.json`
 
 ### `$schema_version`
-Always the quoted string `"2.0"`. Do not change it by hand.
+Always the quoted string `"1.0"`. Do not change it by hand.
 
 ### `created_at`, `updated_at`
 UTC timestamp, `"YYYY-MM-DDTHH:MM:SSZ"`. On a brand-new profile these are identical. Leave

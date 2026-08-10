@@ -31,7 +31,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-MODEL_VERSION = "2.0"
+MODEL_VERSION = "1.0"
 
 
 def fail_usage(message):
@@ -623,7 +623,7 @@ def fixture_volume_block(tier=3, cap=6, sets=3):
 
 def fixture_program_data(split="full_body", days=4, deload=True, volume=None):
     return {
-        "$schema_version": "2.0",
+        "$schema_version": "1.0",
         "created_at": "2026-08-06T00:00:00Z",
         "program": {
             "name": "Fixture Block", "emoji": "🧪", "primary_goal": "hypertrophy",
