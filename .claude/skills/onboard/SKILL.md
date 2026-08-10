@@ -16,7 +16,7 @@ Three bindings for this environment:
 - Use `AskUserQuestion` wherever `questions.yaml` offers `options`, batching as `SKILL.md`'s Flow
   section describes. Each question's `escape` is the **Other** option, which that tool always
   provides.
-- Run `scripts/volume.py` with the `Bash` tool for step 5 (fill the volume block). If `Bash` is
+- Run `scripts/volume.py` with the `Bash` tool for the fill-the-volume-block step. If `Bash` is
   unavailable in this session, fall back to `rules.md` § No Python rather than computing it by
   hand.
 - `--update` means go to `rules.md` § Updating an existing profile instead of the full interview.

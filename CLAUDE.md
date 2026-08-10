@@ -35,7 +35,7 @@ profile/                       user data — gitignored
 datasets/                      cloned exercise datasets — a gitignored local cache
 ```
 
-One repository holds one profile. `profile/profile.json` is written once.
+`profile/profile.json` is written once.
 `profile/programs/program-YYYY-MM-DD.json` holds one file per training block — the onboarding
 skill's answers, including the volume block `volume.py` computes. `profile/plans/` holds what the
 generation skill produces, one dated pair (`.json` + `.md`) per run. `profile/rules.json` is the

@@ -61,8 +61,8 @@ day, print it. It is a snapshot for you, not an input to anything.
 
 ## `profile/plans/plan-YYYY-MM-DD.json` — generated, not hand-written
 
-The structured record of the same plan: program echo, dataset name and commit, the merged rules
-it used, per-group allocated versus planned sets, every session, every warning. If you want a
-different plan, change your `rules.json` (or re-run with different program answers) and generate
-again — a new dated file appears and the old one stays as a record. Hand-editing this file makes
+The structured record of the same plan: who it is for, program echo, dataset name and commit,
+the merged rules it used, per-group allocated versus planned sets, every session, every warning.
+If you want a different plan, change your `rules.json` (or re-run with different program answers)
+and generate again — a new dated file appears and the old one stays as a record. Hand-editing this file makes
 its volume arithmetic quietly wrong, which is worse than any problem it solves.

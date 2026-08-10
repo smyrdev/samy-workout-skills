@@ -6,8 +6,9 @@ description: "Use when someone is setting up a training profile for the first ti
 # Training profile onboarding
 
 Interview the person and save their answers, so a workout generator can read them instead of
-asking twenty questions every cycle. One repository holds one profile, at `profile/`. Written to be run by any capable LLM agent — nothing here
-depends on a particular vendor, and every path below is relative to the repository root.
+asking twenty questions every cycle. One repository holds one profile, at `profile/`. Written to
+be run by any capable LLM agent — nothing here depends on a particular vendor, and every path
+below is relative to the repository root.
 
 ## Flow
 

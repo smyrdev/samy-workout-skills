@@ -13,10 +13,13 @@ One repository holds one profile, at `profile/`. Check whether `profile/profile.
 - **A profile exists and this is explicitly an update** → go to
   [Updating](#updating-an-existing-profile).
 - **A profile exists and this is not explicitly an update** → stop and ask what they want:
-  summarise it in two lines (program name and emoji, goal, days per week — read from the latest
-  file under `programs/`, see below) and offer **change a few fields** (go to
-  [Updating](#updating-an-existing-profile)) or **start over** (full re-interview, overwriting
-  `profile.json` and creating a new dated program file). Proceed only on an explicit answer.
+  summarise it in two lines — whose it is (`user.name`) with experience and gym type from
+  `profile.json`, then program name and emoji, goal, and days per week from the latest file under
+  `programs/` (see below). If `programs/` has no files (a hand-filled profile starts this way),
+  say so instead and offer **set up a program** (ask only the `scope: program` questions).
+  Then offer **change a few fields** (go to [Updating](#updating-an-existing-profile)) or
+  **start over** (full re-interview, overwriting `profile.json` and creating a new dated program
+  file). Proceed only on an explicit answer.
 
 Never start over on an inferred intent. "Set me up" from someone who already has a profile is
 ambiguous, not permission.
@@ -65,9 +68,9 @@ even though the schema does not enforce it.
 - `programs/program-<date>.json`: `$schema_version`, `created_at` (current UTC time), `program`.
   Leave `volume` absent or `null` — filling it is the next step, not this one.
 
-Then run the volume step (`SKILL.md` step 5). Whether or not it succeeds, tell the person where
-both files went, and that the workout-generation skill will use the program answers as defaults
-they can change per cycle without redoing this interview.
+Then run the volume step (the last step of `SKILL.md`'s flow). Whether or not it succeeds, tell
+the person where both files went, and that the workout-generation skill will use the program
+answers as defaults they can change per cycle without redoing this interview.
 
 ## No Python
 
@@ -84,9 +87,10 @@ approximate from memory, and a wrong number is worse than a missing one. Instead
 ## Updating an existing profile
 
 Confirm this is an update and not a fresh start, as in
-[If a profile already exists](#if-a-profile-already-exists). Then ask only about what they named — "change my weight to 82" needs no questions at all, just a
-confirmation. If the request is vague ("update my profile"), offer a group picker — Basics · Gym ·
-Program · Benchmarks — and re-run only that batch. This is never a full re-interview.
+[If a profile already exists](#if-a-profile-already-exists). Then ask only about what they
+named — "change my weight to 82" needs no questions at all, just a confirmation. If the request
+is vague ("update my profile"), offer a group picker — Basics · Gym · Program · Benchmarks — and
+re-run only that batch. This is never a full re-interview.
 
 Fields from `questions.yaml` with `scope: profile` live in `profile.json`; fields with
 `scope: program` live in a program file. **A change to any `scope: program` field always creates a
