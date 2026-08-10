@@ -1,7 +1,6 @@
 {
-  "$schema_version": "1.0",
+  "$schema_version": "2.0",
   "created_at": "2026-08-06T09:15:00Z",
-  "profile_slug": "samy",
   "program": {
     "name": "Summer Build",
     "emoji": "💪",

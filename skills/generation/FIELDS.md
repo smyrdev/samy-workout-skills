@@ -5,7 +5,7 @@ For hand-editing the generation skill's user-facing files. The schemas
 plain-English version. Validate with `python scripts/validate-skills.py` from the repository root
 when you are done.
 
-## `profiles/<slug>/rules.json` — yours to write
+## `profile/rules.json` — yours to write
 
 Your standing preferences, read on every generation run and written by nobody but you. Start from
 `examples/rules.example.json`. Every section is optional — leave one out and the defaults in
@@ -54,12 +54,12 @@ each later rule breaks the remaining ties. Valid rules:
 
 Omit `order` entirely to use the default in `scripts/generate.config.json`.
 
-## `profiles/<slug>/plans/plan-YYYY-MM-DD.md` — also yours
+## `profile/plans/plan-YYYY-MM-DD.md` — also yours
 
 The human-readable render of a generated plan. Edit it freely — annotate weights, cross out a
 day, print it. It is a snapshot for you, not an input to anything.
 
-## `profiles/<slug>/plans/plan-YYYY-MM-DD.json` — generated, not hand-written
+## `profile/plans/plan-YYYY-MM-DD.json` — generated, not hand-written
 
 The structured record of the same plan: program echo, dataset name and commit, the merged rules
 it used, per-group allocated versus planned sets, every session, every warning. If you want a

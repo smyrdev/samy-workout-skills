@@ -17,44 +17,33 @@ provenance, typos included.
 ## Storage layout
 
 ```
-profiles/
-├── samy/
-│   ├── profile.json
-│   └── programs/
-│       ├── program-2026-08-06.json
-│       └── program-2026-11-02.json
-└── sara/
-    ├── profile.json
-    └── programs/
-        └── program-2026-09-01.json
+profile/
+├── profile.json
+├── programs/
+│   ├── program-2026-08-06.json
+│   └── program-2026-11-02.json
+├── plans/
+└── rules.json
 ```
 
-One directory per person, named by **slug**; the person's name is stored verbatim inside
-`profile.json`. `profile.json` is written once and updated in place. `programs/` holds one file
-per training block — every re-run of the program questions adds a new dated file rather than
-overwriting the last one, so the answers a person gave for last summer's cutting block are not
-silently lost when they set up a bulk. The **latest** program is whichever filename sorts highest;
-a same-day re-run suffixes `-2`.
+**One repository holds one profile.** The person's name is stored inside `profile.json` as a
+display label, and nothing on disk is named after it — so changing the name is an ordinary field
+edit with no directory move behind it.
 
-`profiles/<slug>/plans/` is reserved for a future workout-generation skill's output — never
-written by onboarding, and named differently from `programs/` on purpose so the two kinds of file
-(*answers* vs. *generated output*) are never confused by directory alone.
+`profile.json` is written once and updated in place. `programs/` holds one file per training
+block — every re-run of the program questions adds a new dated file rather than overwriting the
+last one, so the answers given for last summer's cutting block are not silently lost when a bulk
+is set up. The **latest** program is whichever filename sorts highest; a same-day re-run suffixes
+`-2`.
 
-### Slug rules
+`profile/plans/` is the workout-generation skill's output — never written by onboarding, and
+named differently from `programs/` on purpose so the two kinds of file (*answers* vs. *generated
+output*) are never confused by directory alone.
 
-Derived from the name: lowercase, trim, spaces and underscores → hyphens, drop everything outside
-`a-z0-9-`, collapse repeated hyphens, strip leading/trailing hyphens.
+### Why one profile and not several
 
-| Name | Slug |
-|---|---|
-| `Samy` | `samy` |
-| `Anna-Maria` | `anna-maria` |
-| `Jean Luc` | `jean-luc` |
-| `José` | `jos` — accents are dropped, not transliterated |
-
-If the slug reduces to an empty string, ask for something usable rather than inventing one. If the
-slug already exists but holds a **different** name, suffix it (`sam-2`) and say so out loud —
-never merge two people into one file.
+The safety property it existed to protect — never silently overwrite a profile — is kept, and now
+sits in `skills/onboarding/rules.md` § If a profile already exists.
 
 ---
 
@@ -123,11 +112,10 @@ neither key is ever missing, rather than pushing that check onto every consumer.
 
 | Field | Type | Rule |
 |---|---|---|
-| `$schema_version` | string | `"1.0"`. Bump the major on any breaking key change. Consumers must refuse an unknown major rather than guessing. |
+| `$schema_version` | string | `"2.0"`. Bump the major on any breaking key change. Consumers must refuse an unknown major rather than guessing. |
 | `created_at` | string | ISO 8601 UTC, `YYYY-MM-DDTHH:MM:SSZ`. Set once, never rewritten. |
 | `updated_at` | string | Same format. Bumped on every write. |
-| `user.name` | string | Verbatim as the person typed it, including case and accents. |
-| `user.slug` | string | Matches the containing directory name. Both stored so a profile is self-describing if moved, and so `profiles/` can be listed without opening every file. |
+| `user.name` | string | Verbatim as the person typed it, including case and accents. A display label only — nothing on disk is named after it. |
 | `units` | enum | `metric` \| `imperial`. A display preference for everything, which is why it is top-level rather than nested under a measurement. |
 
 ### `basics`
@@ -196,9 +184,8 @@ future generation-skill concern, not the volume model's.
 
 | Field | Type | Rule |
 |---|---|---|
-| `$schema_version` | string | `"1.0"`. |
+| `$schema_version` | string | `"2.0"`. |
 | `created_at` | string | ISO 8601 UTC. When *this program file* was written — not the profile's `created_at`. |
-| `profile_slug` | string | Must match the owning profile's `user.slug` and the containing `profiles/<slug>/` directory. |
 | `program` | object | See below. |
 | `volume` | object \| null | Computed by `scripts/volume.py`. Absent or `null` is a valid file — see [Volume model](#volume-model). |
 
@@ -329,3 +316,15 @@ re-asked, never silently clamped and never silently stored.
 are the schema of record. Any field change updates the relevant schema, its example under
 `skills/onboarding/examples/`, `questions.yaml` or `volume.config.json` as appropriate, and this
 document, in the same commit. A breaking change bumps `$schema_version`.
+
+### `1.0` → `2.0`
+
+Dropping multi-person support removed two required fields, so both schemas went to `"2.0"` (and
+`plan.schema.json` with them):
+
+- `profile.json` — `user.slug` removed; `user` is now just `{ name }`.
+- `programs/*.json` and `plans/*.json` — `profile_slug` removed.
+
+Every schema sets `additionalProperties: false`, so a `1.0` file does not merely lack the version
+bump, it **fails validation** on the leftover key. Migrating by hand: move `profiles/<slug>/*` to
+`profile/`, delete those two keys, set `$schema_version` to `"2.0"`.

@@ -2,7 +2,7 @@
 name: onboard
 description: "Use when someone is setting up a training profile for the first time, says they are new here, or asks to change body stats, experience, gym, goal, days per week, session length, split, deload, benchmarks, or program name/emoji. Also use when another skill reports a training profile is missing."
 allowed-tools: Read, Write, Bash, AskUserQuestion
-argument-hint: "[name] [--update]"
+argument-hint: "[--update]"
 ---
 
 Read `skills/onboarding/SKILL.md` and follow it exactly, then its pointers into `questions.yaml`,
@@ -19,5 +19,4 @@ Three bindings for this environment:
 - Run `scripts/volume.py` with the `Bash` tool for step 5 (fill the volume block). If `Bash` is
   unavailable in this session, fall back to `rules.md` § No Python rather than computing it by
   hand.
-- A bare name argument selects the profile (`/onboard sara`). `--update` means go to
-  `rules.md` § Updating an existing profile instead of the full interview.
+- `--update` means go to `rules.md` § Updating an existing profile instead of the full interview.

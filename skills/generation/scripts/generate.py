@@ -31,7 +31,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-MODEL_VERSION = "1.0"
+MODEL_VERSION = "2.0"
 
 
 def fail_usage(message):
@@ -472,7 +472,6 @@ def generate_plan(profile, program_data, records, ds_name, ds, rules, config,
             "  python skills/onboarding/scripts/volume.py --profile <profile.json> "
             "--write <program.json>"
         )
-    slug = program_data.get("profile_slug")
     benchmarks = profile.get("strength_benchmarks", {})
 
     warnings = []
@@ -535,7 +534,6 @@ def generate_plan(profile, program_data, records, ds_name, ds, rules, config,
     return {
         "$schema_version": MODEL_VERSION,
         "created_at": f"{today.isoformat()}T00:00:00Z",
-        "profile_slug": slug,
         "program": program,
         "dataset": {"name": ds_name, "repo": ds["repo"], "ref": ds["ref"], "commit": commit},
         "rules_applied": rules,
@@ -557,7 +555,7 @@ def render_markdown(plan):
                  f"· {program['split']} · goal: {program['primary_goal']}"
                  + (" · ends with a deload week" if plan["deload_week"] else ""))
     lines.append("")
-    lines.append(f"Generated {plan['created_at'][:10]} for `{plan['profile_slug']}` "
+    lines.append(f"Generated {plan['created_at'][:10]} "
                  f"from dataset `{plan['dataset']['name']}`"
                  + (f" @ `{plan['dataset']['commit'][:9]}`" if plan["dataset"]["commit"] else "")
                  + ".")
@@ -625,9 +623,8 @@ def fixture_volume_block(tier=3, cap=6, sets=3):
 
 def fixture_program_data(split="full_body", days=4, deload=True, volume=None):
     return {
-        "$schema_version": "1.0",
+        "$schema_version": "2.0",
         "created_at": "2026-08-06T00:00:00Z",
-        "profile_slug": "fixture",
         "program": {
             "name": "Fixture Block", "emoji": "🧪", "primary_goal": "hypertrophy",
             "days_per_week": days, "session_minutes": "60-90", "split": split,

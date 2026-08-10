@@ -1,48 +1,29 @@
 # Onboarding rules
 
-Everything from the interview that is not a question: how to find whose profile this is, how to
-validate an answer, what to say before writing, how updates work, and what to do without Python.
-`questions.yaml` holds the questions; this file holds the rules around them.
+Everything from the interview that is not a question: what to do when a profile already exists,
+how to validate an answer, what to say before writing, how updates work, and what to do without
+Python. `questions.yaml` holds the questions; this file holds the rules around them.
 
-## Resolving a profile
+## If a profile already exists
 
-Several people can share this repository, one directory each — `profiles/<slug>/`. Resolve which
-profile is in play **before asking anything else**, and never guess:
+One repository holds one profile, at `profile/`. Check whether `profile/profile.json` exists
+**before asking anything else** — a fresh interview overwrites it, and that failure is silent.
 
-- **A name was supplied** (the skill was run with a name, or someone said "update Sara's
-  profile"). Slugify it (see below) and look for `profiles/<slug>/profile.json`. Not found → say
-  so and offer to create it. Found → check `user.name` inside before using it. Same person → that
-  is the profile. Different person (`sara` holding "Sarah") → do not open it and do not overwrite
-  it; say whose profile that slug holds and ask whether they meant that person or a new one.
-- **No name, no profiles exist** → this is a new profile; the interview asks for the name.
-- **No name, exactly one profile exists** → confirm rather than assume: "This is Samy's profile —
-  continuing as Samy?" Cheap to ask, and it stops a housemate silently overwriting someone.
-- **No name, several profiles exist** → list them and ask who this is, with an option for someone
-  new.
+- **No profile** → this is a new one; run the interview.
+- **A profile exists and this is explicitly an update** → go to
+  [Updating](#updating-an-existing-profile).
+- **A profile exists and this is not explicitly an update** → stop and ask what they want:
+  summarise it in two lines (program name and emoji, goal, days per week — read from the latest
+  file under `programs/`, see below) and offer **change a few fields** (go to
+  [Updating](#updating-an-existing-profile)) or **start over** (full re-interview, overwriting
+  `profile.json` and creating a new dated program file). Proceed only on an explicit answer.
 
-There is no default profile and no last-used memory, on purpose. Writing to the wrong person's
-profile is the main hazard of supporting more than one, and it fails silently.
-
-If a profile already exists and this is not explicitly an update, stop and ask what they want:
-summarise it in two lines (program name and emoji, goal, days per week — read from the latest file
-under `programs/`, see below) and offer **change a few fields** (go to
-[Updating](#updating-an-existing-profile)) or **start over** (full re-interview, overwriting
-`profile.json` and creating a new dated program file). Proceed only on an explicit answer.
-
-### Slug rules
-
-Lowercase, trim, spaces and underscores to hyphens, drop anything outside `a-z0-9-`, collapse
-repeated hyphens, strip leading and trailing hyphens. `Anna-Maria` → `anna-maria`, `Jean Luc` →
-`jean-luc`. If the result is empty, ask for something usable instead of inventing one.
-
-**When creating a profile**, if the slug is already taken by a different person, suffix it —
-`sam-2`, then `sam-3` if that is taken too — and say so out loud. Never merge two people into one
-file. Checking this means reading the existing `profile.json` to compare `user.name`; reading
-another profile is fine, writing to one is not.
+Never start over on an inferred intent. "Set me up" from someone who already has a profile is
+ambiguous, not permission.
 
 ## Finding the latest program
 
-`profiles/<slug>/programs/` holds one file per training block, named `program-YYYY-MM-DD.json`.
+`profile/programs/` holds one file per training block, named `program-YYYY-MM-DD.json`.
 The **latest** program is the one whose filename sorts highest. A second run on the same calendar
 day does not overwrite the first — suffix it `program-YYYY-MM-DD-2.json`, then `-3` if that is
 also taken.
@@ -54,8 +35,8 @@ units, bodyfat bracket, gym type, goal, days × session length, split, deload, a
 seven benchmarks they cleared. Age is computed from date of birth for display only and is never
 stored — if only a birth year is known, show it as approximate ("about 32").
 
-**Name the exact paths about to be written** — both `profiles/<slug>/profile.json` and
-`profiles/<slug>/programs/program-<date>.json`.
+**Name the exact paths about to be written** — both `profile/profile.json` and
+`profile/programs/program-<date>.json`.
 
 Then say in plain English what follows from the notable answers:
 
@@ -74,16 +55,15 @@ than no profile.
 
 ## Writing the files
 
-Create `profiles/<slug>/` and `profiles/<slug>/programs/` if they do not exist. Write both files
-shaped exactly by `schema/profile.schema.json` and `schema/program.schema.json` — key order
-matters for readability even though the schema does not enforce it.
+Create `profile/` and `profile/programs/` if they do not exist. Write both files shaped exactly by
+`schema/profile.schema.json` and `schema/program.schema.json` — key order matters for readability
+even though the schema does not enforce it.
 
 - `profile.json`: `$schema_version`, `created_at`, `updated_at` (both the current UTC time as
   `YYYY-MM-DDTHH:MM:SSZ` on a first write), `user`, `units`, `basics`, `experience`, `gym`,
   `strength_benchmarks`.
-- `programs/program-<date>.json`: `$schema_version`, `created_at` (current UTC time),
-  `profile_slug`, `program`. Leave `volume` absent or `null` — filling it is the next step, not
-  this one.
+- `programs/program-<date>.json`: `$schema_version`, `created_at` (current UTC time), `program`.
+  Leave `volume` absent or `null` — filling it is the next step, not this one.
 
 Then run the volume step (`SKILL.md` step 5). Whether or not it succeeds, tell the person where
 both files went, and that the workout-generation skill will use the program answers as defaults
@@ -98,13 +78,13 @@ approximate from memory, and a wrong number is worse than a missing one. Instead
 1. Write `profile.json` and the program file exactly as above, with `volume` left `null`.
 2. Tell the person plainly that the volume block could not be computed here, and give them the
    exact command to run it themselves later:
-   `python skills/onboarding/scripts/volume.py --profile profiles/<slug>/profile.json --write profiles/<slug>/programs/program-<date>.json`
+   `python skills/onboarding/scripts/volume.py --profile profile/profile.json --write profile/programs/program-<date>.json`
 3. Do not block on this. A program file with `volume: null` is schema-valid and usable.
 
 ## Updating an existing profile
 
-Resolve the profile first, exactly as in [Resolving a profile](#resolving-a-profile). Then ask
-only about what they named — "change my weight to 82" needs no questions at all, just a
+Confirm this is an update and not a fresh start, as in
+[If a profile already exists](#if-a-profile-already-exists). Then ask only about what they named — "change my weight to 82" needs no questions at all, just a
 confirmation. If the request is vague ("update my profile"), offer a group picker — Basics · Gym ·
 Program · Benchmarks — and re-run only that batch. This is never a full re-interview.
 
@@ -122,12 +102,8 @@ not changed keeps its exact value, including `profile.json`'s `created_at`. Bump
 - **Changing `units` converts the measurements, it does not relabel them.** See
   [Unit conversion](#unit-conversion).
 - **Changing `date_of_birth` touches nothing else** — age is derived at read time, never stored.
-- **Changing the name re-slugs the directory.** Move the whole directory, not just
-  `profile.json` — it also holds `programs/` and, eventually, `plans/`, and copying one file out
-  before deleting the rest destroys the others. Rename `profiles/<old-slug>/` to
-  `profiles/<new-slug>/`, then update `user.name` and `user.slug` inside the file. If the
-  directory cannot be moved, leave it untouched and say plainly that the rename did not happen —
-  never delete the old one first.
+- **Changing the name touches nothing else either.** `user.name` is a label, not a path — no
+  directory moves, nothing is renamed on disk.
 
 ## Validation
 
@@ -144,9 +120,9 @@ not changed keeps its exact value, including `profile.json`'s `created_at`. Bump
   number, not an invented range.
 - **Echoing before writing is mandatory**, including both target paths. No first-pass write
   without the person seeing the summary.
-- **Write only to `profiles/<slug>/profile.json`** and `profiles/<slug>/programs/program-<date>.json`.
-  Never to `docs/`, never to `skills/`, never to another person's directory. Never modify anything
-  under `skills/onboarding/examples/` — those are the shipped schema samples.
+- **Write only to `profile/profile.json`** and `profile/programs/program-<date>.json`. Never to
+  `docs/`, never to `skills/`, never to `profile/plans/` (the generation skill owns that). Never
+  modify anything under `skills/onboarding/examples/` — those are the shipped schema samples.
 
 ## Unit conversion
 
@@ -162,8 +138,6 @@ Round to one decimal. 178 cm becomes 70.1 in, not 178 in.
 
 A future workout-generation skill consumes these files. It will:
 
-- **Resolve a profile the same way** this skill does — same name argument, same
-  ask-when-ambiguous rule, same slug derivation.
 - **Read `profile.json` without asking:** `user.name`, `basics.*` (deriving age from
   `date_of_birth`), `experience.*`, `gym.type`, `strength_benchmarks.*`.
 - **Read the latest `programs/program-*.json` and re-confirm in one pre-filled batch:**
@@ -171,7 +145,7 @@ A future workout-generation skill consumes these files. It will:
   `program.deload`. Keeping all of them is one click.
 - **Never write to `profile.json`.** If any `scope: profile` field needs to change, it points the
   person at this skill's update path instead of doing it itself.
-- **Write its own output under `profiles/<slug>/plans/`** — never under `programs/`, which belongs
-  to this skill's answers.
+- **Write its own output under `profile/plans/`** — never under `programs/`, which belongs to
+  this skill's answers.
 - **Fail loudly when no profile exists**, telling the person to run onboarding first rather than
   interviewing them itself.

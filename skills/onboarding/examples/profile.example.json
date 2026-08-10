@@ -1,10 +1,9 @@
 {
-  "$schema_version": "1.0",
+  "$schema_version": "2.0",
   "created_at": "2026-08-03T14:22:00Z",
   "updated_at": "2026-08-03T14:22:00Z",
   "user": {
-    "name": "Samy",
-    "slug": "samy"
+    "name": "Samy"
   },
   "units": "metric",
   "basics": {

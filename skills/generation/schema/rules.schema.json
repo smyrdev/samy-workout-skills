@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/smyrdev/samy-workout-skills/skills/generation/schema/rules.schema.json",
   "title": "Personal generation rules",
-  "description": "profiles/<slug>/rules.json — hand-written by the person, read (never written) by the generation skill. Every section is optional: anything absent falls back to default_rules in skills/generation/scripts/generate.config.json, and present sections override the default key-by-key.",
+  "description": "profile/rules.json — hand-written by the person, read (never written) by the generation skill. Every section is optional: anything absent falls back to default_rules in skills/generation/scripts/generate.config.json, and present sections override the default key-by-key.",
   "type": "object",
   "required": ["$schema_version"],
   "additionalProperties": false,

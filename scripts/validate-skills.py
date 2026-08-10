@@ -676,9 +676,10 @@ def main():
             SKILL_DIR / "examples" / "program.example.json", program_schema, "program example"
         )
 
-        for profile_path in sorted((ROOT / "profiles").glob("*/profile.json")):
+        profile_path = ROOT / "profile" / "profile.json"
+        if profile_path.exists():
             validate_file_against_schema(profile_path, profile_schema, str(profile_path))
-        for program_path in sorted((ROOT / "profiles").glob("*/programs/*.json")):
+        for program_path in sorted((ROOT / "profile" / "programs").glob("*.json")):
             validate_file_against_schema(program_path, program_schema, str(program_path))
 
         check_volume_config_coverage(profile_schema, program_schema)
@@ -701,9 +702,10 @@ def main():
             GEN_DIR / "examples" / "rules.example.json", rules_schema, "rules example"
         )
 
-        for plan_path in sorted((ROOT / "profiles").glob("*/plans/*.json")):
+        for plan_path in sorted((ROOT / "profile" / "plans").glob("*.json")):
             validate_file_against_schema(plan_path, plan_schema, str(plan_path))
-        for rules_path in sorted((ROOT / "profiles").glob("*/rules.json")):
+        rules_path = ROOT / "profile" / "rules.json"
+        if rules_path.exists():
             validate_file_against_schema(rules_path, rules_schema, str(rules_path))
 
     check_script_self_test(SKILL_DIR / "scripts" / "volume.py", "volume.py")
