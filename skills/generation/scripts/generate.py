@@ -460,19 +460,40 @@ def dataset_commit(dataset_dir):
     return result.stdout.strip() or None
 
 
+# A program file is machine-written but hand-editable, so "present but
+# incomplete" is an expected input. These are the keys this script reads out of
+# it; anything missing is refused by name rather than met with a KeyError.
+PROGRAM_REQUIRED = ("split", "days_per_week", "primary_goal")
+VOLUME_REQUIRED = ("equipment_tier", "exercises_per_session",
+                   "sets_per_exercise", "per_muscle_weekly_sets")
+VOLUME_HINT = ("  python skills/onboarding/scripts/volume.py "
+               "--profile <profile.json> --write <program.json>")
+
+
 def generate_plan(profile, program_data, records, ds_name, ds, rules, config,
                   today, commit=None):
     program = program_data.get("program")
     if not isinstance(program, dict):
         fail_input("program file has no \"program\" object")
+    missing = [k for k in PROGRAM_REQUIRED if k not in program]
+    if missing:
+        fail_input(f"program block missing keys: {', '.join(missing)} — the onboarding "
+                   f"skill writes this file; it is not hand-built")
+
     volume_block = program_data.get("volume")
     if not isinstance(volume_block, dict):
         fail_input(
-            "program file has no volume block — run volume.py first:\n"
-            "  python skills/onboarding/scripts/volume.py --profile <profile.json> "
-            "--write <program.json>"
+            "program file has no volume block — run volume.py first:\n" + VOLUME_HINT
         )
+    missing = [k for k in VOLUME_REQUIRED if k not in volume_block]
+    if missing:
+        fail_input(f"volume block missing keys: {', '.join(missing)} — rerun volume.py "
+                   f"to rebuild it:\n" + VOLUME_HINT)
+
     slug = program_data.get("profile_slug")
+    if not isinstance(slug, str) or not slug:
+        fail_input("program file has no profile_slug — the onboarding skill writes it, "
+                   "and a plan without one does not match plan.schema.json")
     benchmarks = profile.get("strength_benchmarks", {})
 
     warnings = []
