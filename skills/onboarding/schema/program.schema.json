@@ -2,9 +2,9 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/smyrdev/samy-workout-skills/skills/onboarding/schema/program.schema.json",
   "title": "Program answers",
-  "description": "profiles/<slug>/programs/program-YYYY-MM-DD.json — one per training block, written by the onboarding skill. volume is filled by scripts/volume.py and is optional: absent or null is a valid, unscaled file.",
+  "description": "profile/programs/program-YYYY-MM-DD.json — one per training block, written by the onboarding skill. volume is filled by scripts/volume.py and is optional: absent or null is a valid, unscaled file.",
   "type": "object",
-  "required": ["$schema_version", "created_at", "profile_slug", "program"],
+  "required": ["$schema_version", "created_at", "program"],
   "additionalProperties": false,
   "properties": {
     "$schema_version": { "const": "1.0" },
@@ -12,7 +12,6 @@
       "type": "string",
       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
     },
-    "profile_slug": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
     "program": {
       "type": "object",
       "required": [

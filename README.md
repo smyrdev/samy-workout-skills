@@ -26,13 +26,16 @@ account, and no install. The repository is the whole thing.
 > Read `skills/generation/SKILL.md` and follow it.
 
 Onboarding asks about twenty questions in five or six rounds, shows a summary before anything is
-saved, and ends up with two files: `profiles/<your-name>/profile.json` and
-`profiles/<your-name>/programs/program-<today>.json`.
+saved, and ends up with two files: `profile/profile.json` and
+`profile/programs/program-<today>.json`.
 
 Generation re-confirms your program answers ("same as last time" is one click), clones the
 exercise dataset into a local cache, fits exercises to your computed weekly per-muscle set
 allocation, shows you the week and the volume math before writing, and saves
-`profiles/<your-name>/plans/plan-<today>.json` plus a readable `plan-<today>.md`.
+`profile/plans/plan-<today>.json` plus a readable `plan-<today>.md`.
+
+One repository holds one profile. If someone else wants to use these skills, they clone their own
+copy — there is nothing to share and nothing to keep separate.
 
 ## What it asks
 
@@ -52,35 +55,19 @@ file alongside the old one.
 Nothing is written until you have seen a summary of every answer and the exact paths it is about
 to write.
 
-## Several people, one repository
-
-Each person gets a directory:
-
-```
-profiles/
-├── samy/
-│   ├── profile.json
-│   └── programs/
-│       └── program-2026-08-06.json
-└── sara/
-    ├── profile.json
-    └── programs/
-        └── program-2026-09-01.json
-```
-
-Run `/onboard sara` to go straight to a profile. Run `/onboard` with no name and it asks who you
-are — it never picks a default, because writing to someone else's profile fails silently.
-
-To change something later:
+## Changing something later
 
 ```
 /onboard --update
-/onboard sara --update
 ```
 
 That asks only about the fields you name. A change to a profile field (body stats, gym,
 experience) edits `profile.json` in place; a change to a program field (goal, days, split, ...)
 writes a new dated file under `programs/` instead of touching the old one.
+
+Run `/onboard` with no flag when a profile already exists and it stops to ask whether you meant to
+change a few fields or start over — a fresh interview overwrites `profile.json`, so it is never
+assumed.
 
 ## Hand-fill path — no interview
 
@@ -88,9 +75,9 @@ You can skip the interview entirely: copy the samples, edit them by hand using
 [`skills/onboarding/FIELDS.md`](skills/onboarding/FIELDS.md) as a guide, and validate.
 
 ```bash
-mkdir -p profiles/samy/programs
-cp skills/onboarding/examples/profile.example.json profiles/samy/profile.json
-cp skills/onboarding/examples/program.example.json profiles/samy/programs/program-2026-08-06.json
+mkdir -p profile/programs
+cp skills/onboarding/examples/profile.example.json profile/profile.json
+cp skills/onboarding/examples/program.example.json profile/programs/program-2026-08-06.json
 # edit both by hand
 python scripts/validate-skills.py
 ```
@@ -98,8 +85,8 @@ python scripts/validate-skills.py
 That's a complete, schema-valid pair of files on its own — `volume` is optional. To fill it in:
 
 ```bash
-python skills/onboarding/scripts/volume.py --profile profiles/samy/profile.json \
-  --write profiles/samy/programs/program-2026-08-06.json
+python skills/onboarding/scripts/volume.py --profile profile/profile.json \
+  --write profile/programs/program-2026-08-06.json
 ```
 
 ## The exercise dataset
@@ -119,7 +106,7 @@ different dataset and nothing else changes.
 
 ## Your rules
 
-`profiles/<slug>/rules.json` is a hand-written file of standing preferences the generator reads
+`profile/rules.json` is a hand-written file of standing preferences the generator reads
 on every run: exercises or equipment to never use, muscle groups to focus or drop, how sessions
 are ordered. Copy
 [`skills/generation/examples/rules.example.json`](skills/generation/examples/rules.example.json)
@@ -128,16 +115,16 @@ Typos are reported as warnings in the plan, never silently ignored.
 
 ## Where your data lives
 
-`profiles/` is gitignored in full. Your body stats are never committed, even by accident.
+`profile/` is gitignored in full. Your body stats are never committed, even by accident.
 
-- `profiles/<slug>/profile.json` — who you are: body stats, experience, gym. Written once,
-  updated in place when something about you changes.
-- `profiles/<slug>/programs/program-<date>.json` — what you want this cycle: goal, days, split,
-  and (once `volume.py` has run) a computed weekly per-muscle set allocation. One file per
-  training block; the highest-dated filename is the current one.
-- `profiles/<slug>/rules.json` — your standing generation preferences, written by you alone.
-- `profiles/<slug>/plans/plan-<date>.json` + `.md` — generated plans, one dated pair per run,
-  never overwritten. The `.md` is yours to scribble on.
+- `profile/profile.json` — who you are: body stats, experience, gym. Written once, updated in
+  place when something about you changes.
+- `profile/programs/program-<date>.json` — what you want this cycle: goal, days, split, and (once
+  `volume.py` has run) a computed weekly per-muscle set allocation. One file per training block;
+  the highest-dated filename is the current one.
+- `profile/rules.json` — your standing generation preferences, written by you alone.
+- `profile/plans/plan-<date>.json` + `.md` — generated plans, one dated pair per run, never
+  overwritten. The `.md` is yours to scribble on.
 
 The schema lives at
 [`skills/onboarding/schema/profile.schema.json`](skills/onboarding/schema/profile.schema.json) and
@@ -163,7 +150,7 @@ Your files are plain JSON you can read, edit, back up, or delete. Nothing else t
 ## Roadmap
 
 - ~~Workout generation reading `profile.json` and the latest `programs/*.json`, writing under
-  `profiles/<slug>/plans/`~~ — built, see `/generate`
+  `profile/plans/`~~ — built, see `/generate`
 - Item-level equipment selection, seeded by gym type
 - Session logging and progression
 
@@ -172,7 +159,7 @@ Your files are plain JSON you can read, edit, back up, or delete. Nothing else t
 ```
 skills/onboarding/SKILL.md              the interview flow — vendor-neutral, pointers only
 skills/onboarding/questions.yaml         the interview content
-skills/onboarding/rules.md               resolution, validation, updating rules
+skills/onboarding/rules.md               validation, updating, echo-before-write rules
 skills/onboarding/FIELDS.md              hand-editing guide
 skills/onboarding/schema/                the schema, machine-readable
 skills/onboarding/examples/              copy-to-start samples
@@ -192,7 +179,7 @@ scripts/validate-skills.py               validates both skills against their own
 docs/schema.md                           profile/program fields, and the "why"
 docs/generation.md                       the generator's "why": descriptor, fit, cache
 docs/onboarding.md                       the original hand-written spec, kept as-is
-profiles/                                your data, gitignored
+profile/                                 your data, gitignored
 datasets/                                cloned exercise datasets, gitignored cache
 ```
 

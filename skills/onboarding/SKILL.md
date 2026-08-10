@@ -5,14 +5,15 @@ description: "Use when someone is setting up a training profile for the first ti
 
 # Training profile onboarding
 
-Interview one person and save their answers, so a workout generator can read them instead of
-asking twenty questions every cycle. Written to be run by any capable LLM agent — nothing here
-depends on a particular vendor, and every path below is relative to the repository root.
+Interview the person and save their answers, so a workout generator can read them instead of
+asking twenty questions every cycle. One repository holds one profile, at `profile/`. Written to
+be run by any capable LLM agent — nothing here depends on a particular vendor, and every path
+below is relative to the repository root.
 
 ## Flow
 
-1. **Resolve whose profile this is** — `rules.md` § Resolving a profile. Stop and ask before
-   assuming; there is no default profile and no last-used memory.
+1. **Check whether `profile/profile.json` already exists** — `rules.md` § If a profile already
+   exists. A fresh interview overwrites it; never start over on an inferred intent.
 2. **Ask the questions in `questions.yaml`, in `batch` order.** Offer each entry's `options`;
    always accept a free-text answer instead (its `escape`). Store the `value`, never the label.
    Follow each entry's `notes` — that is where the validation rules live.

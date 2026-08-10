@@ -17,12 +17,8 @@ UTC timestamp, `"YYYY-MM-DDTHH:MM:SSZ"`. On a brand-new profile these are identi
 `created_at` alone after that; bump `updated_at` whenever you edit anything else.
 
 ### `user.name`
-Free text, exactly as you'd want it displayed. Accents and case are kept as typed.
-
-### `user.slug`
-Lowercase, hyphenated version of the name, and must match the directory it lives in
-(`profiles/<slug>/`). Spaces and underscores become hyphens; anything outside `a-z0-9-` is
-dropped. `Jean Luc` → `jean-luc`.
+Free text, exactly as you'd want it displayed. Accents and case are kept as typed. It is a label
+only — no file or directory is named after it, so changing it is safe.
 
 ### `units`
 `"metric"` or `"imperial"`. Controls what `unit` is expected inside `height` and `weight` below —
@@ -71,10 +67,6 @@ clearing 5.
 Same rules as in `profile.json`. `created_at` here is when this particular program file was
 written, not when the profile was created.
 
-### `profile_slug`
-Must match the `user.slug` of the profile this program belongs to, and the directory it sits
-under (`profiles/<slug>/programs/`).
-
 ### `program.name`
 Free text, 1-60 characters. Whatever you want to call this training block.
 
@@ -103,8 +95,8 @@ Leave this out, or set it to `null`. It's the computed weekly per-muscle set all
 `scripts/volume.py`, not something to hand-write. Run:
 
 ```
-python skills/onboarding/scripts/volume.py --profile profiles/<slug>/profile.json \
-  --write profiles/<slug>/programs/program-<date>.json
+python skills/onboarding/scripts/volume.py --profile profile/profile.json \
+  --write profile/programs/program-<date>.json
 ```
 
 If you do want to hand-inspect the shape, `examples/program.example.json` has a filled-in one —

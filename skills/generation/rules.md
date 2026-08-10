@@ -6,8 +6,8 @@ the dataset cache works, what to say before writing, and what this skill must ne
 
 ## Program answers and volume
 
-The inputs are the person's `profiles/<slug>/profile.json` and the **latest** file under
-`profiles/<slug>/programs/` (latest = filename sorts highest — the same rule onboarding uses).
+The inputs are `profile/profile.json` and the **latest** file under `profile/programs/`
+(latest = filename sorts highest — the same rule onboarding uses).
 The program file's `volume` block is the contract between the two skills: `volume.py` (onboarding)
 computes how many weekly sets each muscle group gets; this skill decides which exercises deliver
 them. **Targets are never computed or adjusted here** — one owner per number.
@@ -16,16 +16,16 @@ If the program file has no volume block (or `volume: null`), do not estimate one
 onboarding volume step first:
 
 ```
-python skills/onboarding/scripts/volume.py --profile profiles/<slug>/profile.json \
-  --write profiles/<slug>/programs/program-<date>.json
+python skills/onboarding/scripts/volume.py --profile profile/profile.json \
+  --write profile/programs/program-<date>.json
 ```
 
 The generator itself refuses to run without it, with this same instruction.
 
 ## Personal rules
 
-`profiles/<slug>/rules.json` is the person's own, hand-written file — excluded exercises or
-equipment, muscle groups to focus or drop, exercise ordering. Shaped by
+`profile/rules.json` is the person's own, hand-written file — excluded exercises or equipment,
+muscle groups to focus or drop, exercise ordering. Shaped by
 `schema/rules.schema.json`, explained field-by-field in `FIELDS.md`, sample at
 `examples/rules.example.json`.
 
@@ -36,7 +36,7 @@ equipment, muscle groups to focus or drop, exercise ordering. Shaped by
   file → its sections override the defaults key-by-key; anything it does not mention keeps the
   default.
 - A one-off request ("no squats this cycle") is a `--rules` file passed for that run only — it
-  does not have to live at `profiles/<slug>/rules.json` to be honored.
+  does not have to live at `profile/rules.json` to be honored.
 
 Unknown names in the rules file (a typo, an exercise the dataset does not have) come back as
 warnings in the plan — surface them to the person; never silently drop a rule.
@@ -63,14 +63,14 @@ generator refuses a dataset whose vocabulary is not fully mapped rather than gue
 
 ```
 python skills/generation/scripts/generate.py \
-  --profile profiles/<slug>/profile.json \
-  --program profiles/<slug>/programs/program-<date>.json \
+  --profile profile/profile.json \
+  --program profile/programs/program-<date>.json \
   --dataset-dir datasets/<name> \
-  --write profiles/<slug>/plans/plan-<today>.json \
-  --write-md profiles/<slug>/plans/plan-<today>.md
+  --write profile/plans/plan-<today>.json \
+  --write-md profile/plans/plan-<today>.md
 ```
 
-Add `--rules profiles/<slug>/rules.json` when that file exists. Plan filenames use today's date;
+Add `--rules profile/rules.json` when that file exists. Plan filenames use today's date;
 if the name is taken (a same-day re-run), suffix `-2`, then `-3` — the generator refuses to
 overwrite an existing plan, and so does this skill. Old plans are records; they are never edited
 and never deleted by this skill.
@@ -104,10 +104,10 @@ hand-edit an exercise into the generator's output. If they abandon here, write n
 
 ## What this skill never does
 
-- Never writes to `profile.json`, to `programs/`, to `rules.json`, to `datasets.json`, or to
-  another person's directory. Its entire writable surface is `profiles/<slug>/plans/`.
+- Never writes to `profile.json`, to `programs/`, to `rules.json`, or to `datasets.json`. Its
+  entire writable surface is `profile/plans/`.
 - Never re-interviews. Profile changes go through onboarding.
 - Never computes or adjusts volume targets — that is `volume.py`'s job alone.
-- Never commits the dataset cache or anything under `profiles/`.
+- Never commits the dataset cache or anything under `profile/`.
 - Never hides a shortfall. If the targets cannot be met with the available equipment and rules,
   the plan says so in `warnings` and the person hears it in the echo step.
