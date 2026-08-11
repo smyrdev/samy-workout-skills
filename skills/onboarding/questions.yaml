@@ -27,9 +27,8 @@
   stores: user.name
   type: text
   notes: |
-    Skip this question if the profile was already resolved (rules.md § Resolving a profile) —
-    do not ask twice. Store verbatim, including case and accents. Also derive user.slug from it
-    (rules.md § Slug rules).
+    Store verbatim, including case and accents. It is a display label only — nothing on disk is
+    named after it.
 
 - id: sex
   scope: profile

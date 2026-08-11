@@ -43,9 +43,9 @@ Exit code 0 = pass, non-zero = failure. Default budget is 120s per file, 900s wi
 ### test-validate-skills.sh
 Runs `scripts/validate-skills.py` so this suite is the single command that checks everything. The
 validator is wired in, not re-implemented — it stays the sole owner of the static contracts above.
-It runs with `--skills-only`, which skips the gitignored real profiles under `profiles/`: user
+It runs with `--skills-only`, which skips the gitignored real profile under `profile/`: user
 data no other machine has must never fail a suite that runs clean everywhere else. Run the
-validator bare to check real profiles too.
+validator bare to check the real profile too.
 
 ### test-runner.sh
 `run-skill-tests.sh`'s own gates: an unknown `--test` name is an error rather than a skip, a
@@ -65,7 +65,7 @@ Prose regressions in the onboarding skill, all by literal grep:
 - it still points at `questions.yaml`, `rules.md`, the schemas and `volume.py`
 - `.claude/skills/onboard/SKILL.md` stays a pointer with three bindings, not a second copy of the
   flow
-- `rules.md` keeps the rules that stop silent damage: no default profile, echo-before-write, an
+- `rules.md` keeps the rules that stop silent damage: the overwrite guard, echo-before-write, an
   update is not a re-interview, the shipped examples are off limits, and the exact unit-conversion
   constants
 - `questions.yaml` keeps the profile/program scope split
@@ -113,8 +113,8 @@ tokens, so this file asserts only what is left over:
 - every unknown value — dataset name, muscle, equipment tier, split, goal, rules key, order rule —
   is refused rather than guessed, and the message names the file to fix
 - a hand-edited program file that is present but incomplete — an empty or partial volume block, an
-  empty program block, a missing render-only key like `emoji`, a missing `profile_slug` — is an
-  input error naming the missing key, never a traceback and never a schema-invalid plan on disk
+  empty program block, a missing render-only key like `emoji` — is an input error naming the
+  missing key, never a traceback and never a schema-invalid plan on disk
 - unmatched rule entries are warnings, not failures, and reach both the JSON and the render
 - the markdown render carries the volume table, each day, the deload note and the short flag
 

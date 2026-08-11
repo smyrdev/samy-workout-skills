@@ -50,7 +50,7 @@ assert_file_not_contains "$WRAPPER" "upper_lower" "holds no enum values either"
 echo ""
 
 echo "rules.md keeps the safety rules"
-assert_file_contains "$RULES" "no default profile and no last-used memory" "no default profile"
+assert_file_contains "$RULES" "before asking anything else" "the overwrite guard comes first"
 assert_file_contains "$RULES" "Echoing before writing is mandatory" "echo before write is mandatory"
 assert_file_contains "$RULES" "never a full re-interview" "an update is not a re-interview"
 assert_file_contains "$RULES" "skills/onboarding/examples/" "the shipped examples are off limits"

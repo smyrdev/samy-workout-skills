@@ -9,9 +9,9 @@
 # schemas, the shipped examples validating, and volume.config.json covering
 # every schema enum.
 #
-# --skills-only keeps the gitignored profiles/ out of it: they are user data no
+# --skills-only keeps the gitignored profile/ out of it: it is user data no
 # other machine has, and a hand-edited local profile must not fail a suite that
-# runs clean everywhere else. Run the validator bare to check real profiles.
+# runs clean everywhere else. Run the validator bare to check the real profile.
 #
 # It is silent on success and prints "FAIL: <what>" lines on failure, so the
 # assertion below is the exit code and the output is the diagnosis.

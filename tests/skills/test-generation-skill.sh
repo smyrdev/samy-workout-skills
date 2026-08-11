@@ -55,7 +55,7 @@ assert_file_contains "$SKILL" "FIELDS.md" "points at the hand-editing guide"
 assert_file_contains "$SKILL" "examples/rules.example.json" "points at the rules sample"
 assert_file_contains "$SKILL" "skills/onboarding/rules.md" \
     "reuses onboarding's profile resolution instead of forking it"
-assert_file_contains "$SKILL" "profiles/<slug>/plans/" "names its only writable surface"
+assert_file_contains "$SKILL" "profile/plans/" "names its only writable surface"
 assert_file_contains "$SKILL" "never interview" "says it never interviews"
 echo ""
 
@@ -72,7 +72,7 @@ assert_file_not_contains "$WRAPPER" "must_include_first" "holds no order rule na
 echo ""
 
 echo "rules.md keeps the write-ownership boundary"
-assert_file_contains "$RULES" 'Its entire writable surface is `profiles/<slug>/plans/`.' \
+assert_file_contains "$RULES" 'entire writable surface is `profile/plans/`.' \
     "plans/ is the whole writable surface"
 assert_file_contains "$RULES" "**This skill reads it and never writes it.**" \
     "rules.json belongs to the person"
@@ -87,7 +87,7 @@ assert_file_contains "$RULES" "**Targets are never computed or adjusted here**" 
     "targets have exactly one owner"
 assert_file_contains "$RULES" "Never computes or adjusts volume targets" \
     "and says so again in the never-do list"
-assert_file_contains "$RULES" "volume.py --profile profiles/<slug>/profile.json" \
+assert_file_contains "$RULES" "volume.py --profile profile/profile.json" \
     "hands back the exact volume.py command"
 assert_file_contains "$RULES" "never in the script and never in prose" \
     "tunables live in the config alone"

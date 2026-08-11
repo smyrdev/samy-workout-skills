@@ -6,7 +6,7 @@
 skills/onboarding/
   SKILL.md                    the flow, as pointers. Rarely edited.
   questions.yaml               the interview — edit to change what is asked
-  rules.md                     profile resolution, validation, updating, echo-before-write
+  rules.md                     validation, updating, echo-before-write, overwrite guard
   FIELDS.md                    "what do I type here", for hand-editing a profile
   schema/profile.schema.json   machine contract for profile.json
   schema/program.schema.json   machine contract for programs/program-*.json
@@ -20,7 +20,7 @@ skills/generation/
   FIELDS.md                    hand-editing guide for rules.json and plan files
   datasets.json                dataset registry — ALL dataset-specific knowledge lives here
   schema/plan.schema.json      machine contract for plans/plan-*.json
-  schema/rules.schema.json     machine contract for profiles/<slug>/rules.json
+  schema/rules.schema.json     machine contract for profile/rules.json
   examples/                    copy-to-start samples (plan is genuine generator output)
   scripts/generate.py          the fitting algorithm — no numbers, no dataset field names
   scripts/generate.config.json every dataset-independent number and default rule
@@ -32,15 +32,15 @@ tests/skills/                  bash suite — script CLIs, prose policy, agent b
 docs/schema.md                 rationale: why the profile/program schema looks the way it does
 docs/generation.md             rationale: descriptor format, fitting model, cache design
 docs/onboarding.md             original hand-written spec — left untouched, see below
-profiles/                      user data — gitignored
+profile/                       user data — gitignored
 datasets/                      cloned exercise datasets — a gitignored local cache
 ```
 
-`profiles/<slug>/profile.json` is written once. `profiles/<slug>/programs/program-YYYY-MM-DD.json`
-holds one file per training block — the onboarding skill's answers, including the volume block
-`volume.py` computes. `profiles/<slug>/plans/` holds what the generation skill produces, one dated
-pair (`.json` + `.md`) per run. `profiles/<slug>/rules.json` is the person's hand-written
-generation preferences. The directories never blur.
+`profile/profile.json` is written once.
+`profile/programs/program-YYYY-MM-DD.json` holds one file per training block — the onboarding
+skill's answers, including the volume block `volume.py` computes. `profile/plans/` holds what the
+generation skill produces, one dated pair (`.json` + `.md`) per run. `profile/rules.json` is the
+person's hand-written generation preferences. The directories never blur.
 
 ## Commands
 
@@ -50,16 +50,18 @@ bash tests/skills/run-skill-tests.sh                                 # offline t
 python skills/onboarding/scripts/volume.py --self-test                # volume model self-test
 python skills/generation/scripts/generate.py --self-test              # generator self-test, offline
 git clone --depth 1 https://github.com/smyrdev/exercises-dataset datasets/exercises-dataset
-cp skills/onboarding/examples/profile.example.json profiles/<slug>/profile.json   # hand-fill path
+cp skills/onboarding/examples/profile.example.json profile/profile.json   # hand-fill path
 ```
 
 ## Rules
 
-- `profiles/` is user data. It is gitignored in full except `.gitkeep` — never commit a real
+- `profile/` is user data. It is gitignored in full except `.gitkeep` — never commit a real
   profile, never suggest force-adding one.
-- Write ownership under `profiles/<slug>/` is split three ways and never crossed: onboarding
-  writes `profile.json` and `programs/`; generation writes `plans/` only; `rules.json` is written
-  by the person alone — generation reads it and offers snippets, never edits it.
+- Write ownership under `profile/` is split three ways and never crossed: onboarding writes
+  `profile.json` and `programs/`; generation writes `plans/` only; `rules.json` is written by the
+  person alone — generation reads it and offers snippets, never edits it.
+- One repository holds one profile. There is no slug, no per-person directory, and no "which
+  person is this?" step — `user.name` is a display label, not a path. Do not reintroduce one.
 - One owner per number: `volume.py` computes the per-muscle weekly set allocation, `generate.py`
   consumes it. Generation never recomputes or adjusts targets, and refuses a program file whose
   volume block is missing or incomplete rather than estimating one.

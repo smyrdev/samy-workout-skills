@@ -1,7 +1,7 @@
-# Personal profiles are user data, never committed.
+# The personal profile is user data, never committed.
 # The schema lives at skills/onboarding/examples/profile.example.json instead.
-profiles/*
-!profiles/.gitkeep
+profile/*
+!profile/.gitkeep
 
 # Exercise dataset clones are a local cache, described by skills/generation/datasets.json.
 datasets/

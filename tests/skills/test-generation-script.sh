@@ -141,7 +141,7 @@ echo "Without --write the plan goes to stdout"
 run_default
 assert_exit_code 0 "$code" "prints the plan when --write is absent"
 assert_contains "$out" '"sessions"' "stdout is the plan JSON"
-assert_contains "$out" '"profile_slug": "samy"' "carries the slug from the program file"
+assert_contains "$out" '"name": "Samy"' "carries the user's name from the profile"
 assert_contains "$out" '"commit": null' "records a null commit for a non-git dataset dir"
 assert_order "$out" '"chest"' '"back"' "targets are in canonical order (chest before back)"
 assert_order "$out" '"calves"' '"core"' "targets are in canonical order (calves before core)"
@@ -278,13 +278,6 @@ run_generate --profile "$PROFILE" --program "$PROJECT/no-emoji.json" --dataset-d
 assert_exit_code 3 "$code" "a program block missing a render-only key is an input error"
 assert_contains "$out" "emoji" "names the missing key"
 
-# Without this, the run exits 0 and writes a plan carrying "profile_slug": null
-# — which plan.schema.json rejects, and which rules.md forbids this skill from
-# going back and touching.
-doctor "$PROGRAM" "$PROJECT/no-slug.json" "del d['profile_slug']"
-run_generate --profile "$PROFILE" --program "$PROJECT/no-slug.json" --dataset-dir "$PROJECT"
-assert_exit_code 3 "$code" "a program file with no profile_slug is an input error"
-assert_contains "$out" "profile_slug" "names the missing field"
 echo ""
 
 echo "Unknown dataset vocabulary is refused, never guessed"

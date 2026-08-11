@@ -492,11 +492,6 @@ def generate_plan(profile, program_data, records, ds_name, ds, rules, config,
     if missing:
         fail_input(f"volume block missing keys: {', '.join(missing)} — rerun volume.py "
                    f"to rebuild it:\n" + VOLUME_HINT)
-
-    slug = program_data.get("profile_slug")
-    if not isinstance(slug, str) or not slug:
-        fail_input("program file has no profile_slug — the onboarding skill writes it, "
-                   "and a plan without one does not match plan.schema.json")
     benchmarks = profile.get("strength_benchmarks", {})
 
     warnings = []
@@ -559,7 +554,7 @@ def generate_plan(profile, program_data, records, ds_name, ds, rules, config,
     return {
         "$schema_version": MODEL_VERSION,
         "created_at": f"{today.isoformat()}T00:00:00Z",
-        "profile_slug": slug,
+        "user": {"name": profile["user"]["name"]},
         "program": program,
         "dataset": {"name": ds_name, "repo": ds["repo"], "ref": ds["ref"], "commit": commit},
         "rules_applied": rules,
@@ -581,7 +576,7 @@ def render_markdown(plan):
                  f"· {program['split']} · goal: {program['primary_goal']}"
                  + (" · ends with a deload week" if plan["deload_week"] else ""))
     lines.append("")
-    lines.append(f"Generated {plan['created_at'][:10]} for `{plan['profile_slug']}` "
+    lines.append(f"Generated {plan['created_at'][:10]} for {plan['user']['name']} "
                  f"from dataset `{plan['dataset']['name']}`"
                  + (f" @ `{plan['dataset']['commit'][:9]}`" if plan["dataset"]["commit"] else "")
                  + ".")
@@ -627,6 +622,7 @@ def render_markdown(plan):
 
 def fixture_profile(pullups=True):
     return {
+        "user": {"name": "Fixture"},
         "strength_benchmarks": {
             "pullups_5": pullups, "pullups_10": False, "dips_10": True,
             "pushups_15": True, "bench_press_10": True,
@@ -651,7 +647,6 @@ def fixture_program_data(split="full_body", days=4, deload=True, volume=None):
     return {
         "$schema_version": "1.0",
         "created_at": "2026-08-06T00:00:00Z",
-        "profile_slug": "fixture",
         "program": {
             "name": "Fixture Block", "emoji": "🧪", "primary_goal": "hypertrophy",
             "days_per_week": days, "session_minutes": "60-90", "split": split,

@@ -9,8 +9,8 @@ Exits 0 with nothing printed on success. Exits 1 and prints one line per failure
 This is what keeps the thin-SKILL.md / externalized-rules split from silently rotting: nothing
 here is optional, everything here is checked.
 
---skills-only skips the gitignored real profiles under profiles/. The default run validates
-them too — useful by hand — but the test suite passes the flag, so a hand-edited local
+--skills-only skips the gitignored real profile under profile/. The default run validates
+it too — useful by hand — but the test suite passes the flag, so a hand-edited local
 profile can never fail a suite that other machines run clean.
 """
 
@@ -23,6 +23,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SKILL_DIR = ROOT / "skills" / "onboarding"
 GEN_DIR = ROOT / "skills" / "generation"
+PROFILE_DIR = ROOT / "profile"
 
 FAILURES = []
 
@@ -412,7 +413,9 @@ def _matches(instance, schema):
     return not errs
 
 
-def validate_file_against_schema(path, schema, label):
+def validate_file_against_schema(path, schema, label, required=True):
+    if not required and not path.is_file():
+        return
     data = load_json(path)
     if data is None:
         fail(f"{label}: not valid JSON")
@@ -688,9 +691,11 @@ def main():
         )
 
         if not skills_only:
-            for profile_path in sorted((ROOT / "profiles").glob("*/profile.json")):
-                validate_file_against_schema(profile_path, profile_schema, str(profile_path))
-            for program_path in sorted((ROOT / "profiles").glob("*/programs/*.json")):
+            validate_file_against_schema(
+                PROFILE_DIR / "profile.json", profile_schema, "profile/profile.json",
+                required=False
+            )
+            for program_path in sorted((PROFILE_DIR / "programs").glob("*.json")):
                 validate_file_against_schema(program_path, program_schema, str(program_path))
 
         check_volume_config_coverage(profile_schema, program_schema)
@@ -714,10 +719,12 @@ def main():
         )
 
         if not skills_only:
-            for plan_path in sorted((ROOT / "profiles").glob("*/plans/*.json")):
+            for plan_path in sorted((PROFILE_DIR / "plans").glob("*.json")):
                 validate_file_against_schema(plan_path, plan_schema, str(plan_path))
-            for rules_path in sorted((ROOT / "profiles").glob("*/rules.json")):
-                validate_file_against_schema(rules_path, rules_schema, str(rules_path))
+            validate_file_against_schema(
+                PROFILE_DIR / "rules.json", rules_schema, "profile/rules.json",
+                required=False
+            )
 
     check_script_self_test(SKILL_DIR / "scripts" / "volume.py", "volume.py")
     check_script_self_test(GEN_DIR / "scripts" / "generate.py", "generate.py")

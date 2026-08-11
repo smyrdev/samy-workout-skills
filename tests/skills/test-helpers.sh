@@ -315,7 +315,6 @@ create_test_profile() {
 {
   "$schema_version": "1.0",
   "created_at": "2026-08-06T09:15:00Z",
-  "profile_slug": "samy",
   "program": {
     "name": "Summer Build",
     "emoji": "💪",
@@ -343,6 +342,7 @@ export -f assert_count
 export -f assert_order
 export -f assert_file_contains
 export -f assert_file_not_contains
+export -f assert_file_absent
 export -f assert_exit_code
 export -f create_test_project
 export -f cleanup_test_project
