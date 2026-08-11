@@ -461,9 +461,12 @@ def dataset_commit(dataset_dir):
 
 
 # A program file is machine-written but hand-editable, so "present but
-# incomplete" is an expected input. These are the keys this script reads out of
-# it; anything missing is refused by name rather than met with a KeyError.
-PROGRAM_REQUIRED = ("split", "days_per_week", "primary_goal")
+# incomplete" is an expected input. The program block is echoed into the plan,
+# whose schema requires every one of these keys — so all of them are checked up
+# front, not just the ones the fitting code reads. Anything missing is refused
+# by name rather than met with a KeyError or a schema-invalid plan on disk.
+PROGRAM_REQUIRED = ("name", "emoji", "primary_goal", "days_per_week",
+                    "session_minutes", "split", "deload")
 VOLUME_REQUIRED = ("equipment_tier", "exercises_per_session",
                    "sets_per_exercise", "per_muscle_weekly_sets")
 VOLUME_HINT = ("  python skills/onboarding/scripts/volume.py "
@@ -818,11 +821,17 @@ def main(argv=None):
     plan = generate_plan(profile, program_data, records, ds_name, ds, rules,
                          config, today, commit=dataset_commit(dataset_dir))
 
-    if args.write:
-        out = Path(args.write)
-        if out.exists():
-            fail_usage(f"{args.write} already exists — plans are never overwritten; "
-                       f"pick the next -2/-3 suffix")
+    # Both targets are checked before either is written: a refused run must
+    # not leave an orphan half of the dated .json/.md pair behind.
+    out = Path(args.write) if args.write else None
+    out_md = Path(args.write_md) if args.write_md else None
+    if out and out.exists():
+        fail_usage(f"{args.write} already exists — plans are never overwritten; "
+                   f"pick the next -2/-3 suffix")
+    if out_md and out_md.exists():
+        fail_usage(f"{args.write_md} already exists — pick the next -2/-3 suffix")
+
+    if out:
         out.parent.mkdir(parents=True, exist_ok=True)
         with out.open("w", encoding="utf-8") as f:
             json.dump(plan, f, indent=2, ensure_ascii=False)
@@ -831,10 +840,7 @@ def main(argv=None):
     else:
         print(json.dumps(plan, indent=2, ensure_ascii=False))
 
-    if args.write_md:
-        out_md = Path(args.write_md)
-        if out_md.exists():
-            fail_usage(f"{args.write_md} already exists — pick the next -2/-3 suffix")
+    if out_md:
         out_md.parent.mkdir(parents=True, exist_ok=True)
         out_md.write_text(render_markdown(plan), encoding="utf-8")
         print(f"wrote {args.write_md}")

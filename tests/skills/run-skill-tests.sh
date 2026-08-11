@@ -28,11 +28,11 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --test|-t)
-            SPECIFIC_TEST="$2"
+            SPECIFIC_TEST="${2:?--test needs a test file name}"
             shift 2
             ;;
         --timeout)
-            TIMEOUT="$2"
+            TIMEOUT="${2:?--timeout needs a number of seconds}"
             shift 2
             ;;
         --integration|-i)
@@ -51,6 +51,7 @@ while [[ $# -gt 0 ]]; do
             echo ""
             echo "Offline tests:"
             echo "  test-validate-skills.sh    scripts/validate-skills.py, the static contracts"
+            echo "  test-runner.sh             this runner's own gates"
             echo "  test-agent-harness.sh      run_claude itself, against a fake CLI"
             echo "  test-onboarding-skill.sh   onboarding SKILL.md / rules.md policy regressions"
             echo "  test-onboarding-volume.sh  volume.py's command-line contract"
@@ -75,6 +76,7 @@ done
 # failures downstream of it, so report it before them.
 tests=(
     "test-validate-skills.sh"
+    "test-runner.sh"
     "test-agent-harness.sh"
     "test-onboarding-skill.sh"
     "test-onboarding-volume.sh"
@@ -103,8 +105,20 @@ fi
 
 TIMEOUT="${TIMEOUT:-120}"
 
-# Filter to specific test if requested
+# Filter to specific test if requested. Membership is checked so a typo is an
+# error, not a skip — and naming an integration test still requires -i, so the
+# CLI guard above has run and a plain invocation stays offline.
 if [ -n "$SPECIFIC_TEST" ]; then
+    if printf '%s\n' "${integration_tests[@]}" | grep -qxF "$SPECIFIC_TEST" \
+            && [ "$RUN_INTEGRATION" = false ]; then
+        echo "ERROR: $SPECIFIC_TEST is an integration test — add --integration to run it"
+        exit 1
+    fi
+    if ! printf '%s\n' "${tests[@]}" "${integration_tests[@]}" | grep -qxF "$SPECIFIC_TEST"; then
+        echo "ERROR: unknown test: $SPECIFIC_TEST"
+        echo "Use --help to list the test files"
+        exit 1
+    fi
     tests=("$SPECIFIC_TEST")
 fi
 
@@ -189,7 +203,9 @@ if [ "$RUN_INTEGRATION" = false ]; then
     echo ""
 fi
 
-if [ $failed -gt 0 ]; then
+# A skipped test is a listed file that has gone missing — coverage silently
+# lost, which must fail the run, not decorate a green one.
+if [ $failed -gt 0 ] || [ $skipped -gt 0 ]; then
     echo "STATUS: FAILED"
     exit 1
 else

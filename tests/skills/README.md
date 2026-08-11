@@ -18,16 +18,21 @@ behaviour** when a skill is actually loaded.
 
 ## Requirements
 
+- bash with GNU coreutils — `timeout -k` and `mktemp` are load-bearing. Git Bash on Windows
+  qualifies; stock macOS ships no `timeout`
+- Python 3 on PATH as `python`
 - Claude Code CLI installed and in PATH (`claude --version` should work) — **only** for `--integration`
 
 ## Running tests
 
+From the repository root:
+
 ```bash
-./run-skill-tests.sh                                  # offline suite
-./run-skill-tests.sh --verbose                        # stream each assertion
-./run-skill-tests.sh --test test-generation-script.sh # one file
-./run-skill-tests.sh --integration                    # add the agent tests (slow 100 seconds, costs tokens)
-./run-skill-tests.sh --timeout 300                    # override the per-file budget
+bash tests/skills/run-skill-tests.sh                                  # offline suite
+bash tests/skills/run-skill-tests.sh --verbose                        # stream each assertion
+bash tests/skills/run-skill-tests.sh --test test-generation-script.sh # one file
+bash tests/skills/run-skill-tests.sh --integration                    # add the agent tests (slow, costs tokens)
+bash tests/skills/run-skill-tests.sh --timeout 300                    # override the per-file budget
 ```
 
 Exit code 0 = pass, non-zero = failure. Default budget is 120s per file, 900s with
@@ -38,6 +43,14 @@ Exit code 0 = pass, non-zero = failure. Default budget is 120s per file, 900s wi
 ### test-validate-skills.sh
 Runs `scripts/validate-skills.py` so this suite is the single command that checks everything. The
 validator is wired in, not re-implemented — it stays the sole owner of the static contracts above.
+It runs with `--skills-only`, which skips the gitignored real profiles under `profiles/`: user
+data no other machine has must never fail a suite that runs clean everywhere else. Run the
+validator bare to check real profiles too.
+
+### test-runner.sh
+`run-skill-tests.sh`'s own gates: an unknown `--test` name is an error rather than a skip, a
+listed test file that has gone missing fails the run rather than decorating a green one, and
+`--test` cannot smuggle an integration test past the `--integration` gate.
 
 ### test-agent-harness.sh
 `run_claude` itself, the harness the two agent tests are built on. Offline and deterministic:
@@ -93,14 +106,15 @@ tokens, so this file asserts only what is left over:
 `skills/generation/scripts/generate.py` through its real command line:
 - `--self-test` passes; its ten in-process invariants are not re-asserted here
 - the worked case reproduces `examples/plan.example.json` byte for byte from the bundled fixture —
-  one `cmp` that pins selection, scoring, ordering, rounding and formatting at once
+  one `cmp` that pins selection, scoring, ordering, rounding and formatting at once (line endings
+  aside: what the checkout holds depends on `core.autocrlf`, not on the generator)
 - two identical runs produce identical output; targets come back in canonical order
 - usage errors exit 2 and input errors exit 3; a plan is never overwritten
 - every unknown value — dataset name, muscle, equipment tier, split, goal, rules key, order rule —
   is refused rather than guessed, and the message names the file to fix
 - a hand-edited program file that is present but incomplete — an empty or partial volume block, an
-  empty program block, a missing `profile_slug` — is an input error naming the missing key, never
-  a traceback and never a plan written with a null slug
+  empty program block, a missing render-only key like `emoji`, a missing `profile_slug` — is an
+  input error naming the missing key, never a traceback and never a schema-invalid plan on disk
 - unmatched rule entries are warnings, not failures, and reach both the JSON and the render
 - the markdown render carries the volume table, each day, the deload note and the short flag
 
@@ -136,7 +150,7 @@ Fixtures:
 - `create_test_profile "$dir" "$repo_root"` → the shipped example profile plus a program file with
   no volume block, the state onboarding leaves behind before its last step
 
-Every assertion increments `TESTS_FAILED`. End each file with `finish_tests`, which prints
+Every failing assertion increments `TESTS_FAILED`. End each file with `finish_tests`, which prints
 `STATUS: PASSED` / `STATUS: FAILED (N failures)` and exits accordingly.
 
 ## Adding a test

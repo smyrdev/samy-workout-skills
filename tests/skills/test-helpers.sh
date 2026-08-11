@@ -6,7 +6,7 @@
 #   assert_contains       — on captured OUTPUT text, case-insensitive regex
 #   assert_file_contains  — on a FILE's content, literal and case-sensitive
 #
-# Every assertion bumps TESTS_FAILED. End a test file with finish_tests.
+# Every failing assertion bumps TESTS_FAILED. End a test file with finish_tests.
 
 TESTS_FAILED=0
 
@@ -241,6 +241,21 @@ assert_file_not_contains() {
         _fail "$test_name"
         echo "    Did not expect to find: $pattern"
         echo "    In file: $file"
+        return 1
+    else
+        _pass "$test_name"
+    fi
+}
+
+# Check that a file does NOT exist — a refused run must not leave partial output
+# Usage: assert_file_absent "$file" "test name"
+assert_file_absent() {
+    local file="$1"
+    local test_name="${2:-test}"
+
+    if [ -e "$file" ]; then
+        _fail "$test_name"
+        echo "    Expected no file at: $file"
         return 1
     else
         _pass "$test_name"

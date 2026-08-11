@@ -8,6 +8,10 @@ Stdlib only. Run from the repository root:
 Exits 0 with nothing printed on success. Exits 1 and prints one line per failure otherwise.
 This is what keeps the thin-SKILL.md / externalized-rules split from silently rotting: nothing
 here is optional, everything here is checked.
+
+--skills-only skips the gitignored real profiles under profiles/. The default run validates
+them too — useful by hand — but the test suite passes the flag, so a hand-edited local
+profile can never fail a suite that other machines run clean.
 """
 
 import json
@@ -655,6 +659,13 @@ def load_json(path):
 
 
 def main():
+    args = sys.argv[1:]
+    unknown = [a for a in args if a != "--skills-only"]
+    if unknown:
+        print(f"usage: validate-skills.py [--skills-only] — unknown: {' '.join(unknown)}")
+        sys.exit(2)
+    skills_only = "--skills-only" in args
+
     check_skill_frontmatter()
     check_portable_skill_neutrality()
     check_no_rule_content()
@@ -676,10 +687,11 @@ def main():
             SKILL_DIR / "examples" / "program.example.json", program_schema, "program example"
         )
 
-        for profile_path in sorted((ROOT / "profiles").glob("*/profile.json")):
-            validate_file_against_schema(profile_path, profile_schema, str(profile_path))
-        for program_path in sorted((ROOT / "profiles").glob("*/programs/*.json")):
-            validate_file_against_schema(program_path, program_schema, str(program_path))
+        if not skills_only:
+            for profile_path in sorted((ROOT / "profiles").glob("*/profile.json")):
+                validate_file_against_schema(profile_path, profile_schema, str(profile_path))
+            for program_path in sorted((ROOT / "profiles").glob("*/programs/*.json")):
+                validate_file_against_schema(program_path, program_schema, str(program_path))
 
         check_volume_config_coverage(profile_schema, program_schema)
 
@@ -701,10 +713,11 @@ def main():
             GEN_DIR / "examples" / "rules.example.json", rules_schema, "rules example"
         )
 
-        for plan_path in sorted((ROOT / "profiles").glob("*/plans/*.json")):
-            validate_file_against_schema(plan_path, plan_schema, str(plan_path))
-        for rules_path in sorted((ROOT / "profiles").glob("*/rules.json")):
-            validate_file_against_schema(rules_path, rules_schema, str(rules_path))
+        if not skills_only:
+            for plan_path in sorted((ROOT / "profiles").glob("*/plans/*.json")):
+                validate_file_against_schema(plan_path, plan_schema, str(plan_path))
+            for rules_path in sorted((ROOT / "profiles").glob("*/rules.json")):
+                validate_file_against_schema(rules_path, rules_schema, str(rules_path))
 
     check_script_self_test(SKILL_DIR / "scripts" / "volume.py", "volume.py")
     check_script_self_test(GEN_DIR / "scripts" / "generate.py", "generate.py")

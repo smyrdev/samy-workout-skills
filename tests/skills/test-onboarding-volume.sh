@@ -74,15 +74,22 @@ fi
 echo ""
 
 echo "Usage errors exit 2"
+# Each also asserts the message, so "everything exits 2 for one wrong reason"
+# cannot pass. Patterns skip the leading dashes of a flag name: assert_contains
+# hands its pattern to grep bare, where "--profile" reads as an option.
 run_volume --goal hypertrophy --days 6 --session 60-90 --split upper_lower
 assert_exit_code 2 "$code" "--profile is required"
+assert_contains "$out" "profile is required" "says which flag is missing"
 run_volume --profile "$PROFILE" --days 6 --session 60-90 --split upper_lower
 assert_exit_code 2 "$code" "--goal is required without --write"
+assert_contains "$out" "are required unless" "names the flags it still needs"
 run_volume --profile "$PROFILE" --goal hypertrophy --days 6 --session 60-90 \
     --split upper_lower --today "not-a-date"
 assert_exit_code 2 "$code" "--today must be a real date"
+assert_contains "$out" "not a valid YYYY-MM-DD date" "says what shape a date has"
 run_volume --profile "$PROFILE" --goal hypertrophy --days 6 --session 60-90 --split ppl
 assert_exit_code 2 "$code" "an unknown --split value is rejected"
+assert_contains "$out" "invalid choice: 'ppl'" "quotes the value back"
 echo ""
 
 echo "Input errors exit 3, never a guess"

@@ -111,11 +111,14 @@ else
     echo "    the byte comparison below cannot hold with a non-null commit"
 fi
 
-if cmp -s "$PROJECT/plan.json" "$PLAN_EXAMPLE"; then
+# Line endings are stripped on both sides: what the generator writes depends
+# on the platform (text mode), and what the checkout holds depends on
+# core.autocrlf — neither difference is the generator's doing.
+if cmp -s <(tr -d '\r' < "$PROJECT/plan.json") <(tr -d '\r' < "$PLAN_EXAMPLE"); then
     _pass "reproduces examples/plan.example.json byte for byte"
 else
     _fail "reproduces examples/plan.example.json byte for byte"
-    diff "$PLAN_EXAMPLE" "$PROJECT/plan.json" | head -40 | sed 's/^/    /'
+    diff <(tr -d '\r' < "$PLAN_EXAMPLE") <(tr -d '\r' < "$PROJECT/plan.json") | head -40 | sed 's/^/    /'
 fi
 echo ""
 
@@ -160,9 +163,11 @@ assert_exit_code 2 "$code" "--write refuses an existing file"
 assert_contains "$out" "already exists" "says the file already exists"
 assert_contains "$out" "never overwritten" "says plans are never overwritten"
 assert_contains "$out" "pick the next" "names the suffix convention"
-run_default --write "$PROJECT/plan-partial.json" --write-md "$PROJECT/plan.md"
+run_default --write "$PROJECT/plan-2.json" --write-md "$PROJECT/plan.md"
 assert_exit_code 2 "$code" "--write-md refuses an existing file"
 assert_contains "$out" "already exists" "says the markdown file already exists"
+assert_file_absent "$PROJECT/plan-2.json" \
+    "a refused run writes neither file — no orphan plan JSON"
 echo ""
 
 echo "Usage errors exit 2"
@@ -263,6 +268,15 @@ run_generate --profile "$PROFILE" --program "$PROJECT/empty-program.json" --data
 assert_exit_code 3 "$code" "an empty program block is an input error"
 assert_contains "$out" "program block missing keys" "names the shape it wanted"
 assert_contains "$out" "split" "names a missing key"
+
+# The guard must cover every key the plan echo needs, not just the ones the
+# fitting code reads: emoji is only touched by the markdown render, so with a
+# narrower guard this run exits 0 and writes a plan.json that plan.schema.json
+# rejects — or a KeyError once --write-md joins in.
+doctor "$PROGRAM" "$PROJECT/no-emoji.json" "del d['program']['emoji']"
+run_generate --profile "$PROFILE" --program "$PROJECT/no-emoji.json" --dataset-dir "$PROJECT"
+assert_exit_code 3 "$code" "a program block missing a render-only key is an input error"
+assert_contains "$out" "emoji" "names the missing key"
 
 # Without this, the run exits 0 and writes a plan carrying "profile_slug": null
 # — which plan.schema.json rejects, and which rules.md forbids this skill from
