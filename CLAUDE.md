@@ -28,6 +28,7 @@ skills/generation/
 .claude/skills/onboard/SKILL.md   Claude Code pointer + environment bindings, not a fork
 .claude/skills/generate/SKILL.md  same, for the generation skill
 scripts/validate-skills.py     validates both skills against their own schemas
+tests/skills/                  bash suite — script CLIs, prose policy, agent behaviour
 docs/schema.md                 rationale: why the profile/program schema looks the way it does
 docs/generation.md             rationale: descriptor format, fitting model, cache design
 docs/onboarding.md             original hand-written spec — left untouched, see below
@@ -45,6 +46,7 @@ person's hand-written generation preferences. The directories never blur.
 
 ```
 python scripts/validate-skills.py                                    # validate everything, exit 0 clean
+bash tests/skills/run-skill-tests.sh                                 # offline test suite (-i adds agent tests)
 python skills/onboarding/scripts/volume.py --self-test                # volume model self-test
 python skills/generation/scripts/generate.py --self-test              # generator self-test, offline
 git clone --depth 1 https://github.com/smyrdev/exercises-dataset datasets/exercises-dataset
@@ -62,7 +64,7 @@ cp skills/onboarding/examples/profile.example.json profile/profile.json   # hand
   person is this?" step — `user.name` is a display label, not a path. Do not reintroduce one.
 - One owner per number: `volume.py` computes the per-muscle weekly set allocation, `generate.py`
   consumes it. Generation never recomputes or adjusts targets, and refuses a program file whose
-  volume block is missing rather than estimating one.
+  volume block is missing or incomplete rather than estimating one.
 - Both `skills/*/SKILL.md` files are portable: no vendor tool names, no absolute or Windows
   paths, frontmatter carries only `name` and `description`. The `.claude/skills/*/SKILL.md`
   wrappers are pointers, not forks — a change to a flow goes in the portable file, never copied
