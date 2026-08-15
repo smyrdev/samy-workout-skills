@@ -1,0 +1,33 @@
+{
+  "$schema_version": "1.0",
+  "created_at": "2026-08-12T09:00:00Z",
+  "updated_at": "2026-08-12T09:00:00Z",
+  "user": {
+    "name": "Ehsan"
+  },
+  "units": "metric",
+  "basics": {
+    "sex": "male",
+    "date_of_birth": "1990-02-11",
+    "height": { "value": 175, "unit": "cm" },
+    "weight": { "value": 74, "unit": "kg" },
+    "bodyfat_bracket": "24-29"
+  },
+  "experience": {
+    "lifting": "beginner",
+    "cardio": "none"
+  },
+  "gym": {
+    "type": "local_gym",
+    "notes": "Small coworking-space/hotel-style gym in his office building: dumbbell rack up to 30 kg, two adjustable benches, a cable station, a few cardio machines. No barbell, no rack."
+  },
+  "strength_benchmarks": {
+    "pullups_5": false,
+    "pullups_10": false,
+    "dips_10": false,
+    "pushups_15": false,
+    "bench_press_10": false,
+    "incline_press_10": false,
+    "overhead_press_10": false
+  }
+}

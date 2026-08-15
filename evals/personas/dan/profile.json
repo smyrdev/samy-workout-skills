@@ -1,0 +1,33 @@
+{
+  "$schema_version": "1.0",
+  "created_at": "2026-08-12T09:00:00Z",
+  "updated_at": "2026-08-12T09:00:00Z",
+  "user": {
+    "name": "Dan"
+  },
+  "units": "metric",
+  "basics": {
+    "sex": "male",
+    "date_of_birth": "1989-11-02",
+    "height": { "value": 183, "unit": "cm" },
+    "weight": { "value": 92, "unit": "kg" },
+    "bodyfat_bracket": "18-23"
+  },
+  "experience": {
+    "lifting": "intermediate",
+    "cardio": "none"
+  },
+  "gym": {
+    "type": "garage_gym",
+    "notes": "Well equipped: power rack, barbell with 180 kg of plates, adjustable bench, adjustable dumbbells up to 32 kg, pull-up bar. No machines, no cables."
+  },
+  "strength_benchmarks": {
+    "pullups_5": true,
+    "pullups_10": false,
+    "dips_10": true,
+    "pushups_15": true,
+    "bench_press_10": true,
+    "incline_press_10": true,
+    "overhead_press_10": false
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "$schema_version": "1.0",
+  "created_at": "2026-08-12T09:00:00Z",
+  "updated_at": "2026-08-12T09:00:00Z",
+  "user": {
+    "name": "Shiva"
+  },
+  "units": "metric",
+  "basics": {
+    "sex": "female",
+    "date_of_birth": "1995-05-30",
+    "height": { "value": 168, "unit": "cm" },
+    "weight": { "value": 71, "unit": "kg" },
+    "bodyfat_bracket": "24-29"
+  },
+  "experience": {
+    "lifting": "intermediate",
+    "cardio": "beginner"
+  },
+  "gym": {
+    "type": "warehouse_gym",
+    "notes": "Strength-focused warehouse gym: racks, platforms, bars and plates everywhere, a few basic machines, chalk allowed."
+  },
+  "strength_benchmarks": {
+    "pullups_5": true,
+    "pullups_10": false,
+    "dips_10": false,
+    "pushups_15": true,
+    "bench_press_10": true,
+    "incline_press_10": false,
+    "overhead_press_10": false
+  }
+}
