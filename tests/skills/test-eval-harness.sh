@@ -17,6 +17,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$SCRIPT_DIR/test-helpers.sh"
 
 JUDGE="$REPO_ROOT/evals/judge.sh"
+RUNNER="$REPO_ROOT/evals/run-evals.sh"
 
 PROJECT=$(create_test_project)
 trap 'cleanup_test_project "$PROJECT"' EXIT
@@ -206,5 +207,60 @@ then
 else
     _fail "medians land per criterion and overall"
 fi
+
+echo ""
+echo "--- run-evals.sh ---"
+echo ""
+
+# The runner's overrides exist exactly for this: a fixture dataset dir and a
+# temp results dir, so the smoke test touches nothing real and costs nothing.
+FIXDS="$PROJECT/fixture-ds"
+mkdir -p "$FIXDS/data"
+cp "$REPO_ROOT/skills/generation/scripts/generate.fixture.json" \
+   "$FIXDS/data/exercises.json"
+
+echo "Smoke: one persona, fixture dataset, fake judge"
+CLAUDE_BIN="$PROJECT/ok" bash "$RUNNER" --persona mira \
+    --dataset-dir "$FIXDS" --results-dir "$PROJECT/results" > /dev/null 2>&1
+rc=$?
+assert_exit_code 0 "$rc" "the smoke run exits 0"
+run_dir=$(ls -d "$PROJECT/results"/*/ 2>/dev/null | head -1)
+for f in mira/plan.json mira/plan.md mira/verdict.json report.md; do
+    if [ -f "$run_dir/$f" ]; then
+        _pass "$f landed in the run folder"
+    else
+        _fail "$f landed in the run folder"
+    fi
+done
+assert_file_contains "$run_dir/report.md" "mira" \
+    "the report names the persona"
+assert_file_contains "$run_dir/report.md" "a fine plan overall" \
+    "the report carries the judge's summary"
+assert_file_contains "$run_dir/report.md" "Weakest criterion" \
+    "the report ends with the weakest-criterion line"
+echo ""
+
+echo "--skip-judge needs no CLI at all"
+CLAUDE_BIN="$PROJECT/no-such-cli" bash "$RUNNER" --persona mira --skip-judge \
+    --dataset-dir "$FIXDS" --results-dir "$PROJECT/results-nojudge" > /dev/null 2>&1
+rc=$?
+assert_exit_code 0 "$rc" "generate-only exits 0 with a broken CLAUDE_BIN"
+run_dir=$(ls -d "$PROJECT/results-nojudge"/*/ 2>/dev/null | head -1)
+if [ -f "$run_dir/mira/plan.md" ] && [ ! -f "$run_dir/mira/verdict.json" ]; then
+    _pass "a plan lands and no verdict is attempted"
+else
+    _fail "a plan lands and no verdict is attempted"
+fi
+assert_file_contains "$run_dir/report.md" "generated" \
+    "the report shows the not-judged status"
+echo ""
+
+echo "A missing dataset dir fails preflight, helpfully"
+output=$(bash "$RUNNER" --skip-judge --dataset-dir "$PROJECT/no-dataset-here" \
+    --results-dir "$PROJECT/results-nods" 2>&1)
+rc=$?
+assert_exit_code 2 "$rc" "preflight failure is non-zero"
+assert_contains "$output" "git clone" \
+    "and the message hands over the exact clone command"
 
 finish_tests
