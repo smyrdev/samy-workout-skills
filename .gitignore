@@ -10,3 +10,6 @@ __pycache__/
 *.pyc
 
 .todos.md
+
+# eval results, generated on every run, not committed
+/evals/results/
