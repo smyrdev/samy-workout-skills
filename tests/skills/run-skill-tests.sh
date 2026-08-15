@@ -57,6 +57,7 @@ while [[ $# -gt 0 ]]; do
             echo "  test-onboarding-volume.sh  volume.py's command-line contract"
             echo "  test-generation-skill.sh   generation SKILL.md / rules.md / FIELDS.md policy"
             echo "  test-generation-script.sh  generate.py's command-line contract"
+            echo "  test-eval-harness.sh       evals judge.sh + run-evals.sh, against fake CLIs"
             echo ""
             echo "Integration tests (use --integration):"
             echo "  test-onboarding-agent.sh   Real agent behaviour, needs the claude CLI"
@@ -82,6 +83,7 @@ tests=(
     "test-onboarding-volume.sh"
     "test-generation-skill.sh"
     "test-generation-script.sh"
+    "test-eval-harness.sh"
 )
 
 # Integration tests: these drive a real agent.
