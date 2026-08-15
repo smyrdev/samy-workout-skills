@@ -68,8 +68,10 @@ preferences, and any personal rules — in spirit, not just in letter?
 
 ## red_flags
 
-Anything a competent coach would veto outright. This is not a 1–5 quality scale: list
-each red flag you find (with the evidence), or state that there are none. Red flags
+Anything a competent coach would veto outright. List each red flag you find (with the
+evidence), or state that there are none — and still give this criterion a score like
+the others: 5 when there is nothing to veto, 3 when there is a borderline call you
+would question but not veto, 1 when anything veto-worthy is present. Red flags
 include, for example: an exercise that directly loads a stated injury; a dangerous or
 nonsensical exercise for this person's level; a session so overloaded it is unsafe or
 impossible; a plan element that contradicts the program's own stated goal.

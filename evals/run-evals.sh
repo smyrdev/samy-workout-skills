@@ -127,7 +127,7 @@ for p in "${PERSONAS[@]}"; do
 done
 
 # --- compose report.md from what is on disk -------------------------------
-python - "$RUN_DIR" <<'EOF'
+if ! python - "$RUN_DIR" <<'EOF'
 import json, os, sys
 
 run_dir = sys.argv[1]
@@ -194,5 +194,9 @@ report = os.path.join(run_dir, "report.md")
 open(report, "w", encoding="utf-8").write("\n".join(lines) + "\n")
 print(f"report: {report}")
 EOF
+then
+    echo "run-evals.sh: report composition failed" >&2
+    exit 2
+fi
 
 exit "$INDETERMINATE"

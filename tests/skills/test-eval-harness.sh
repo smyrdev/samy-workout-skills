@@ -208,6 +208,34 @@ else
     _fail "medians land per criterion and overall"
 fi
 
+echo "Non-string red flags are rejected, not crashed on"
+# A verdict whose red_flags holds objects used to pass validation and then
+# blow up (unhashably) inside multi-judge aggregation — a silent exit-0 path.
+python - "$PROJECT" <<'EOF'
+import json, pathlib, sys
+proj = pathlib.Path(sys.argv[1])
+names = ["selection_suitability", "balance_and_coverage",
+         "ordering_and_structure", "persona_fit", "red_flags"]
+v = {"criteria": [{"name": n, "evidence": "e", "reasoning": "r", "score": 2}
+                  for n in names],
+     "red_flags": [{"flag": "not a string"}], "overall": 2,
+     "summary": "flags as objects"}
+(proj / "badflags-envelope.json").write_text(
+    json.dumps({"result": json.dumps(v)}), encoding="utf-8")
+EOF
+cat > "$PROJECT/badflags" <<EOF
+#!/usr/bin/env bash
+echo call >> "$PROJECT/badflags-calls.log"
+cat "$PROJECT/badflags-envelope.json"
+EOF
+chmod +x "$PROJECT/badflags"
+judge badflags "$PROJECT/out-badflags" --judges 2 > /dev/null 2>&1
+rc=$?
+assert_exit_code 1 "$rc" "object red flags exit 1, not a crash-to-scored"
+assert_file_contains "$PROJECT/out-badflags/verdict.json" \
+    '"outcome": "indeterminate"' "and the verdict is indeterminate"
+echo ""
+
 echo ""
 echo "--- run-evals.sh ---"
 echo ""
@@ -253,6 +281,18 @@ else
 fi
 assert_file_contains "$run_dir/report.md" "generated" \
     "the report shows the not-judged status"
+echo ""
+
+echo "An indeterminate judging fails the run, and the report says so"
+CLAUDE_BIN="$PROJECT/garbage" bash "$RUNNER" --persona mira \
+    --dataset-dir "$FIXDS" --results-dir "$PROJECT/results-indet" > /dev/null 2>&1
+rc=$?
+assert_exit_code 1 "$rc" "indeterminate is an infra failure: exit 1"
+run_dir=$(ls -d "$PROJECT/results-indet"/*/ 2>/dev/null | head -1)
+assert_file_contains "$run_dir/report.md" "| indeterminate |" \
+    "the table row shows the status in place of scores"
+assert_file_contains "$run_dir/report.md" "## Indeterminate" \
+    "the report carries the reason section"
 echo ""
 
 echo "A missing dataset dir fails preflight, helpfully"

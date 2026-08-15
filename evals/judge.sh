@@ -150,9 +150,13 @@ for crit, expected in zip(crits, NAMES):
 
 if not isinstance(v.get("red_flags"), list):
     fail("red_flags must be a list")
+if not all(isinstance(f, str) for f in v["red_flags"]):
+    fail("red_flags must be a list of strings")
 overall = v.get("overall")
 if not isinstance(overall, (int, float)) or isinstance(overall, bool):
     fail("overall must be a number")
+if not 1 <= overall <= 5:
+    fail("overall must be between 1 and 5")
 if v["red_flags"] and overall > 2:
     fail("red flags present but the cap on overall was not applied")
 if not isinstance(v.get("summary"), str) or not v["summary"].strip():
@@ -201,7 +205,7 @@ done
 # One judging passes through as-is; several aggregate: per-criterion median,
 # median overall, union of red flags — and the cap re-applied to the median,
 # since a red flag any judge saw must still cap the aggregate.
-python - "$OUTDIR/verdict.json" "$JUDGES" "$OUTDIR" <<'EOF'
+if ! python - "$OUTDIR/verdict.json" "$JUDGES" "$OUTDIR" <<'EOF'
 import json, statistics, sys
 
 out, judges, outdir = sys.argv[1], int(sys.argv[2]), sys.argv[3]
@@ -227,4 +231,8 @@ else:
 
 json.dump(final, open(out, "w", encoding="utf-8"), indent=2)
 EOF
+then
+    write_indeterminate "final verdict aggregation failed"
+    exit 1
+fi
 exit 0
