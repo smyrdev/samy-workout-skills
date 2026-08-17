@@ -1,0 +1,33 @@
+{
+  "$schema_version": "1.0",
+  "created_at": "2026-08-12T09:00:00Z",
+  "updated_at": "2026-08-12T09:00:00Z",
+  "user": {
+    "name": "Iman"
+  },
+  "units": "metric",
+  "basics": {
+    "sex": "male",
+    "date_of_birth": "1976-09-14",
+    "height": { "value": 175, "unit": "cm" },
+    "weight": { "value": 140, "unit": "kg" },
+    "bodyfat_bracket": "40+"
+  },
+  "experience": {
+    "lifting": "none",
+    "cardio": "none"
+  },
+  "gym": {
+    "type": "local_gym",
+    "notes": "Small neighborhood gym two streets away: basic machines, dumbbells, one squat rack that is usually free."
+  },
+  "strength_benchmarks": {
+    "pullups_5": false,
+    "pullups_10": false,
+    "dips_10": false,
+    "pushups_15": false,
+    "bench_press_10": false,
+    "incline_press_10": false,
+    "overhead_press_10": false
+  }
+}

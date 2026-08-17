@@ -1,0 +1,43 @@
+{
+  "$schema_version": "1.0",
+  "created_at": "2026-08-12T09:00:00Z",
+  "program": {
+    "name": "Platform Practice",
+    "emoji": "⚙️",
+    "primary_goal": "strength",
+    "days_per_week": 5,
+    "session_minutes": "60-90",
+    "split": "full_body",
+    "deload": true
+  },
+  "volume": {
+    "model_version": "1.0",
+    "age": 31,
+    "bodyfat_midpoint": 26.5,
+    "equipment_tier": 3,
+    "benchmarks_cleared": 3,
+    "exercises_per_session": 8,
+    "sets_per_exercise": 4,
+    "weekly_set_capacity": 160,
+    "weekly_sets_allocated": 160,
+    "unallocated_sets": 0,
+    "target_weekly_sets_per_muscle": 14,
+    "scale_factor": 1.322,
+    "per_muscle_weekly_sets": {
+      "chest": 20,
+      "back": 26,
+      "shoulders": 20,
+      "biceps": 10,
+      "triceps": 10,
+      "quads": 23,
+      "hamstrings": 18,
+      "glutes": 18,
+      "calves": 7,
+      "core": 8
+    },
+    "warnings": [
+      "untrained:shoulders",
+      "full_body_high_frequency"
+    ]
+  }
+}

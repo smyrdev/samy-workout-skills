@@ -1,0 +1,33 @@
+{
+  "$schema_version": "1.0",
+  "created_at": "2026-08-12T09:00:00Z",
+  "updated_at": "2026-08-12T09:00:00Z",
+  "user": {
+    "name": "Lena"
+  },
+  "units": "metric",
+  "basics": {
+    "sex": "female",
+    "date_of_birth": "1997-07-09",
+    "height": { "value": 171, "unit": "cm" },
+    "weight": { "value": 66, "unit": "kg" },
+    "bodyfat_bracket": "18-23"
+  },
+  "experience": {
+    "lifting": "advanced",
+    "cardio": "beginner"
+  },
+  "gym": {
+    "type": "everything_gym",
+    "notes": "Big training facility: full free-weight area, every machine and cable station, specialty bars."
+  },
+  "strength_benchmarks": {
+    "pullups_5": true,
+    "pullups_10": true,
+    "dips_10": true,
+    "pushups_15": true,
+    "bench_press_10": true,
+    "incline_press_10": true,
+    "overhead_press_10": true
+  }
+}
