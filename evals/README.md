@@ -10,7 +10,7 @@ evaluated across the whole matrix in one command.
 ## Requirements
 
 * python
-* bash
+* bash — only for judging, which calls the CLI through a small shell shim
 * the Claude Code CLI, logged in — the judge runs through `claude -p`; nothing else in
   the pipeline needs it, and `--skip-judge` runs without it
 * the exercise dataset, cloned locally:
@@ -22,10 +22,10 @@ evaluated across the whole matrix in one command.
 ## Running
 
 ```bash
-bash evals/run-evals.sh                     # all personas: generate + judge + report
-bash evals/run-evals.sh --persona <name>    # one persona
-bash evals/run-evals.sh --skip-judge        # generate only — free; for diffing plans
-bash evals/run-evals.sh --judges 3          # median-of-3 judging
+python evals/run-evals.py                     # all personas: generate + judge + report
+python evals/run-evals.py --persona <name>    # one persona
+python evals/run-evals.py --skip-judge        # generate only — free; for diffing plans
+python evals/run-evals.py --judges 3          # median-of-3 judging
 ```
 
 Each run writes a fresh folder `evals/results/<YYYY-MM-DD-HHMM>/` (gitignored, never
@@ -50,7 +50,7 @@ The intended workflow when retuning `volume.config.json`, `generate.config.json`
 `datasets.json`:
 
 1. Tweak the config.
-2. `bash evals/run-evals.sh --skip-judge` — free, no CLI needed.
+2. `python evals/run-evals.py --skip-judge` — free, no CLI needed.
 3. Diff the new run's plans against the last run's (within a run, `--today` is pinned,
    so plan diffs are pure signal).
 4. Judge only when the diff looks interesting.

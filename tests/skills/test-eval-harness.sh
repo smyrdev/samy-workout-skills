@@ -254,7 +254,7 @@ assert_file_contains "$PROJECT/out-badutf8/verdict.json" \
 echo ""
 
 echo ""
-echo "--- run-evals.sh ---"
+echo "--- run-evals.py ---"
 echo ""
 
 # The runner's overrides exist exactly for this: a fixture dataset dir and a
