@@ -7,7 +7,7 @@
 # already owns, for this skill: frontmatter shape, the AskUserQuestion / Bash /
 # "the Write tool" vendor-tool scan, the absolute and Windows path patterns, the
 # gym / bodyfat / session-minute / goal enum tokens, both example files against
-# their schemas, datasets.json and generate.config.json completeness, and
+# their schemas, assets/datasets.json and generate.config.json completeness, and
 # generate.py --self-test. test-validate-skills.sh runs it as part of this
 # suite. What is asserted below is what that validator cannot see.
 
@@ -18,9 +18,10 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$SCRIPT_DIR/test-helpers.sh"
 
 SKILL="$REPO_ROOT/skills/generation/SKILL.md"
-RULES="$REPO_ROOT/skills/generation/rules.md"
-FIELDS="$REPO_ROOT/skills/generation/FIELDS.md"
-DESCRIPTOR="$REPO_ROOT/skills/generation/datasets.json"
+RULES="$REPO_ROOT/skills/generation/references/rules.md"
+FIELDS="$REPO_ROOT/docs/generation-fields.md"
+EXAMPLE_RULES="$REPO_ROOT/skills/generation/assets/examples/rules.example.md"
+DESCRIPTOR="$REPO_ROOT/skills/generation/assets/datasets.json"
 CONFIG="$REPO_ROOT/skills/generation/scripts/generate.config.json"
 WRAPPER="$REPO_ROOT/.claude/skills/generate/SKILL.md"
 
@@ -46,14 +47,14 @@ assert_file_not_contains "$SKILL" "indirect_discount" "holds no tunable numbers 
 echo ""
 
 echo "SKILL.md stays a set of pointers"
-assert_file_contains "$SKILL" "rules.md" "points at rules.md"
-assert_file_contains "$SKILL" "datasets.json" "points at the dataset registry"
+assert_file_contains "$SKILL" "references/rules.md" "points at references/rules.md"
+assert_file_contains "$SKILL" "assets/datasets.json" "points at the dataset registry"
 assert_file_contains "$SKILL" "scripts/generate.py" "points at the generator"
 assert_file_contains "$SKILL" "scripts/generate.config.json" "points at the config"
-assert_file_contains "$SKILL" "schema/" "points at the schemas"
-assert_file_contains "$SKILL" "FIELDS.md" "points at the hand-editing guide"
-assert_file_contains "$SKILL" "examples/rules.example.json" "points at the rules sample"
-assert_file_contains "$SKILL" "skills/onboarding/rules.md" \
+assert_file_contains "$SKILL" "assets/schema/" "points at the schemas"
+assert_file_contains "$SKILL" "docs/generation-fields.md" "points at the hand-editing guide"
+assert_file_contains "$SKILL" "assets/examples/rules.example.md" "points at the rules sample"
+assert_file_contains "$SKILL" "skills/onboarding/references/rules.md" \
     "reuses onboarding's profile resolution instead of forking it"
 assert_file_contains "$SKILL" "profile/plans/" "names its only writable surface"
 assert_file_contains "$SKILL" "never interview" "says it never interviews"
@@ -71,18 +72,18 @@ assert_file_not_contains "$WRAPPER" "upper_lower" "holds no enum values either"
 assert_file_not_contains "$WRAPPER" "must_include_first" "holds no order rule names either"
 echo ""
 
-echo "rules.md keeps the write-ownership boundary"
+echo "references/rules.md keeps the write-ownership boundary"
 assert_file_contains "$RULES" 'entire writable surface is `profile/plans/`.' \
     "plans/ is the whole writable surface"
 assert_file_contains "$RULES" "**This skill reads it and never writes it.**" \
-    "rules.json belongs to the person"
+    "rules.md belongs to the person"
 assert_file_contains "$RULES" "Never re-interviews. Profile changes go through onboarding." \
     "an interview is onboarding's job"
 assert_file_contains "$RULES" "never committed to this repository" \
     "the dataset cache is never committed"
 echo ""
 
-echo "rules.md keeps one owner per number"
+echo "references/rules.md keeps one owner per number"
 assert_file_contains "$RULES" "**Targets are never computed or adjusted here**" \
     "targets have exactly one owner"
 assert_file_contains "$RULES" "Never computes or adjusts volume targets" \
@@ -93,7 +94,7 @@ assert_file_contains "$RULES" "never in the script and never in prose" \
     "tunables live in the config alone"
 echo ""
 
-echo "rules.md keeps the rules that stop a wrong plan"
+echo "references/rules.md keeps the rules that stop a wrong plan"
 assert_file_contains "$RULES" "never generate from memory of what the dataset probably contains." \
     "never invents exercises"
 assert_file_contains "$RULES" "git clone --depth 1 --branch <ref> <repo> datasets/<name>" \
@@ -107,7 +108,7 @@ assert_file_contains "$RULES" "hand-edit an exercise into the generator's output
     "a swap is a re-run, not an edit"
 echo ""
 
-echo "rules.md keeps the four things shown before any file lands"
+echo "references/rules.md keeps the four things shown before any file lands"
 assert_file_contains "$RULES" "planned-versus-allocated table" "shows the planned-versus-allocated table"
 assert_file_contains "$RULES" "The **week itself**" "shows the week itself"
 assert_file_contains "$RULES" "**Every warning**" "shows every warning"
@@ -115,8 +116,15 @@ assert_file_contains "$RULES" "The **exact paths** about to be written." "names 
 assert_file_contains "$RULES" "If they abandon here, write nothing." "an abandoned review writes nothing"
 echo ""
 
-echo "FIELDS.md stays the hand-editing contract"
-assert_file_contains "$FIELDS" 'Always the quoted string `"1.0"`' "pins the schema version"
+echo "docs/generation-fields.md stays the hand-editing contract"
+assert_file_contains "$FIELDS" '`## Heading` starts a section' "pins the heading syntax"
+assert_file_contains "$FIELDS" '`- item` is one value' "pins the bullet syntax"
+assert_file_contains "$FIELDS" 'is ignored' "prose is a note to self, not a rule"
+for heading in "## Exclude exercises" "## Exclude equipment" "## Exclude movement groups" \
+               "## Exclude muscles" "## Focus muscles" "## Must include" "## Order"; do
+    assert_file_contains "$FIELDS" "$heading" "documents the $heading section"
+    assert_file_contains "$EXAMPLE_RULES" "$heading" "the sample has the $heading section"
+done
 assert_file_contains "$FIELDS" "unknown_exclude_exercise:<name>" "names the unknown-exclusion warning"
 assert_file_contains "$FIELDS" "unmatched_must_include:<name>" "names the unplaceable-must-include warning"
 assert_file_contains "$FIELDS" '`chest`, `back`, `shoulders`, `biceps`, `triceps`,' "lists the muscle groups"

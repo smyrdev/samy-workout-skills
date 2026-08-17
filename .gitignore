@@ -1,10 +1,13 @@
 # The personal profile is user data, never committed.
-# The schema lives at skills/onboarding/examples/profile.example.json instead.
+# A copy-to-start sample lives at skills/onboarding/assets/examples/profile.example.json instead.
 profile/*
 !profile/.gitkeep
 
-# Exercise dataset clones are a local cache, described by skills/generation/datasets.json.
+# Exercise dataset clones are a local cache, described by skills/generation/assets/datasets.json.
 datasets/
+
+# Eval run outputs (skill-creator workspaces: iteration-N/, grading, benchmarks) are local.
+*-workspace/
 
 __pycache__/
 *.pyc

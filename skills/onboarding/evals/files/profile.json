@@ -1,0 +1,33 @@
+{
+  "$schema_version": "1.0",
+  "created_at": "2026-08-03T14:22:00Z",
+  "updated_at": "2026-08-03T14:22:00Z",
+  "user": {
+    "name": "Samy"
+  },
+  "units": "metric",
+  "basics": {
+    "sex": "male",
+    "date_of_birth": "1994-06-15",
+    "height": { "value": 178, "unit": "cm" },
+    "weight": { "value": 80, "unit": "kg" },
+    "bodyfat_bracket": "13-17"
+  },
+  "experience": {
+    "lifting": "advanced",
+    "cardio": "beginner"
+  },
+  "gym": {
+    "type": "commercial_gym",
+    "notes": null
+  },
+  "strength_benchmarks": {
+    "pullups_5": true,
+    "pullups_10": false,
+    "dips_10": true,
+    "pushups_15": true,
+    "bench_press_10": true,
+    "incline_press_10": true,
+    "overhead_press_10": false
+  }
+}

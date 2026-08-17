@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/smyrdev/samy-workout-skills/skills/generation/schema/plan.schema.json",
+  "$id": "https://github.com/smyrdev/samy-workout-skills/skills/generation/assets/schema/plan.schema.json",
   "title": "Generated workout plan",
   "description": "profile/plans/plan-YYYY-MM-DD.json — written by the generation skill's scripts/generate.py, one file per generated plan, never overwritten (same-day re-runs suffix -2, -3). Self-contained: exercise volume maps are copied in, so the plan is readable without the dataset. A plan-YYYY-MM-DD.md render sits next to it for humans.",
   "type": "object",

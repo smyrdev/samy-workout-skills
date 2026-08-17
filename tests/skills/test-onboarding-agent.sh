@@ -27,18 +27,18 @@ fi
 echo ""
 
 echo "It confirms before writing"
-output=$(run_claude "Read skills/onboarding/SKILL.md and skills/onboarding/rules.md. Do not write anything. What must happen before the first byte is written?" 90 "Read")
+output=$(run_claude "Read skills/onboarding/SKILL.md and skills/onboarding/references/rules.md. Do not write anything. What must happen before the first byte is written?" 90 "Read")
 if assert_agent_responded "$?" "$output" "the confirm-before-writing prompt"; then
     assert_contains "$output" "summary\|echo\|confirm" "echoes a summary first"
     assert_contains "$output" "path" "names the paths it is about to write"
 fi
 echo ""
 
-echo "It resolves whose profile this is instead of assuming"
-output=$(run_claude "Read skills/onboarding/rules.md. Do not write anything. Several profiles exist and I did not say who I am. What do you do?" 90 "Read")
-if assert_agent_responded "$?" "$output" "the whose-profile prompt"; then
-    assert_contains "$output" "ask\|which\|who" "asks who this is"
-    assert_not_contains "$output" "assume the default profile" "does not assume a default"
+echo "It treats an existing profile as a stop sign, not a target"
+output=$(run_claude "Read skills/onboarding/references/rules.md. Do not write anything. A profile/profile.json already exists and the person just said 'set me up'. What do you do?" 90 "Read")
+if assert_agent_responded "$?" "$output" "the profile-exists prompt"; then
+    assert_contains "$output" "ask\|confirm\|which\|update\|start over" "asks what they want instead of assuming"
+    assert_not_contains "$output" "overwrite it immediately\|start the interview immediately" "does not overwrite on an inferred intent"
 fi
 
 finish_tests

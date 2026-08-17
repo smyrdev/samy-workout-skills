@@ -13,7 +13,7 @@
 # prose, and the validator pins the config). A slow non-deterministic prompt is
 # worth spending on the rules nothing else can reach.
 #
-# A note on negative assertions. rules.md phrases every prohibition as
+# A note on negative assertions. references/rules.md phrases every prohibition as
 # "never <verb>", so an agent summarising it quotes the forbidden phrase back
 # and a naive assert_not_contains fails on a correct answer. A negative here has
 # to be a phrase the source never uses — hence "here is your plan" rather than
@@ -31,16 +31,16 @@ echo "=== Generation Skill Agent Behaviour ==="
 echo ""
 
 echo "It knows what the skill writes and what it must leave alone"
-output=$(run_claude "Read skills/generation/SKILL.md and skills/generation/rules.md. Do not run the skill and do not write anything. Which files does this skill write, and which files under a person's directory must it leave alone?" 90 "Read")
+output=$(run_claude "Read skills/generation/SKILL.md and skills/generation/references/rules.md. Do not run the skill and do not write anything. Which files does this skill write, and which files under a person's directory must it leave alone?" 90 "Read")
 if assert_agent_responded "$?" "$output" "the write-boundary prompt"; then
     assert_contains "$output" "plans" "names the plans directory as what it writes"
-    assert_contains "$output" "rules\.json" "names the rules file it may not write"
+    assert_contains "$output" "rules\.md" "names the rules file it may not write"
     assert_contains "$output" "programs\|profile\.json" "names the onboarding files it may not write"
 fi
 echo ""
 
 echo "It shows the week before writing it"
-output=$(run_claude "Read skills/generation/rules.md. Do not write anything. What must you show the person before the first plan file lands on disk?" 90 "Read")
+output=$(run_claude "Read skills/generation/references/rules.md. Do not write anything. What must you show the person before the first plan file lands on disk?" 90 "Read")
 if assert_agent_responded "$?" "$output" "the echo-before-writing prompt"; then
     assert_contains "$output" "allocated\|planned\|table" "shows the planned-versus-allocated table"
     assert_contains "$output" "warning" "surfaces every warning"
@@ -49,7 +49,7 @@ fi
 echo ""
 
 echo "It refuses to invent a plan when the dataset is unavailable"
-output=$(run_claude "Read skills/generation/rules.md. Do not write anything. There is no datasets/ cache, no network, and git is unavailable. I still want a plan today. What do you do?" 90 "Read")
+output=$(run_claude "Read skills/generation/references/rules.md. Do not write anything. There is no datasets/ cache, no network, and git is unavailable. I still want a plan today. What do you do?" 90 "Read")
 if assert_agent_responded "$?" "$output" "the dataset-unavailable prompt"; then
     assert_contains "$output" "stop\|cannot\|unable\|refus" "stops rather than improvising"
     assert_contains "$output" "clone\|datasets/" "names the cache it needs"

@@ -1,0 +1,69 @@
+{
+  "skill_name": "onboarding",
+  "notes": "Each run starts in a fresh clone of this repository. `setup` says what to place under profile/ before the prompt is sent; `files` lists the fixtures it draws on, relative to the skill directory. Assertions are graded against the transcript and the files left behind.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "fresh-setup-answers-up-front",
+      "setup": [
+        "profile/ contains only .gitkeep — no profile.json, no programs/"
+      ],
+      "files": [],
+      "prompt": "hey, new here — set me up. I'm Dana, female, born 1991-03-22, metric, 168 cm, 63 kg, bodyfat somewhere 21-25%. Been lifting about 2 years (intermediate), cardio I'm a beginner. I train at a garage gym — barbell, rack, dumbbells, pull-up bar. Goal is hypertrophy, 4 days a week, 60-90 min sessions, upper/lower split, yes to deloads. Benchmarks: I can do 15 push-ups and 10 dips, no pull-ups yet, bench 10 reps yes, incline no, overhead press no. Call the program 'Winter Base' with the snowflake emoji.",
+      "expected_output": "The skill confirms nothing is on disk, echoes a compact summary plus the two exact paths it is about to write, gets a go-ahead, then writes profile/profile.json and profile/programs/program-<today>.json shaped by the schemas, runs scripts/volume.py so the program file carries a filled volume block, and tells the person where both files went and that generation reads them as defaults.",
+      "assertions": [
+        "Before any file is written, the transcript shows a summary of the answers and names both target paths (profile/profile.json and profile/programs/program-<date>.json)",
+        "profile/profile.json exists and validates against skills/onboarding/assets/schema/profile.schema.json",
+        "Exactly one file exists under profile/programs/, named program-YYYY-MM-DD.json, and it validates against skills/onboarding/assets/schema/program.schema.json",
+        "Stored values are the option values, not labels: basics.bodyfat_bracket is '21-25', gym.type is 'garage_gym', program.split is 'upper_lower', program.session_minutes is '60-90'",
+        "strength_benchmarks.pullups_5 and pullups_10 are both false; pushups_15, dips_10 and bench_press_10 are true; incline_press_10 and overhead_press_10 are false",
+        "No age field is stored anywhere; basics.date_of_birth is '1991-03-22'",
+        "The program file's volume block is non-null and its per_muscle_weekly_sets sums to weekly_sets_allocated (i.e. scripts/volume.py was run, not hand-computed)",
+        "Nothing was written outside profile/profile.json and profile/programs/"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "update-weight-in-place",
+      "setup": [
+        "copy files/profile.json to profile/profile.json",
+        "copy files/programs/program-2026-08-06.json to profile/programs/program-2026-08-06.json"
+      ],
+      "files": [
+        "evals/files/profile.json",
+        "evals/files/programs/program-2026-08-06.json"
+      ],
+      "prompt": "change my weight to 82",
+      "expected_output": "Recognised as an update, not a fresh start. No interview: a one-line confirmation of the change (80 kg → 82 kg), then profile.json rewritten in schema key order with only basics.weight.value changed and updated_at bumped. No new program file, since weight is a profile-scope field.",
+      "assertions": [
+        "The transcript asks no interview questions beyond confirming the single change",
+        "profile/profile.json has basics.weight.value == 82 and basics.weight.unit == 'kg'",
+        "profile/profile.json created_at is still '2026-08-03T14:22:00Z' and updated_at is later than that",
+        "Every other field in profile/profile.json is identical in value to files/profile.json",
+        "profile/programs/ still contains exactly one file, program-2026-08-06.json, unchanged",
+        "profile/profile.json still validates against skills/onboarding/assets/schema/profile.schema.json"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "set-me-up-with-profile-present",
+      "setup": [
+        "copy files/profile.json to profile/profile.json",
+        "copy files/programs/program-2026-08-06.json to profile/programs/program-2026-08-06.json"
+      ],
+      "files": [
+        "evals/files/profile.json",
+        "evals/files/programs/program-2026-08-06.json"
+      ],
+      "prompt": "can you set me up with a training profile?",
+      "expected_output": "The skill notices profile.json already exists before asking anything, summarises it in two lines (name, experience, gym type; program name and emoji, goal, days per week), and offers change-a-few-fields / start-over rather than starting a fresh interview or overwriting. It writes nothing in this turn.",
+      "assertions": [
+        "The response mentions that a profile already exists before asking any interview question",
+        "The response names the existing profile's owner ('Samy') and program ('Summer Build')",
+        "The response offers a choice between updating some fields and starting over, and does not proceed on its own",
+        "profile/profile.json is byte-identical to files/profile.json after the turn",
+        "No new file appears under profile/programs/"
+      ]
+    }
+  ]
+}

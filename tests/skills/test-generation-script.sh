@@ -26,11 +26,11 @@ source "$SCRIPT_DIR/test-helpers.sh"
 
 GENERATE="$REPO_ROOT/skills/generation/scripts/generate.py"
 FIXTURE="$REPO_ROOT/skills/generation/scripts/generate.fixture.json"
-DESCRIPTOR="$REPO_ROOT/skills/generation/datasets.json"
+DESCRIPTOR="$REPO_ROOT/skills/generation/assets/datasets.json"
 CONFIG="$REPO_ROOT/skills/generation/scripts/generate.config.json"
-PROFILE="$REPO_ROOT/skills/onboarding/examples/profile.example.json"
-PROGRAM="$REPO_ROOT/skills/onboarding/examples/program.example.json"
-PLAN_EXAMPLE="$REPO_ROOT/skills/generation/examples/plan.example.json"
+PROFILE="$REPO_ROOT/skills/onboarding/assets/examples/profile.example.json"
+PROGRAM="$REPO_ROOT/skills/onboarding/assets/examples/program.example.json"
+PLAN_EXAMPLE="$REPO_ROOT/skills/generation/assets/examples/plan.example.json"
 TODAY="2026-08-06"
 
 PROJECT=$(create_test_project)
@@ -38,7 +38,7 @@ trap 'cleanup_test_project "$PROJECT"' EXIT
 
 # The dataset this whole file runs against: the bundled self-test fixture, laid
 # out where the descriptor's data_file expects it. Offline, and the same input
-# that produced examples/plan.example.json. Never datasets/ — that cache is
+# that produced assets/examples/plan.example.json. Never datasets/ — that cache is
 # gitignored, may be absent, and moves with upstream.
 mkdir -p "$PROJECT/data"
 cp "$FIXTURE" "$PROJECT/data/exercises.json"
@@ -115,9 +115,9 @@ fi
 # on the platform (text mode), and what the checkout holds depends on
 # core.autocrlf — neither difference is the generator's doing.
 if cmp -s <(tr -d '\r' < "$PROJECT/plan.json") <(tr -d '\r' < "$PLAN_EXAMPLE"); then
-    _pass "reproduces examples/plan.example.json byte for byte"
+    _pass "reproduces assets/examples/plan.example.json byte for byte"
 else
-    _fail "reproduces examples/plan.example.json byte for byte"
+    _fail "reproduces assets/examples/plan.example.json byte for byte"
     diff <(tr -d '\r' < "$PLAN_EXAMPLE") <(tr -d '\r' < "$PROJECT/plan.json") | head -40 | sed 's/^/    /'
 fi
 echo ""
@@ -244,7 +244,7 @@ assert_exit_code 3 "$code" "a file with no program object is refused"
 assert_contains "$out" "no .program. object" "says which object is missing"
 echo ""
 
-# A hand-edited program file can be present but incomplete. FIELDS.md teaches
+# A hand-edited program file can be present but incomplete. docs/onboarding-fields.md teaches
 # people to edit these files, so a half-written one is an expected input, not
 # programmer error — it has to come back as an input error naming the missing
 # key, never as a traceback. An agent that meets an unexplained crash here is
@@ -292,7 +292,7 @@ doctor "$DESCRIPTOR" "$PROJECT/d-untiered.json" \
 run_default --descriptor "$PROJECT/d-untiered.json"
 assert_exit_code 3 "$code" "an untiered equipment value is refused"
 assert_contains "$out" "equipment not in any tier" "names the problem"
-assert_contains "$out" "equipment_tiers in datasets.json" "names the file to fix"
+assert_contains "$out" "equipment_tiers in assets/datasets.json" "names the file to fix"
 
 doctor "$DESCRIPTOR" "$PROJECT/d-dup.json" \
     "d['datasets']['exercises-dataset']['equipment_tiers']['2'].append('barbell')"

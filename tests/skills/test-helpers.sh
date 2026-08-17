@@ -309,7 +309,7 @@ create_test_profile() {
     local repo_root="$2"
 
     mkdir -p "$project_dir/programs"
-    cp "$repo_root/skills/onboarding/examples/profile.example.json" "$project_dir/profile.json"
+    cp "$repo_root/skills/onboarding/assets/examples/profile.example.json" "$project_dir/profile.json"
 
     cat > "$project_dir/programs/program-2026-08-06.json" <<'EOF'
 {

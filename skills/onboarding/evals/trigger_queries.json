@@ -1,0 +1,22 @@
+[
+  { "query": "new here, can you get me set up?", "should_trigger": true },
+  { "query": "I moved — training at a home gym now instead of the commercial one, update my stuff", "should_trigger": true },
+  { "query": "change my weight to 82", "should_trigger": true },
+  { "query": "I can finally do 5 pull-ups, mark that", "should_trigger": true },
+  { "query": "switch me to a push/pull/legs split, 5 days", "should_trigger": true },
+  { "query": "my sessions are only 45 min now, adjust that", "should_trigger": true },
+  { "query": "rename my program to Spring Cut with the 🔥 emoji", "should_trigger": true },
+  { "query": "I want to switch from hypertrophy to strength for the next block", "should_trigger": true },
+  { "query": "the generate skill says it can't find a profile — what do I do", "should_trigger": true },
+  { "query": "im 34, 182cm, 88kg, lift 3 yrs, commercial gym, want hypertrophy 4x/wk. save that pls", "should_trigger": true },
+  { "query": "make me this week's plan", "should_trigger": false },
+  { "query": "swap the leg press for something else", "should_trigger": false },
+  { "query": "log today's session: bench 80x8x3, rows 70x10x3", "should_trigger": false },
+  { "query": "what's my estimated 1RM if I bench 90 for 6?", "should_trigger": false },
+  { "query": "convert my plan-2026-08-06.md to a PDF", "should_trigger": false },
+  { "query": "how many sets per week should chest get for hypertrophy, generally?", "should_trigger": false },
+  { "query": "add 'no burpees' to my rules.md", "should_trigger": false },
+  { "query": "clone the exercises dataset so generation works offline", "should_trigger": false },
+  { "query": "what does the volume.py scale_factor mean?", "should_trigger": false },
+  { "query": "write me a 20 minute bodyweight warm-up routine", "should_trigger": false }
+]

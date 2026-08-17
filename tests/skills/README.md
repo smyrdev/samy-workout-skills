@@ -5,11 +5,13 @@ The tests that drive a real agent are opt-in behind `--integration`.
 
 ## Division of labour
 
-`scripts/validate-skills.py` owns the **static contracts**: frontmatter shape, SKILL.md
-vendor-neutrality, every `stores:` path in `questions.yaml` resolving against the schemas, the
-shipped examples validating, `volume.config.json` covering every schema enum, `datasets.json` and
-`generate.config.json` covering every value the generator can meet, and both script
-`--self-test`s. Do not re-implement those checks here; two owners for one check means one of them
+`scripts/validate-skills.py` owns the **static contracts**: frontmatter shape and the Agent
+Skills spec constraints (name/description/compatibility limits, name equals directory, body under
+500 lines, wrapper descriptions mirroring their portable twins), SKILL.md vendor-neutrality, every
+`stores:` path in `references/questions.yaml` resolving against the schemas, the shipped examples
+validating, `volume.config.json` covering every schema enum, `assets/datasets.json` and
+`generate.config.json` covering every value the generator can meet, both script `--self-test`s,
+and the shape of each skill's `evals/evals.json` and `evals/trigger_queries.json`. Do not re-implement those checks here; two owners for one check means one of them
 goes stale. `test-validate-skills.sh` wires the validator into this suite rather than repeating it.
 
 This suite owns what that validator cannot see: the **command-line behaviour** of the scripts
@@ -62,18 +64,18 @@ than as a handful of content assertions failing for a reason that has nothing to
 Prose regressions in the onboarding skill, all by literal grep:
 - `skills/onboarding/SKILL.md` stays thin and vendor-neutral — no tool names, no vendor
   directories, no absolute or Windows paths, no enum values
-- it still points at `questions.yaml`, `rules.md`, the schemas and `volume.py`
+- it still points at `references/questions.yaml`, `references/rules.md`, the schemas and `volume.py`
 - `.claude/skills/onboard/SKILL.md` stays a pointer with three bindings, not a second copy of the
   flow
-- `rules.md` keeps the rules that stop silent damage: the overwrite guard, echo-before-write, an
+- `references/rules.md` keeps the rules that stop silent damage: the overwrite guard, echo-before-write, an
   update is not a re-interview, the shipped examples are off limits, and the exact unit-conversion
   constants
-- `questions.yaml` keeps the profile/program scope split
+- `references/questions.yaml` keeps the profile/program scope split
 
 ### test-onboarding-volume.sh
 `skills/onboarding/scripts/volume.py` through its real command line:
 - `--self-test` passes and covers all 720 enum combinations
-- the worked case reproduces the `volume` block in `examples/program.example.json` byte for byte —
+- the worked case reproduces the `volume` block in `assets/examples/program.example.json` byte for byte —
   the shipped example doubles as the pinned fixture
 - two identical runs produce identical output; muscles come back in canonical order
 - usage errors exit 2, input errors exit 3, and an unknown gym type or missing experience is
@@ -83,8 +85,8 @@ Prose regressions in the onboarding skill, all by literal grep:
 
 ### test-onboarding-agent.sh (integration)
 Three prompts against a real agent: what onboarding writes, what must happen before the first
-write, and what it does when it does not know whose profile this is. Non-deterministic by nature —
-assertions stay at keyword level.
+write, and what it does when a profile already exists and the person just says "set me up".
+Non-deterministic by nature — assertions stay at keyword level.
 
 ### test-generation-skill.sh
 Prose regressions in the generation skill, all by literal grep. Narrower than the onboarding
@@ -93,19 +95,19 @@ tokens, so this file asserts only what is left over:
 - `skills/generation/SKILL.md` stays portable and stays a set of pointers, holding no split names,
   muscle groups, order rules or tunable keys of its own
 - `.claude/skills/generate/SKILL.md` stays a pointer with three bindings, not a second copy
-- `rules.md` keeps the boundaries: `plans/` is the entire writable surface, `rules.json` is read and
+- `references/rules.md` keeps the boundaries: `plans/` is the entire writable surface, `rules.md` is read and
   never written, it never re-interviews, and the dataset cache is never committed
-- `rules.md` keeps one owner per number — targets are never computed here, and it hands back the
+- `references/rules.md` keeps one owner per number — targets are never computed here, and it hands back the
   exact `volume.py` command
-- `rules.md` keeps the rules that stop a wrong plan: never fabricate exercises, the exact clone
+- `references/rules.md` keeps the rules that stop a wrong plan: never fabricate exercises, the exact clone
   command, a missing plan beats a plausible wrong one, never drop a rule, never hide a shortfall,
   suffix rather than overwrite
-- `FIELDS.md` keeps the warning names, the ten muscle groups and all five order rules
+- `docs/generation-fields.md` keeps the warning names, the ten muscle groups and all five order rules
 
 ### test-generation-script.sh
 `skills/generation/scripts/generate.py` through its real command line:
 - `--self-test` passes; its ten in-process invariants are not re-asserted here
-- the worked case reproduces `examples/plan.example.json` byte for byte from the bundled fixture —
+- the worked case reproduces `assets/examples/plan.example.json` byte for byte from the bundled fixture —
   one `cmp` that pins selection, scoring, ordering, rounding and formatting at once (line endings
   aside: what the checkout holds depends on `core.autocrlf`, not on the generator)
 - two identical runs produce identical output; targets come back in canonical order

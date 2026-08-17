@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/smyrdev/samy-workout-skills/skills/onboarding/schema/program.schema.json",
+  "$id": "https://github.com/smyrdev/samy-workout-skills/skills/onboarding/assets/schema/program.schema.json",
   "title": "Program answers",
   "description": "profile/programs/program-YYYY-MM-DD.json — one per training block, written by the onboarding skill. volume is filled by scripts/volume.py and is optional: absent or null is a valid, unscaled file.",
   "type": "object",

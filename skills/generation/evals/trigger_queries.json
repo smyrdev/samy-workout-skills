@@ -1,0 +1,22 @@
+[
+  { "query": "make me this week's plan", "should_trigger": true },
+  { "query": "next block please, same settings", "should_trigger": true },
+  { "query": "swap the leg press for something else", "should_trigger": true },
+  { "query": "regenerate but skip anything overhead, shoulder is sore", "should_trigger": true },
+  { "query": "can I get a version of my plan that focuses more on back?", "should_trigger": true },
+  { "query": "new cycle starts monday, what am I doing?", "should_trigger": true },
+  { "query": "my last plan was from june, generate a fresh one", "should_trigger": true },
+  { "query": "i want the plan to use the other exercises dataset this time", "should_trigger": true },
+  { "query": "no burpees ever — redo the week without them", "should_trigger": true },
+  { "query": "print out my workout for the week as markdown", "should_trigger": true },
+  { "query": "new here, can you get me set up?", "should_trigger": false },
+  { "query": "change my weight to 82", "should_trigger": false },
+  { "query": "switch me to a push/pull/legs split, 5 days", "should_trigger": false },
+  { "query": "log today's session: bench 80x8x3, rows 70x10x3", "should_trigger": false },
+  { "query": "what's my estimated 1RM if I bench 90 for 6?", "should_trigger": false },
+  { "query": "how many sets per week should chest get for hypertrophy, generally?", "should_trigger": false },
+  { "query": "explain the fitting algorithm in generate.py", "should_trigger": false },
+  { "query": "add a new dataset descriptor for the wger exercise database", "should_trigger": false },
+  { "query": "write me a 20 minute bodyweight warm-up routine", "should_trigger": false },
+  { "query": "convert my plan-2026-08-06.md to a PDF", "should_trigger": false }
+]

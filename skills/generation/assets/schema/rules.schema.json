@@ -1,13 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/smyrdev/samy-workout-skills/skills/generation/schema/rules.schema.json",
+  "$id": "https://github.com/smyrdev/samy-workout-skills/skills/generation/assets/schema/rules.schema.json",
   "title": "Personal generation rules",
-  "description": "profile/rules.json — hand-written by the person, read (never written) by the generation skill. Every section is optional: anything absent falls back to default_rules in skills/generation/scripts/generate.config.json, and present sections override the default key-by-key.",
+  "description": "The parsed form of profile/rules.md — hand-written by the person as Markdown (## sections, - bullets), read (never written) by the generation skill. This schema describes what generate.py parses that file into, and the shape of default_rules in generate.config.json; the person never types JSON. Every section is optional: anything absent falls back to default_rules, and present sections override the default key-by-key.",
   "type": "object",
-  "required": ["$schema_version"],
   "additionalProperties": false,
   "properties": {
-    "$schema_version": { "const": "1.0" },
+    "$schema_version": {
+      "const": "1.0",
+      "description": "Legacy only — a pre-Markdown profile/rules.json still carries it. rules.md has no equivalent and needs none."
+    },
     "exclude": {
       "description": "Filtered out before any exercise is picked. Unknown names are reported as warnings, never silently skipped.",
       "type": "object",

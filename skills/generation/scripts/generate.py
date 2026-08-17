@@ -2,15 +2,16 @@
 """Workout plan generator for samy-workout-skills.
 
 Reads a profile.json, a program file whose volume block volume.py has already
-filled, an exercise dataset described by a descriptor in datasets.json, and an
-optional personal rules.json — and fits concrete exercises to the per-muscle
-weekly set allocation. Every tunable number lives in generate.config.json;
-every dataset-specific name lives in datasets.json. This script holds the
-algorithm only and refuses unknown values rather than guessing.
+filled, an exercise dataset described by a descriptor in assets/datasets.json, and an
+optional hand-written personal rules.md — and fits concrete exercises to the
+per-muscle weekly set allocation. Every tunable number lives in
+generate.config.json; every dataset-specific name lives in assets/datasets.json.
+This script holds the algorithm only and refuses unknown values rather than
+guessing.
 
 Usage:
     generate.py --profile PROFILE.json --program PROGRAM.json \\
-        --dataset-dir DIR [--rules RULES.json] [--dataset NAME] \\
+        --dataset-dir DIR [--rules RULES.md] [--dataset NAME] \\
         [--today YYYY-MM-DD] [--write PLAN.json] [--write-md PLAN.md]
 
     generate.py --self-test
@@ -64,7 +65,7 @@ def default_config_path():
 
 
 def default_descriptor_path():
-    return script_dir().parent / "datasets.json"
+    return script_dir().parent / "assets" / "datasets.json"
 
 
 def load_config(path):
@@ -113,7 +114,7 @@ def equipment_to_tier(ds):
 
 
 KNOWN_MUSCLES_NOTE = (
-    "add it to muscle_map or muscle_ignore in datasets.json — unmapped muscles are refused, never guessed"
+    "add it to muscle_map or muscle_ignore in assets/datasets.json — unmapped muscles are refused, never guessed"
 )
 
 
@@ -172,9 +173,89 @@ def build_rows(records, ds):
                    f"{sorted(unmapped_muscles)} — {KNOWN_MUSCLES_NOTE}")
     if unknown_equipment:
         fail_input(f"dataset equipment not in any tier: {sorted(unknown_equipment)} "
-                   f"— add each to equipment_tiers in datasets.json")
+                   f"— add each to equipment_tiers in assets/datasets.json")
     rows.sort(key=lambda r: (r["name"], r["id"]))
     return rows
+
+
+# Keys are the headings as the docs spell them; lookup is case-insensitive.
+RULES_SECTIONS = {
+    "Exclude exercises": ("exclude", "exercises"),
+    "Exclude equipment": ("exclude", "equipment"),
+    "Exclude movement groups": ("exclude", "movement_groups"),
+    "Exclude muscles": ("exclude", "muscles"),
+    "Focus muscles": ("focus", "muscles"),
+    "Must include": ("focus", "must_include"),
+    "Order": ("order", None),
+}
+_RULES_SECTIONS_LOWER = {h.lower(): target for h, target in RULES_SECTIONS.items()}
+
+RULES_HEADING_NOTE = (
+    "valid headings: " + ", ".join(f"## {h}" for h in RULES_SECTIONS)
+)
+
+
+def parse_rules_md(text, path):
+    """Parse a hand-written rules.md into the same dict shape rules.json had.
+
+    The format is deliberately dumb so it is easy to type and easy to diff:
+    `## <Section>` headings, one `- item` bullet per value. Only bullets carry
+    meaning — any other prose is a note to self and is ignored, so the file can
+    explain itself to the person editing it. A heading with no bullets under it
+    means "no items", which is how a default is switched off. An unknown
+    heading is refused, never ignored: a silently dropped rule is worse than a
+    failed run. Raises ValueError with a `path:line: reason` message.
+    """
+    rules = {}
+    current = None      # the list the next bullet appends to
+    for lineno, raw in enumerate(text.splitlines(), 1):
+        line = raw.strip()
+        if not line:
+            continue
+        if line.startswith("#"):
+            level = len(line) - len(line.lstrip("#"))
+            heading = line.lstrip("#").strip()
+            if level == 1:
+                current = None          # the document title
+                continue
+            target = _RULES_SECTIONS_LOWER.get(heading.lower().rstrip(":"))
+            if target is None:
+                raise ValueError(f"{path}:{lineno}: unknown section {heading!r} — "
+                                 f"{RULES_HEADING_NOTE}")
+            section, field = target
+            if field is None:
+                current = rules.setdefault(section, [])
+            else:
+                current = rules.setdefault(section, {}).setdefault(field, [])
+            continue
+        if line.startswith(("-", "*")):
+            value = line[1:].strip()
+            if not value:
+                continue
+            if current is None:
+                raise ValueError(f"{path}:{lineno}: bullet {value!r} before any section "
+                                 f"heading — {RULES_HEADING_NOTE}")
+            current.append(value)
+            continue
+        # Anything else is prose — a note to self, an explanation under a heading.
+        # Only bullets carry meaning, so prose is ignored wherever it appears.
+    return rules
+
+
+def load_rules(path):
+    """Read a personal rules file. `.md` is the documented format; `.json` is
+    still accepted so an older file keeps working."""
+    p = Path(path)
+    if p.suffix.lower() == ".json":
+        personal = load_json(path, "rules file")
+        personal.pop("$schema_version", None)
+        return personal
+    if not p.is_file():
+        fail_input(f"rules file not found: {path}")
+    try:
+        return parse_rules_md(p.read_text(encoding="utf-8"), path)
+    except ValueError as e:
+        fail_input(str(e))
 
 
 def merge_rules(default_rules, personal):
@@ -715,6 +796,39 @@ def run_self_test(config, descriptor):
     check("unknown_exclude_exercise:flying pig" in ruled["warnings"],
           "unknown exclusion name not warned about")
 
+    # 6b. The markdown rules format parses to exactly what the JSON shape used to be.
+    parsed = parse_rules_md("""
+# My rules
+
+A note to self that is not a rule.
+
+## Exclude exercises
+- barbell squat
+- flying pig
+
+## Exclude equipment
+
+## Focus muscles
+* shoulders
+
+## Must include
+- dumbbell fly
+
+## Order
+- must_include_first
+- compound_before_isolation
+""", "<self-test>")
+    check(parsed == {
+        "exclude": {"exercises": ["barbell squat", "flying pig"], "equipment": []},
+        "focus": {"muscles": ["shoulders"], "must_include": ["dumbbell fly"]},
+        "order": ["must_include_first", "compound_before_isolation"],
+    }, f"rules.md parsed to {parsed!r}")
+    md_ruled = plan_for(fixture_profile(), fixture_program_data(), rules={
+        k: v for k, v in parsed.items() if k != "order"})
+    md_names = [ex["name"] for s in md_ruled["sessions"] for ex in s["exercises"]]
+    check("barbell squat" not in md_names and "dumbbell fly" in md_names,
+          "rules.md exclusion/must_include did not reach the plan")
+
     # 7. Session ordering: trailer groups (core, calves) come after everything else.
     for s in plan["sessions"]:
         primaries = [ex["primary"] for ex in s["exercises"]]
@@ -765,10 +879,10 @@ def build_parser():
     )
     p.add_argument("--profile", help="path to profile.json")
     p.add_argument("--program", help="path to programs/program-*.json with a volume block")
-    p.add_argument("--rules", help="path to a personal rules.json (optional)")
+    p.add_argument("--rules", help="path to a personal rules.md (optional; .json also accepted)")
     p.add_argument("--dataset-dir", help="path to the cloned dataset repository")
     p.add_argument("--dataset", help="dataset key in the descriptor (default: its \"default\")")
-    p.add_argument("--descriptor", help="path to datasets.json (default: alongside the skill)")
+    p.add_argument("--descriptor", help="path to assets/datasets.json (default: alongside the skill)")
     p.add_argument("--config", help="path to generate.config.json (default: alongside this script)")
     p.add_argument("--today", help="YYYY-MM-DD, for a deterministic created_at. Defaults to the real date.")
     p.add_argument("--write", help="write the plan JSON here (refuses to overwrite)")
@@ -793,7 +907,7 @@ def main(argv=None):
 
     profile = load_json(args.profile, "profile")
     program_data = load_json(args.program, "program file")
-    personal = load_json(args.rules, "rules file") if args.rules else None
+    personal = load_rules(args.rules) if args.rules else None
 
     ds_name, ds = pick_dataset(descriptor, args.dataset)
     dataset_dir = Path(args.dataset_dir)

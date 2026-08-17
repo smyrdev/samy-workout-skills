@@ -25,6 +25,11 @@ SKILL_DIR = ROOT / "skills" / "onboarding"
 GEN_DIR = ROOT / "skills" / "generation"
 PROFILE_DIR = ROOT / "profile"
 
+# The generator owns the rules.md format; import it once so the validator parses with the same code.
+sys.path.insert(0, str(GEN_DIR / "scripts"))
+import generate  # noqa: E402
+sys.path.pop(0)
+
 FAILURES = []
 
 
@@ -97,30 +102,77 @@ def is_quoted_single_line(raw_value):
 # 1. SKILL.md frontmatter shape
 # --------------------------------------------------------------------------------------
 
+# The Agent Skills specification (agentskills.io/specification): name is 1-64 chars of
+# lowercase alphanumerics and single hyphens and must equal the parent directory; description
+# is 1-1024 chars; compatibility, when present, is 1-500 chars; the body should stay under
+# 500 lines. The portable files carry only spec fields; the wrappers may add Claude Code's own.
+SPEC_NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+SPEC_NAME_MAX = 64
+SPEC_DESCRIPTION_MAX = 1024
+SPEC_COMPATIBILITY_MAX = 500
+SPEC_BODY_MAX_LINES = 500
+PORTABLE_KEYS = {"name", "description", "compatibility"}
+
+# Each wrapper's description is a copy of its portable twin's — frontmatter cannot point. The
+# one permitted delta, when present, is the slash-command spelling of the other skill's name.
+WRAPPER_TWINS = (
+    (ROOT / ".claude" / "skills" / "onboard" / "SKILL.md", SKILL_DIR / "SKILL.md", None),
+    (ROOT / ".claude" / "skills" / "generate" / "SKILL.md", GEN_DIR / "SKILL.md",
+     ("run onboarding first", "run /onboard first")),
+)
+
+
 def check_skill_frontmatter():
-    checks = (
-        (SKILL_DIR / "SKILL.md", True),
-        (ROOT / ".claude" / "skills" / "onboard" / "SKILL.md", False),
-        (GEN_DIR / "SKILL.md", True),
-        (ROOT / ".claude" / "skills" / "generate" / "SKILL.md", False),
-    )
-    for path, exact_keys in checks:
+    checks = [(portable, True) for _, portable, _ in WRAPPER_TWINS] +              [(wrapper, False) for wrapper, _, _ in WRAPPER_TWINS]
+    parsed = {}
+    for path, portable in checks:
         rel = path.relative_to(ROOT)
         if not path.is_file():
             fail(f"{rel}: file not found")
             continue
-        fields, raw, _ = parse_frontmatter(path.read_text(encoding="utf-8"))
+        fields, raw, body = parse_frontmatter(path.read_text(encoding="utf-8"))
         if fields is None:
             fail(f"{rel}: frontmatter does not parse (missing --- delimiters)")
             continue
+        parsed[path] = fields
         if "name" not in fields or "description" not in fields:
             fail(f"{rel}: frontmatter must contain both name and description")
             continue
-        if exact_keys and set(fields.keys()) != {"name", "description"}:
-            extra = set(fields.keys()) - {"name", "description"}
-            fail(f"{rel}: frontmatter must carry exactly name + description, found extra keys: {sorted(extra)}")
+        if portable and not set(fields.keys()) <= PORTABLE_KEYS:
+            extra = set(fields.keys()) - PORTABLE_KEYS
+            fail(f"{rel}: portable frontmatter carries only spec fields {sorted(PORTABLE_KEYS)}, "
+                 f"found extra keys: {sorted(extra)}")
         if not is_quoted_single_line(raw.get("description", "")):
             fail(f"{rel}: description must be a quoted, single-line string")
+
+        name = fields["name"]
+        if not SPEC_NAME_RE.match(name) or len(name) > SPEC_NAME_MAX:
+            fail(f"{rel}: name {name!r} must be 1-{SPEC_NAME_MAX} lowercase alphanumerics/hyphens, "
+                 "no leading, trailing or doubled hyphen")
+        if name != path.parent.name:
+            fail(f"{rel}: name {name!r} must equal its parent directory {path.parent.name!r}")
+        desc = fields["description"]
+        if not desc.strip() or len(desc) > SPEC_DESCRIPTION_MAX:
+            fail(f"{rel}: description must be 1-{SPEC_DESCRIPTION_MAX} characters, is {len(desc)}")
+        if "compatibility" in fields:
+            compat = fields["compatibility"]
+            if not compat.strip() or len(compat) > SPEC_COMPATIBILITY_MAX:
+                fail(f"{rel}: compatibility must be 1-{SPEC_COMPATIBILITY_MAX} characters, is {len(compat)}")
+        body_lines = len(body.splitlines())
+        if body_lines > SPEC_BODY_MAX_LINES:
+            fail(f"{rel}: body is {body_lines} lines; the spec asks for under {SPEC_BODY_MAX_LINES} "
+                 "— move detail into references/")
+
+    for wrapper, portable, delta in WRAPPER_TWINS:
+        if wrapper not in parsed or portable not in parsed:
+            continue
+        expected = parsed[portable].get("description", "")
+        if delta:
+            expected = expected.replace(*delta)
+        if parsed[wrapper].get("description", "") != expected:
+            fail(f"{wrapper.relative_to(ROOT)}: description has drifted from "
+                 f"{portable.relative_to(ROOT)} — copy it verbatim"
+                 + (f" (only {delta[0]!r} -> {delta[1]!r} may differ)" if delta else ""))
 
 
 # --------------------------------------------------------------------------------------
@@ -162,8 +214,8 @@ def check_portable_skill_neutrality():
 # --------------------------------------------------------------------------------------
 
 def rule_content_tokens():
-    profile_schema = load_json(SKILL_DIR / "schema" / "profile.schema.json")
-    program_schema = load_json(SKILL_DIR / "schema" / "program.schema.json")
+    profile_schema = load_json(SKILL_DIR / "assets" / "schema" / "profile.schema.json")
+    program_schema = load_json(SKILL_DIR / "assets" / "schema" / "program.schema.json")
     tokens = set()
     if profile_schema:
         tokens.update(profile_schema["properties"]["basics"]["properties"]["bodyfat_bracket"]["enum"])
@@ -197,11 +249,11 @@ def check_no_rule_content():
         rel = path.relative_to(ROOT)
         for token in sorted(tokens):
             if token in text:
-                fail(f"{rel}: contains rule content {token!r} — belongs in questions.yaml or FIELDS.md")
+                fail(f"{rel}: contains rule content {token!r} — belongs in references/questions.yaml or docs/*-fields.md")
 
 
 # --------------------------------------------------------------------------------------
-# 4. questions.yaml — minimal hand-rolled parser, every `stores`/`store` path exists in schema
+# 4. references/questions.yaml — minimal hand-rolled parser, every `stores`/`store` path exists in schema
 # --------------------------------------------------------------------------------------
 
 def parse_flow_map(line):
@@ -282,18 +334,18 @@ def resolve_schema_path(schema, path):
 
 
 def check_questions_yaml(profile_schema, program_schema):
-    path = SKILL_DIR / "questions.yaml"
+    path = SKILL_DIR / "references" / "questions.yaml"
     if not path.is_file():
-        fail("skills/onboarding/questions.yaml not found")
+        fail("skills/onboarding/references/questions.yaml not found")
         return
     text = path.read_text(encoding="utf-8")
     try:
         entries = parse_questions_yaml(text)
     except Exception as e:  # pragma: no cover - defensive
-        fail(f"skills/onboarding/questions.yaml failed to parse: {e}")
+        fail(f"skills/onboarding/references/questions.yaml failed to parse: {e}")
         return
     if not entries:
-        fail("skills/onboarding/questions.yaml: no question entries found")
+        fail("skills/onboarding/references/questions.yaml: no question entries found")
         return
 
     schemas = {"profile": profile_schema, "program": program_schema}
@@ -301,25 +353,25 @@ def check_questions_yaml(profile_schema, program_schema):
         qid = entry.get("id", "<unknown>")
         scope = entry.get("scope")
         if scope not in schemas:
-            fail(f"questions.yaml[{qid}]: scope must be 'profile' or 'program', got {scope!r}")
+            fail(f"references/questions.yaml[{qid}]: scope must be 'profile' or 'program', got {scope!r}")
             continue
         schema = schemas[scope]
 
         qtype = entry.get("type")
         if qtype not in ("choice", "multi_select", "text"):
-            fail(f"questions.yaml[{qid}]: type must be choice/multi_select/text, got {qtype!r}")
+            fail(f"references/questions.yaml[{qid}]: type must be choice/multi_select/text, got {qtype!r}")
 
         # multi_select entries may store per-option instead of via a single `stores:` path.
         option_stores = [o["store"] for o in entry.get("options", []) if "store" in o]
         if option_stores:
             for store_path in option_stores:
                 if not resolve_schema_path(schema, store_path):
-                    fail(f"questions.yaml[{qid}]: option store path {store_path!r} not found in {scope} schema")
+                    fail(f"references/questions.yaml[{qid}]: option store path {store_path!r} not found in {scope} schema")
         elif "stores" in entry:
             if not resolve_schema_path(schema, entry["stores"]):
-                fail(f"questions.yaml[{qid}]: stores path {entry['stores']!r} not found in {scope} schema")
+                fail(f"references/questions.yaml[{qid}]: stores path {entry['stores']!r} not found in {scope} schema")
         else:
-            fail(f"questions.yaml[{qid}]: has neither `stores` nor per-option `store`")
+            fail(f"references/questions.yaml[{qid}]: has neither `stores` nor per-option `store`")
 
 
 # --------------------------------------------------------------------------------------
@@ -413,13 +465,33 @@ def _matches(instance, schema):
     return not errs
 
 
-def validate_file_against_schema(path, schema, label, required=True):
+def parse_rules_md(path):
+    """Parse a rules.md with the generator's own parser, so the format has one
+    owner. Returns None (and records the failure) if it will not parse."""
+    if not path.is_file():
+        fail(f"{path.relative_to(ROOT)}: missing")
+        return None
+    try:
+        return generate.parse_rules_md(path.read_text(encoding="utf-8"), str(path))
+    except ValueError as e:
+        fail(str(e))
+        return None
+
+
+def validate_file_against_schema(path, schema, label, required=True, loader=None):
+    """Load `path` with `loader` (JSON by default, parse_rules_md for a rules.md)
+    and validate it against `schema`."""
     if not required and not path.is_file():
         return
-    data = load_json(path)
-    if data is None:
-        fail(f"{label}: not valid JSON")
-        return
+    if loader is None:
+        data = load_json(path)
+        if data is None:
+            fail(f"{label}: not valid JSON")
+            return
+    else:
+        data = loader(path)
+        if data is None:
+            return
     errs = []
     validate_instance(data, schema, str(path.relative_to(ROOT)), errs)
     for e in errs:
@@ -497,7 +569,7 @@ def check_script_self_test(script, label):
 
 
 # --------------------------------------------------------------------------------------
-# 8. Generation skill: datasets.json descriptor is complete and internally consistent
+# 8. Generation skill: assets/datasets.json descriptor is complete and internally consistent
 # --------------------------------------------------------------------------------------
 
 DESCRIPTOR_REQUIRED_KEYS = [
@@ -510,24 +582,24 @@ DESCRIPTOR_REQUIRED_FIELDS = [
 
 
 def check_datasets_descriptor(program_schema):
-    path = GEN_DIR / "datasets.json"
+    path = GEN_DIR / "assets" / "datasets.json"
     descriptor = load_json(path)
     if descriptor is None:
-        fail("skills/generation/datasets.json: not valid JSON")
+        fail("skills/generation/assets/datasets.json: not valid JSON")
         return
 
     datasets = descriptor.get("datasets")
     if not isinstance(datasets, dict) or not datasets:
-        fail("datasets.json: no datasets defined")
+        fail("assets/datasets.json: no datasets defined")
         return
     default = descriptor.get("default")
     if default not in datasets:
-        fail(f"datasets.json: default {default!r} is not a defined dataset")
+        fail(f"assets/datasets.json: default {default!r} is not a defined dataset")
 
     canonical = set(
         program_schema["properties"]["volume"]["oneOf"][1]["properties"]["per_muscle_weekly_sets"]["required"]
     )
-    profile_schema = load_json(SKILL_DIR / "schema" / "profile.schema.json")
+    profile_schema = load_json(SKILL_DIR / "assets" / "schema" / "profile.schema.json")
     benchmark_keys = set(
         profile_schema["properties"]["strength_benchmarks"]["required"]
     ) if profile_schema else set()
@@ -535,33 +607,33 @@ def check_datasets_descriptor(program_schema):
     for name, ds in datasets.items():
         missing = [k for k in DESCRIPTOR_REQUIRED_KEYS if k not in ds]
         if missing:
-            fail(f"datasets.json[{name}]: missing keys {missing}")
+            fail(f"assets/datasets.json[{name}]: missing keys {missing}")
             continue
         missing_fields = [k for k in DESCRIPTOR_REQUIRED_FIELDS if k not in ds["fields"]]
         if missing_fields:
-            fail(f"datasets.json[{name}]: fields missing {missing_fields}")
+            fail(f"assets/datasets.json[{name}]: fields missing {missing_fields}")
 
         seen_equipment = {}
         for tier_str, names in ds["equipment_tiers"].items():
             if not tier_str.isdigit():
-                fail(f"datasets.json[{name}]: equipment tier key {tier_str!r} is not an integer")
+                fail(f"assets/datasets.json[{name}]: equipment tier key {tier_str!r} is not an integer")
             for eq in names:
                 if eq in seen_equipment:
-                    fail(f"datasets.json[{name}]: equipment {eq!r} in tiers "
+                    fail(f"assets/datasets.json[{name}]: equipment {eq!r} in tiers "
                          f"{seen_equipment[eq]} and {tier_str}")
                 seen_equipment[eq] = tier_str
 
         bad_groups = sorted(set(ds["muscle_map"].values()) - canonical)
         if bad_groups:
-            fail(f"datasets.json[{name}]: muscle_map maps to unknown groups {bad_groups} "
+            fail(f"assets/datasets.json[{name}]: muscle_map maps to unknown groups {bad_groups} "
                  f"— canonical groups come from program.schema.json")
         overlap = sorted(set(ds["muscle_ignore"]) & set(ds["muscle_map"]))
         if overlap:
-            fail(f"datasets.json[{name}]: muscles both mapped and ignored: {overlap}")
+            fail(f"assets/datasets.json[{name}]: muscles both mapped and ignored: {overlap}")
 
         for bench_key in ds["benchmark_gates"]:
             if benchmark_keys and bench_key not in benchmark_keys:
-                fail(f"datasets.json[{name}]: benchmark_gates key {bench_key!r} is not a "
+                fail(f"assets/datasets.json[{name}]: benchmark_gates key {bench_key!r} is not a "
                      f"profile strength benchmark")
 
     # The default descriptor must fully cover the bundled fixture's vocabulary — the offline
@@ -580,10 +652,10 @@ def check_datasets_descriptor(program_schema):
             unmapped = sorted(muscles - known)
             if unmapped:
                 fail(f"fixture record {rec.get('id')}: muscles {unmapped} not covered by "
-                     f"datasets.json[{default}] muscle_map/muscle_ignore")
+                     f"assets/datasets.json[{default}] muscle_map/muscle_ignore")
             if rec.get("equipment") not in tiered:
                 fail(f"fixture record {rec.get('id')}: equipment {rec.get('equipment')!r} "
-                     f"not in any tier of datasets.json[{default}]")
+                     f"not in any tier of assets/datasets.json[{default}]")
 
 
 # --------------------------------------------------------------------------------------
@@ -661,6 +733,73 @@ def load_json(path):
         return None
 
 
+# --------------------------------------------------------------------------------------
+# 10. Eval scaffolding — evals/evals.json and evals/trigger_queries.json have the shape the
+#     skill-creator loop reads (agentskills.io/skill-creation/evaluating-skills)
+# --------------------------------------------------------------------------------------
+
+EVAL_REQUIRED = {"id", "prompt", "expected_output"}
+
+
+def check_evals(skill_dir):
+    rel_dir = skill_dir.relative_to(ROOT).as_posix()
+    evals_path = skill_dir / "evals" / "evals.json"
+    data = load_json(evals_path)
+    if data is None:
+        fail(f"{rel_dir}/evals/evals.json: missing or not valid JSON")
+    else:
+        if data.get("skill_name") != skill_dir.name:
+            fail(f"{rel_dir}/evals/evals.json: skill_name must be {skill_dir.name!r}, got {data.get('skill_name')!r}")
+        evals = data.get("evals")
+        if not isinstance(evals, list) or not evals:
+            fail(f"{rel_dir}/evals/evals.json: evals must be a non-empty list")
+            evals = []
+        seen_ids = set()
+        for i, e in enumerate(evals):
+            if not isinstance(e, dict):
+                fail(f"{rel_dir}/evals/evals.json[{i}]: not an object")
+                continue
+            missing = EVAL_REQUIRED - set(e)
+            if missing:
+                fail(f"{rel_dir}/evals/evals.json[{i}]: missing {sorted(missing)}")
+            eid = e.get("id")
+            if eid in seen_ids:
+                fail(f"{rel_dir}/evals/evals.json[{i}]: duplicate id {eid!r}")
+            seen_ids.add(eid)
+            for k in ("prompt", "expected_output"):
+                if not isinstance(e.get(k), str) or not e.get(k, "").strip():
+                    fail(f"{rel_dir}/evals/evals.json[{i}]: {k} must be a non-empty string")
+            well_formed = True
+            for k in ("files", "assertions", "setup"):
+                if k in e and not (isinstance(e[k], list) and all(isinstance(x, str) for x in e[k])):
+                    fail(f"{rel_dir}/evals/evals.json[{i}]: {k} must be a list of strings")
+                    well_formed = False
+            for f in e.get("files", []) if well_formed else []:
+                if not (skill_dir / f).is_file():
+                    fail(f"{rel_dir}/evals/evals.json[{i}]: files entry {f!r} does not exist under {rel_dir}/")
+
+    tq_path = skill_dir / "evals" / "trigger_queries.json"
+    tq = load_json(tq_path)
+    if tq is None:
+        fail(f"{rel_dir}/evals/trigger_queries.json: missing or not valid JSON")
+    elif not isinstance(tq, list) or not tq:
+        fail(f"{rel_dir}/evals/trigger_queries.json: must be a non-empty list")
+    else:
+        pos = neg = 0
+        for i, q in enumerate(tq):
+            if not (isinstance(q, dict) and isinstance(q.get("query"), str) and q["query"].strip()
+                    and isinstance(q.get("should_trigger"), bool)):
+                fail(f"{rel_dir}/evals/trigger_queries.json[{i}]: needs a non-empty query and a boolean should_trigger")
+                continue
+            if q["should_trigger"]:
+                pos += 1
+            else:
+                neg += 1
+        if pos == 0 or neg == 0:
+            fail(f"{rel_dir}/evals/trigger_queries.json: needs both should-trigger and should-not-trigger queries "
+                 f"(have {pos} / {neg})")
+
+
 def main():
     args = sys.argv[1:]
     unknown = [a for a in args if a != "--skills-only"]
@@ -673,21 +812,21 @@ def main():
     check_portable_skill_neutrality()
     check_no_rule_content()
 
-    profile_schema = load_json(SKILL_DIR / "schema" / "profile.schema.json")
-    program_schema = load_json(SKILL_DIR / "schema" / "program.schema.json")
+    profile_schema = load_json(SKILL_DIR / "assets" / "schema" / "profile.schema.json")
+    program_schema = load_json(SKILL_DIR / "assets" / "schema" / "program.schema.json")
     if profile_schema is None:
-        fail("skills/onboarding/schema/profile.schema.json: not valid JSON")
+        fail("skills/onboarding/assets/schema/profile.schema.json: not valid JSON")
     if program_schema is None:
-        fail("skills/onboarding/schema/program.schema.json: not valid JSON")
+        fail("skills/onboarding/assets/schema/program.schema.json: not valid JSON")
 
     if profile_schema and program_schema:
         check_questions_yaml(profile_schema, program_schema)
 
         validate_file_against_schema(
-            SKILL_DIR / "examples" / "profile.example.json", profile_schema, "profile example"
+            SKILL_DIR / "assets" / "examples" / "profile.example.json", profile_schema, "profile example"
         )
         validate_file_against_schema(
-            SKILL_DIR / "examples" / "program.example.json", program_schema, "program example"
+            SKILL_DIR / "assets" / "examples" / "program.example.json", program_schema, "program example"
         )
 
         if not skills_only:
@@ -700,27 +839,33 @@ def main():
 
         check_volume_config_coverage(profile_schema, program_schema)
 
-    plan_schema = load_json(GEN_DIR / "schema" / "plan.schema.json")
-    rules_schema = load_json(GEN_DIR / "schema" / "rules.schema.json")
+    plan_schema = load_json(GEN_DIR / "assets" / "schema" / "plan.schema.json")
+    rules_schema = load_json(GEN_DIR / "assets" / "schema" / "rules.schema.json")
     if plan_schema is None:
-        fail("skills/generation/schema/plan.schema.json: not valid JSON")
+        fail("skills/generation/assets/schema/plan.schema.json: not valid JSON")
     if rules_schema is None:
-        fail("skills/generation/schema/rules.schema.json: not valid JSON")
+        fail("skills/generation/assets/schema/rules.schema.json: not valid JSON")
 
     if program_schema and plan_schema and rules_schema:
         check_datasets_descriptor(program_schema)
         check_generate_config(program_schema, rules_schema)
 
         validate_file_against_schema(
-            GEN_DIR / "examples" / "plan.example.json", plan_schema, "plan example"
+            GEN_DIR / "assets" / "examples" / "plan.example.json", plan_schema, "plan example"
         )
         validate_file_against_schema(
-            GEN_DIR / "examples" / "rules.example.json", rules_schema, "rules example"
+            GEN_DIR / "assets" / "examples" / "rules.example.md", rules_schema, "rules example",
+            loader=parse_rules_md
         )
 
         if not skills_only:
             for plan_path in sorted((PROFILE_DIR / "plans").glob("*.json")):
                 validate_file_against_schema(plan_path, plan_schema, str(plan_path))
+            validate_file_against_schema(
+                PROFILE_DIR / "rules.md", rules_schema, "profile/rules.md",
+                required=False, loader=parse_rules_md
+            )
+            # A pre-Markdown rules.json is still read by the generator, so keep checking one.
             validate_file_against_schema(
                 PROFILE_DIR / "rules.json", rules_schema, "profile/rules.json",
                 required=False
@@ -728,6 +873,9 @@ def main():
 
     check_script_self_test(SKILL_DIR / "scripts" / "volume.py", "volume.py")
     check_script_self_test(GEN_DIR / "scripts" / "generate.py", "generate.py")
+
+    check_evals(SKILL_DIR)
+    check_evals(GEN_DIR)
 
     if FAILURES:
         for f in FAILURES:

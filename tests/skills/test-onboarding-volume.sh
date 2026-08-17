@@ -16,8 +16,8 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$SCRIPT_DIR/test-helpers.sh"
 
 VOLUME="$REPO_ROOT/skills/onboarding/scripts/volume.py"
-PROFILE="$REPO_ROOT/skills/onboarding/examples/profile.example.json"
-PROGRAM="$REPO_ROOT/skills/onboarding/examples/program.example.json"
+PROFILE="$REPO_ROOT/skills/onboarding/assets/examples/profile.example.json"
+PROGRAM="$REPO_ROOT/skills/onboarding/assets/examples/program.example.json"
 TODAY="2026-08-06"
 
 PROJECT=$(create_test_project)
@@ -51,9 +51,9 @@ got = json.load(open(sys.argv[1], encoding='utf-8'))
 want = json.load(open(sys.argv[2], encoding='utf-8'))['volume']
 sys.exit(0 if got == want else 1)
 " "$PROJECT/computed.json" "$PROGRAM"; then
-    _pass "output reproduces examples/program.example.json's volume block"
+    _pass "output reproduces assets/examples/program.example.json's volume block"
 else
-    _fail "output reproduces examples/program.example.json's volume block"
+    _fail "output reproduces assets/examples/program.example.json's volume block"
     echo "$out" | sed 's/^/    /'
 fi
 assert_order "$out" '"chest"' '"back"' "muscles are in canonical order (chest before back)"

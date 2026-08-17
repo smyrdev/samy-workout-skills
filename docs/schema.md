@@ -1,13 +1,13 @@
 # Profile and program schema — rationale
 
 The machine-readable contracts are
-[`skills/onboarding/schema/profile.schema.json`](../skills/onboarding/schema/profile.schema.json)
+[`skills/onboarding/assets/schema/profile.schema.json`](../skills/onboarding/assets/schema/profile.schema.json)
 and
-[`skills/onboarding/schema/program.schema.json`](../skills/onboarding/schema/program.schema.json),
-with [`skills/onboarding/examples/`](../skills/onboarding/examples/) holding a filled-in sample of
+[`skills/onboarding/assets/schema/program.schema.json`](../skills/onboarding/assets/schema/program.schema.json),
+with [`skills/onboarding/assets/examples/`](../skills/onboarding/assets/examples/) holding a filled-in sample of
 each. When this document and a schema disagree, the schema wins and this document is the bug. For
 "what do I literally type in this field", see
-[`skills/onboarding/FIELDS.md`](../skills/onboarding/FIELDS.md) instead — this file is the *why*.
+[`onboarding-fields.md`](onboarding-fields.md) instead — this file is the *why*.
 
 [`onboarding.md`](onboarding.md) is the original hand-written spec and is kept as-is for
 provenance, typos included.
@@ -23,7 +23,7 @@ profile/
 │   ├── program-2026-08-06.json
 │   └── program-2026-11-02.json
 ├── plans/
-└── rules.json
+└── rules.md
 ```
 
 **One repository holds one profile.** The person's name is stored inside `profile.json` as a
@@ -43,7 +43,7 @@ output*) are never confused by directory alone.
 ### Why one profile and not several
 
 The safety property it existed to protect — never silently overwrite a profile — is kept, and now
-sits in `skills/onboarding/rules.md` § If a profile already exists.
+sits in `skills/onboarding/references/rules.md` § If a profile already exists.
 
 ---
 
@@ -312,9 +312,9 @@ re-asked, never silently clamped and never silently stored.
 
 ## Changing the schema
 
-`skills/onboarding/schema/profile.schema.json` and `skills/onboarding/schema/program.schema.json`
+`skills/onboarding/assets/schema/profile.schema.json` and `skills/onboarding/assets/schema/program.schema.json`
 are the schema of record. Any field change updates the relevant schema, its example under
-`skills/onboarding/examples/`, `questions.yaml` or `volume.config.json` as appropriate, and this
+`skills/onboarding/assets/examples/`, `references/questions.yaml` or `volume.config.json` as appropriate, and this
 document, in the same commit. A breaking change bumps `$schema_version` — once there is released
 data to break. Nothing has shipped yet, so pre-release breaking changes (such as dropping
 multi-person support, which removed `user.slug` and `profile_slug`) edit the schemas in place and

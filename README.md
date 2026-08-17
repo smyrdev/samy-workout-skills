@@ -72,12 +72,12 @@ assumed.
 ## Hand-fill path — no interview
 
 You can skip the interview entirely: copy the samples, edit them by hand using
-[`skills/onboarding/FIELDS.md`](skills/onboarding/FIELDS.md) as a guide, and validate.
+[`docs/onboarding-fields.md`](docs/onboarding-fields.md) as a guide, and validate.
 
 ```bash
 mkdir -p profile/programs
-cp skills/onboarding/examples/profile.example.json profile/profile.json
-cp skills/onboarding/examples/program.example.json profile/programs/program-2026-08-06.json
+cp skills/onboarding/assets/examples/profile.example.json profile/profile.json
+cp skills/onboarding/assets/examples/program.example.json profile/programs/program-2026-08-06.json
 # edit both by hand
 python scripts/validate-skills.py
 ```
@@ -101,16 +101,27 @@ falls short with your equipment.
 The dataset is cloned into a gitignored `datasets/` cache on first use. Everything the generator
 knows about it — field names, equipment tiers, how its 22-muscle vocabulary maps onto the volume
 model's 10 groups — lives in
-[`skills/generation/datasets.json`](skills/generation/datasets.json). Point that file at a
+[`skills/generation/assets/datasets.json`](skills/generation/assets/datasets.json). Point that file at a
 different dataset and nothing else changes.
 
 ## Your rules
 
-`profile/rules.json` is a hand-written file of standing preferences the generator reads
+`profile/rules.md` is a hand-written file of standing preferences the generator reads
 on every run: exercises or equipment to never use, muscle groups to focus or drop, how sessions
-are ordered. Copy
-[`skills/generation/examples/rules.example.json`](skills/generation/examples/rules.example.json)
-and edit — [`skills/generation/FIELDS.md`](skills/generation/FIELDS.md) explains every field.
+are ordered. It is plain Markdown — `## Section` headings and `- item` bullets, with any other
+prose ignored as a note to yourself:
+
+```markdown
+## Exclude exercises
+- burpee
+
+## Focus muscles
+- shoulders
+```
+
+Copy
+[`skills/generation/assets/examples/rules.example.md`](skills/generation/assets/examples/rules.example.md)
+and edit — [`docs/generation-fields.md`](docs/generation-fields.md) lists every section.
 Typos are reported as warnings in the plan, never silently ignored.
 
 ## Where your data lives
@@ -122,13 +133,13 @@ Typos are reported as warnings in the plan, never silently ignored.
 - `profile/programs/program-<date>.json` — what you want this cycle: goal, days, split, and (once
   `volume.py` has run) a computed weekly per-muscle set allocation. One file per training block;
   the highest-dated filename is the current one.
-- `profile/rules.json` — your standing generation preferences, written by you alone.
+- `profile/rules.md` — your standing generation preferences, written by you alone.
 - `profile/plans/plan-<date>.json` + `.md` — generated plans, one dated pair per run, never
   overwritten. The `.md` is yours to scribble on.
 
 The schema lives at
-[`skills/onboarding/schema/profile.schema.json`](skills/onboarding/schema/profile.schema.json) and
-[`skills/onboarding/schema/program.schema.json`](skills/onboarding/schema/program.schema.json),
+[`skills/onboarding/assets/schema/profile.schema.json`](skills/onboarding/assets/schema/profile.schema.json) and
+[`skills/onboarding/assets/schema/program.schema.json`](skills/onboarding/assets/schema/program.schema.json),
 with every field documented in [`docs/schema.md`](docs/schema.md).
 
 Your files are plain JSON you can read, edit, back up, or delete. Nothing else touches them.
@@ -147,6 +158,23 @@ Your files are plain JSON you can read, edit, back up, or delete. Nothing else t
 - **Benchmark gates are name-pattern based.** "Can't do five pull-ups" removes exercises whose
   names match pull-up patterns; a dataset with unusual naming could slip past them.
 
+## Evaluating the skills
+
+Each skill carries its own test cases in `evals/`, in the shape the
+[skill-creator](https://github.com/anthropics/skills/tree/main/skills/skill-creator) loop
+reads ([how it works](https://agentskills.io/skill-creation/evaluating-skills)):
+
+- `evals/evals.json` — realistic prompts, what a good outcome looks like, and gradable
+  assertions. Every case runs in a fresh clone; its `setup` lines say what to seed under
+  `profile/` (and `datasets/`) from `evals/files/` first. The generation cases use the bundled
+  fixture dataset, so they run offline.
+- `evals/trigger_queries.json` — about twenty prompts labelled should / should-not trigger,
+  near-misses included, for tuning the `description`.
+
+Run outputs, grades and benchmarks land in a sibling `<skill>-workspace/iteration-N/`, which is
+gitignored. `python scripts/validate-skills.py` checks the shape of both files; running the
+loop itself needs an agent.
+
 ## Roadmap
 
 - ~~Workout generation reading `profile.json` and the latest `programs/*.json`, writing under
@@ -156,31 +184,38 @@ Your files are plain JSON you can read, edit, back up, or delete. Nothing else t
 
 ## Layout
 
+Both skills follow the [Agent Skills](https://agentskills.io/specification) layout: a thin
+`SKILL.md`, `references/` for what the agent reads on demand, `assets/` for data files,
+`scripts/` for code, `evals/` for the test cases.
+
 ```
-skills/onboarding/SKILL.md              the interview flow — vendor-neutral, pointers only
-skills/onboarding/questions.yaml         the interview content
-skills/onboarding/rules.md               validation, updating, echo-before-write rules
-skills/onboarding/FIELDS.md              hand-editing guide
-skills/onboarding/schema/                the schema, machine-readable
-skills/onboarding/examples/              copy-to-start samples
-skills/onboarding/scripts/volume.py      the volume algorithm
+skills/onboarding/SKILL.md                     the interview flow — vendor-neutral, pointers + gotchas
+skills/onboarding/references/questions.yaml    the interview content
+skills/onboarding/references/rules.md          validation, updating, echo-before-write rules
+skills/onboarding/assets/schema/               the schema, machine-readable
+skills/onboarding/assets/examples/             copy-to-start samples
+skills/onboarding/scripts/volume.py            the volume algorithm
 skills/onboarding/scripts/volume.config.json   every number the volume model uses
-skills/generation/SKILL.md              the generation flow — vendor-neutral, pointers only
-skills/generation/rules.md               dataset cache, personal rules, echo-before-write
-skills/generation/FIELDS.md              hand-editing guide for rules.json and plans
-skills/generation/datasets.json          dataset registry — all dataset-specific knowledge
-skills/generation/schema/                plan and rules contracts, machine-readable
-skills/generation/examples/              copy-to-start samples
-skills/generation/scripts/generate.py    the fitting algorithm
-skills/generation/scripts/generate.config.json   every number the generator uses
-.claude/skills/onboard/SKILL.md          thin wrapper so /onboard works in Claude Code
-.claude/skills/generate/SKILL.md         thin wrapper so /generate works in Claude Code
-scripts/validate-skills.py               validates both skills against their own schemas
-docs/schema.md                           profile/program fields, and the "why"
-docs/generation.md                       the generator's "why": descriptor, fit, cache
-docs/onboarding.md                       the original hand-written spec, kept as-is
-profile/                                 your data, gitignored
-datasets/                                cloned exercise datasets, gitignored cache
+skills/onboarding/evals/                       test cases, trigger queries, fixtures
+skills/generation/SKILL.md                     the generation flow — vendor-neutral, pointers + gotchas
+skills/generation/references/rules.md          dataset cache, personal rules, echo-before-write
+skills/generation/assets/datasets.json         dataset registry — all dataset-specific knowledge
+skills/generation/assets/schema/               plan and rules contracts, machine-readable
+skills/generation/assets/examples/             copy-to-start samples
+skills/generation/scripts/generate.py          the fitting algorithm
+skills/generation/scripts/generate.config.json every number the generator uses
+skills/generation/evals/                       test cases, trigger queries, fixtures (offline dataset included)
+.claude/skills/onboard/SKILL.md                thin wrapper so /onboard works in Claude Code
+.claude/skills/generate/SKILL.md               thin wrapper so /generate works in Claude Code
+scripts/validate-skills.py                     validates both skills against the spec and their own schemas
+tests/skills/                                  offline test suite, plus opt-in agent tests
+docs/schema.md                                 profile/program fields, and the "why"
+docs/generation.md                             the generator's "why": descriptor, fit, cache
+docs/onboarding-fields.md                      hand-editing guide for profile.json and programs
+docs/generation-fields.md                      hand-editing guide for rules.md and plans
+docs/onboarding.md                             the original hand-written spec, kept as-is
+profile/                                       your data, gitignored
+datasets/                                      cloned exercise datasets, gitignored cache
 ```
 
 ## License

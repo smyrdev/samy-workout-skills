@@ -5,8 +5,9 @@ allowed-tools: Read, Write, Bash, AskUserQuestion
 argument-hint: "[--dataset name]"
 ---
 
-Read `skills/generation/SKILL.md` and follow it exactly, then its pointers into `rules.md`,
-`datasets.json`, `schema/*.json` and `scripts/generate.config.json`.
+Read `skills/generation/SKILL.md` and follow it exactly, then its pointers into
+`references/rules.md`, `assets/datasets.json`, `assets/schema/*.json` and
+`scripts/generate.config.json`.
 
 That file is the source of truth and is deliberately vendor-neutral. Do not duplicate, paraphrase,
 or summarise its steps here — a second copy of the flow will drift from the first.
@@ -16,7 +17,8 @@ Three bindings for this environment:
 - Use `AskUserQuestion` for the pre-filled re-confirm batch (offer "same as last time" as the
   first option) and for the veto/adjust loop before writing. Free-text answers arrive through
   that tool's **Other** option.
-- Use `Bash` for the dataset clone (`rules.md` § Dataset cache) and to run
-  `scripts/generate.py` (`rules.md` § Running the generator). If `Bash` is unavailable in this
-  session, fall back to `rules.md` § No Python rather than fitting exercises by hand.
-- `--dataset` picks a non-default entry from `skills/generation/datasets.json`.
+- Use `Bash` for the dataset clone (`references/rules.md` § Dataset cache) and to run
+  `scripts/generate.py` (`references/rules.md` § Running the generator). If `Bash` is unavailable
+  in this session, fall back to `references/rules.md` § No Python rather than fitting exercises
+  by hand.
+- `--dataset` picks a non-default entry from `skills/generation/assets/datasets.json`.

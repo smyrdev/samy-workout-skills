@@ -1,13 +1,18 @@
 # Generation — rationale
 
 The machine-readable contracts are
-[`skills/generation/schema/plan.schema.json`](../skills/generation/schema/plan.schema.json) and
-[`skills/generation/schema/rules.schema.json`](../skills/generation/schema/rules.schema.json),
-with [`skills/generation/examples/`](../skills/generation/examples/) holding a filled-in sample of
+[`skills/generation/assets/schema/plan.schema.json`](../skills/generation/assets/schema/plan.schema.json) and
+[`skills/generation/assets/schema/rules.schema.json`](../skills/generation/assets/schema/rules.schema.json),
+with [`skills/generation/assets/examples/`](../skills/generation/assets/examples/) holding a filled-in sample of
 each — the plan example is genuine generator output, not hand-written. When this document and a
 schema disagree, the schema wins and this document is the bug. For "what do I literally type in
-`rules.json`", see [`skills/generation/FIELDS.md`](../skills/generation/FIELDS.md) — this file is
+`rules.md`", see [`generation-fields.md`](generation-fields.md) — this file is
 the *why*.
+
+`rules.schema.json` is the odd one out: the person writes `profile/rules.md` as Markdown, and the
+schema describes what `generate.py` parses that into. Markdown is what a human edits between
+training blocks with no punctuation to get wrong; the schema still pins the vocabulary, so
+`default_rules` in `generate.config.json` and a parsed `rules.md` are checked against one contract.
 
 ---
 
@@ -19,7 +24,7 @@ Three parties, one number each:
 |---|---|---|
 | `volume.py` (onboarding) | how many weekly sets each muscle group gets | exercise selection |
 | `generate.py` (generation) | which exercises deliver those sets | the set targets |
-| the person (`rules.json`) | exclusions, focus, ordering | — it's their training |
+| the person (`rules.md`) | exclusions, focus, ordering | — it's their training |
 
 The volume block inside `programs/program-*.json` is the interface between the first two. That is
 why generation refuses a program file without one instead of estimating targets itself: the
@@ -28,7 +33,7 @@ quietly used the wrong targets looks exactly like a correct plan.
 
 ## The dataset descriptor
 
-`skills/generation/datasets.json` holds **everything** the generator knows about any particular
+`skills/generation/assets/datasets.json` holds **everything** the generator knows about any particular
 dataset: repository and ref, file paths, field names, category filter, equipment→tier tables,
 muscle vocabulary mapping, benchmark gates. `generate.py` is deliberately dataset-agnostic — it
 reads shapes through the descriptor and refuses anything unmapped.
@@ -112,7 +117,7 @@ no clock except the `--today` override. The same profile, program, rules, datase
 produce a byte-identical plan. Boring on purpose: a surprising plan should always be explainable
 by an input that changed.
 
-Session ordering is a user-visible rule list (`order` in `rules.json`), applied top-down as
+Session ordering is a user-visible rule list (`## Order` in `rules.md`), applied top-down as
 successive sort keys. The default puts pinned exercises first, trailer groups (core, calves)
 last, and compounds before isolation in between.
 

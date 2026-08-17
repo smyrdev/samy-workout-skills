@@ -1,0 +1,66 @@
+{
+  "skill_name": "generation",
+  "notes": "Each run starts in a fresh clone of this repository. `setup` says what to place under profile/ and datasets/ before the prompt is sent; `files` lists the fixtures it draws on, relative to the skill directory. files/data/exercises.json is the offline self-test fixture, laid out where assets/datasets.json's data_file expects it, so no clone is needed. Assertions are graded against the transcript and the files left behind.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "plain-plan-from-fixtures",
+      "setup": [
+        "copy files/profile.json to profile/profile.json",
+        "copy files/programs/program-2026-08-06.json to profile/programs/program-2026-08-06.json",
+        "copy files/data/exercises.json to datasets/exercises-dataset/data/exercises.json"
+      ],
+      "files": ["evals/files/profile.json", "evals/files/programs/program-2026-08-06.json", "evals/files/data/exercises.json"],
+      "prompt": "make me this week's plan",
+      "expected_output": "Reads the profile and the latest program file, re-confirms the five program answers in one pre-filled batch (keeping all is one choice), notes no rules.md is present, uses the local dataset cache, runs scripts/generate.py, shows the planned-versus-allocated table, the week and every warning plus the two exact paths before writing, then writes profile/plans/plan-<today>.json and plan-<today>.md and nothing else.",
+      "assertions": [
+        "The transcript re-confirms goal, days per week, session length, split and deload with their saved values before generating",
+        "The transcript shows a per-muscle planned-versus-allocated table and the day-by-day week before any plan file is written",
+        "The transcript names both output paths under profile/plans/ before writing them",
+        "profile/plans/ contains exactly one .json and one .md with the same date stem, and the .json validates against skills/generation/assets/schema/plan.schema.json",
+        "The plan's per-muscle targets equal the program file's volume.per_muscle_weekly_sets exactly (no recomputation)",
+        "profile/profile.json and profile/programs/program-2026-08-06.json are byte-identical to the fixtures, and no profile/rules.md was created",
+        "The transcript shows scripts/generate.py being invoked with --profile, --program, --dataset-dir, --write and --write-md; the week was not composed by hand"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "program-without-volume-block",
+      "setup": [
+        "copy files/profile.json to profile/profile.json",
+        "copy files/programs/program-2026-08-06-novolume.json to profile/programs/program-2026-08-06.json",
+        "copy files/data/exercises.json to datasets/exercises-dataset/data/exercises.json"
+      ],
+      "files": ["evals/files/profile.json", "evals/files/programs/program-2026-08-06-novolume.json", "evals/files/data/exercises.json"],
+      "prompt": "give me a plan for this cycle",
+      "expected_output": "Notices volume is null in the latest program file, refuses to estimate targets, and either runs the onboarding volume step (python skills/onboarding/scripts/volume.py --profile profile/profile.json --write profile/programs/program-2026-08-06.json) or hands that exact command back — then continues only once the block exists. Under no circumstances does it invent per-muscle set targets.",
+      "assertions": [
+        "The transcript states that the program file has no volume block before doing anything else with the dataset",
+        "The transcript contains the volume.py command with --profile and --write pointing at the real files, either run or handed back",
+        "No plan file is written while volume is still null",
+        "If a plan was written, the program file now has a non-null volume block that volume.py produced (integer per_muscle_weekly_sets summing to weekly_sets_allocated) and the plan targets equal it",
+        "No per-muscle set numbers appear in the transcript that did not come from volume.py output"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "one-off-exclusion-no-squats",
+      "setup": [
+        "copy files/profile.json to profile/profile.json",
+        "copy files/programs/program-2026-08-06.json to profile/programs/program-2026-08-06.json",
+        "copy files/data/exercises.json to datasets/exercises-dataset/data/exercises.json"
+      ],
+      "files": ["evals/files/profile.json", "evals/files/programs/program-2026-08-06.json", "evals/files/data/exercises.json"],
+      "prompt": "same program as last time but no squats this cycle, my knee's grumpy",
+      "expected_output": "Keeps the saved program answers, treats 'no squats' as a one-off rules file passed with --rules for this run (not a hand-edit of the output and not a write to profile/rules.md), regenerates, shows the table/week/warnings/paths, writes the plan pair, and offers a paste-ready rules.md snippet in case the exclusion should stick.",
+      "assertions": [
+        "No exercise in the written plan has 'squat' in its name",
+        "profile/rules.md does not exist after the run (the skill never writes it)",
+        "The transcript shows the exclusion was applied through a rules file passed to the generator, not by editing the generated week",
+        "The transcript offers a paste-ready rules.md snippet containing the squat exclusion, as Markdown bullets under an '## Exclude exercises' heading rather than JSON",
+        "The plan's per-muscle targets still equal the program file's volume.per_muscle_weekly_sets; any shortfall from dropping squats appears in the plan's warnings and in the transcript",
+        "profile/plans/ contains exactly one .json and one .md"
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/smyrdev/samy-workout-skills/skills/onboarding/schema/profile.schema.json",
+  "$id": "https://github.com/smyrdev/samy-workout-skills/skills/onboarding/assets/schema/profile.schema.json",
   "title": "Training profile",
   "description": "profile/profile.json — written once by the onboarding skill. One profile per repository.",
   "type": "object",
