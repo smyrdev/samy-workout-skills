@@ -1,0 +1,71 @@
+{
+  "$schema_version": "1.0",
+  "sessions": [
+    {
+      "day": 1,
+      "exercises": [
+        { "id": "9001", "sets": 3, "reps": "8-10", "rir": 2, "superset_group": "A" },
+        { "id": "9012", "sets": 3, "reps": "8-10", "rir": 2, "superset_group": "A" },
+        { "id": "9020", "sets": 3, "reps": "8-10", "rir": 2 },
+        { "id": "9010", "sets": 3, "reps": "10-12", "rir": 2 },
+        { "id": "9041", "sets": 3, "reps": "8-10", "rir": 2, "superset_group": "B" },
+        { "id": "9031", "sets": 4, "reps": "10-12", "rir": 1, "superset_group": "B" }
+      ]
+    },
+    {
+      "day": 2,
+      "exercises": [
+        { "id": "9050", "sets": 3, "reps": "8-10", "rir": 2 },
+        { "id": "9060", "sets": 3, "reps": "8-10", "rir": 2 },
+        { "id": "9070", "sets": 3, "reps": "10-12", "rir": 2 },
+        { "id": "9052", "sets": 3, "reps": "13-15", "rir": 1, "superset_group": "A" },
+        { "id": "9061", "sets": 3, "reps": "13-15", "rir": 1, "superset_group": "A" },
+        { "id": "9080", "sets": 4, "reps": "13-15", "rir": 1 }
+      ]
+    },
+    {
+      "day": 3,
+      "exercises": [
+        { "id": "9002", "sets": 3, "reps": "10-12", "rir": 1 },
+        { "id": "9013", "sets": 3, "reps": "10-12", "rir": 2, "superset_group": "A" },
+        { "id": "9021", "sets": 3, "reps": "13-15", "rir": 1, "superset_group": "A" },
+        { "id": "9022", "sets": 3, "reps": "13-15", "rir": 1 },
+        { "id": "9042", "sets": 3, "reps": "10-12", "rir": 1, "superset_group": "B" },
+        { "id": "9030", "sets": 4, "reps": "10-12", "rir": 1, "superset_group": "B" }
+      ]
+    },
+    {
+      "day": 4,
+      "exercises": [
+        { "id": "9051", "sets": 3, "reps": "10-12", "rir": 2 },
+        { "id": "9060", "sets": 3, "reps": "10-12", "rir": 2 },
+        { "id": "9071", "sets": 3, "reps": "10-12", "rir": 1 },
+        { "id": "9062", "sets": 3, "reps": "10-12", "rir": 2 },
+        { "id": "9081", "sets": 4, "reps": "13-15", "rir": 1, "superset_group": "A" },
+        { "id": "9090", "sets": 3, "reps": "13-15", "rir": 1, "superset_group": "A" }
+      ]
+    },
+    {
+      "day": 5,
+      "exercises": [
+        { "id": "9001", "sets": 3, "reps": "10-12", "rir": 2, "superset_group": "A" },
+        { "id": "9012", "sets": 3, "reps": "10-12", "rir": 2, "superset_group": "A" },
+        { "id": "9020", "sets": 3, "reps": "10-12", "rir": 2 },
+        { "id": "9003", "sets": 3, "reps": "13-15", "rir": 1 },
+        { "id": "9014", "sets": 3, "reps": "10-12", "rir": 1 },
+        { "id": "9031", "sets": 4, "reps": "13-15", "rir": 1 }
+      ]
+    },
+    {
+      "day": 6,
+      "exercises": [
+        { "id": "9050", "sets": 3, "reps": "10-12", "rir": 2 },
+        { "id": "9070", "sets": 3, "reps": "10-12", "rir": 2 },
+        { "id": "9093", "sets": 3, "reps": "10-12", "rir": 1 },
+        { "id": "9052", "sets": 3, "reps": "13-15", "rir": 1, "superset_group": "A" },
+        { "id": "9061", "sets": 3, "reps": "13-15", "rir": 1, "superset_group": "A" },
+        { "id": "9091", "sets": 3, "reps": "13-15", "rir": 1 }
+      ]
+    }
+  ]
+}

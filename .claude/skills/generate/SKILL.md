@@ -5,9 +5,7 @@ allowed-tools: Read, Write, Bash, AskUserQuestion
 argument-hint: "[--dataset name]"
 ---
 
-Read `skills/generation/SKILL.md` and follow it exactly, then its pointers into
-`references/rules.md`, `assets/datasets.json`, `assets/schema/*.json` and
-`scripts/generate.config.json`.
+Read `skills/generation/SKILL.md` and follow it exactly, then the files it points at.
 
 That file is the source of truth and is deliberately vendor-neutral. Do not duplicate, paraphrase,
 or summarise its steps here — a second copy of the flow will drift from the first.
@@ -18,7 +16,8 @@ Three bindings for this environment:
   first option) and for the veto/adjust loop before writing. Free-text answers arrive through
   that tool's **Other** option.
 - Use `Bash` for the dataset clone (`references/rules.md` § Dataset cache) and to run
-  `scripts/generate.py` (`references/rules.md` § Running the generator). If `Bash` is unavailable
-  in this session, fall back to `references/rules.md` § No Python rather than fitting exercises
-  by hand.
+  `scripts/generate.py` twice — once for the brief, once with the selection
+  (`references/rules.md` § Running the generator). Use `Write` for the selection file itself, to
+  a scratch path outside `profile/`. If `Bash` is unavailable in this session, fall back to
+  `references/rules.md` § No Python rather than choosing exercises against an unfiltered dataset.
 - `--dataset` picks a non-default entry from `skills/generation/assets/datasets.json`.

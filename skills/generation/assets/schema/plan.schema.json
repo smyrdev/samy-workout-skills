@@ -112,6 +112,21 @@
                 "volume": {
                   "type": "object",
                   "description": "Muscle-group involvement per set, in the skill's canonical vocabulary (already mapped from the dataset's)."
+                },
+                "rir": {
+                  "description": "Reps in reserve, as the coach prescribed it. Optional: a plan written before this field existed is still valid, and a coach who did not prescribe one leaves it out rather than inventing a number.",
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "superset_group": {
+                  "description": "A short label shared by exercises performed together. Absent means performed straight.",
+                  "type": "string",
+                  "minLength": 1
+                },
+                "rest_seconds": {
+                  "description": "Present only where the coach overrode the rest interval the brief assumed.",
+                  "type": "integer",
+                  "minimum": 0
                 }
               }
             }

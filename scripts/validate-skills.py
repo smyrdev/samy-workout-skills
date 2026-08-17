@@ -841,10 +841,20 @@ def main():
 
     plan_schema = load_json(GEN_DIR / "assets" / "schema" / "plan.schema.json")
     rules_schema = load_json(GEN_DIR / "assets" / "schema" / "rules.schema.json")
+    selection_schema = load_json(GEN_DIR / "assets" / "schema" / "selection.schema.json")
     if plan_schema is None:
         fail("skills/generation/assets/schema/plan.schema.json: not valid JSON")
     if rules_schema is None:
         fail("skills/generation/assets/schema/rules.schema.json: not valid JSON")
+    if selection_schema is None:
+        fail("skills/generation/assets/schema/selection.schema.json: not valid JSON")
+    elif selection_schema:
+        # The selection example is what produced the plan example — if it stops
+        # matching its own contract the pair is no longer a working walkthrough.
+        validate_file_against_schema(
+            GEN_DIR / "assets" / "examples" / "selection.example.json", selection_schema,
+            "selection example"
+        )
 
     if program_schema and plan_schema and rules_schema:
         check_datasets_descriptor(program_schema)

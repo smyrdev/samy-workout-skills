@@ -31,6 +31,7 @@ CONFIG="$REPO_ROOT/skills/generation/scripts/generate.config.json"
 PROFILE="$REPO_ROOT/skills/onboarding/assets/examples/profile.example.json"
 PROGRAM="$REPO_ROOT/skills/onboarding/assets/examples/program.example.json"
 PLAN_EXAMPLE="$REPO_ROOT/skills/generation/assets/examples/plan.example.json"
+SELECTION="$REPO_ROOT/skills/generation/assets/examples/selection.example.json"
 TODAY="2026-08-06"
 
 PROJECT=$(create_test_project)
@@ -54,10 +55,30 @@ run_generate() {
     code=$?
 }
 
-# The common form: profile, program and the fixture dataset already filled in.
+# The common form: profile, program, the fixture dataset and the shipped
+# selection already filled in. The selection is what a coach hands back after
+# reading a brief; every write-a-plan case below needs one.
 run_default() {
     run_generate --profile "$PROFILE" --program "$PROGRAM" \
-        --dataset-dir "$PROJECT" --today "$TODAY" "$@"
+        --dataset-dir "$PROJECT" --today "$TODAY" --selection "$SELECTION" "$@"
+}
+
+# The same inputs, stopping at the brief. No selection: there is nothing yet to
+# have chosen.
+run_brief() {
+    run_generate --profile "$PROFILE" --program "$PROGRAM" \
+        --dataset-dir "$PROJECT" --today "$TODAY" --brief "$@"
+}
+
+# Read the shipped selection, apply the python statement in $2 to `d`, write $1.
+# For the cases that must be refused.
+bend_selection() {
+    python -c "
+import sys, json
+d = json.load(open(sys.argv[2], encoding='utf-8'))
+$2
+json.dump(d, open(sys.argv[1], 'w', encoding='utf-8'))
+" "$1" "$SELECTION"
 }
 
 # Read $1, apply the python statement in $3 to `d`, write $2. Paths travel as
@@ -79,6 +100,15 @@ plan_names() {
 import sys, json
 p = json.load(open(sys.argv[1], encoding='utf-8'))
 print('\n'.join(e['name'] for s in p['sessions'] for e in s['exercises']))
+" "$1"
+}
+
+# The same, for a brief: just the names it is willing to offer.
+brief_names() {
+    PYTHONIOENCODING=utf-8 python -c "
+import sys, json
+b = json.load(open(sys.argv[1], encoding='utf-8'))
+print('\n'.join(c['name'] for pool in b['candidates'].values() for c in pool))
 " "$1"
 }
 
@@ -379,24 +409,76 @@ assert_contains "$out" "unmatched_must_include:flying pig" "warns about the unpl
 assert_file_contains "$PROJECT/warned.md" "## Warnings" "the render carries a warnings section"
 assert_file_contains "$PROJECT/warned.md" "unknown_exclude_exercise:flying pig" "the render names the warning"
 
+# An exclusion now bites one step earlier: the exercise stops being offered at
+# all. The shipped selection contains it, so re-running that selection against
+# the narrowed rules is refused rather than quietly honoured.
 printf '%s' '{"exclude": {"exercises": ["barbell bench press"]}}' > "$PROJECT/r-excl.json"
-run_default --rules "$PROJECT/r-excl.json" --write "$PROJECT/plan-excl.json"
+run_brief --rules "$PROJECT/r-excl.json"
 assert_exit_code 0 "$code" "an exclusion runs clean"
-assert_not_contains "$(plan_names "$PROJECT/plan-excl.json")" "barbell bench press" \
-    "the excluded exercise is gone from every session"
+# Against the candidate names alone: a brief echoes rules_applied verbatim, so
+# grepping the whole document for an excluded name always matches its own
+# exclusion entry.
+printf '%s\n' "$out" > "$PROJECT/brief-excl.json"
+assert_not_contains "$(brief_names "$PROJECT/brief-excl.json")" "barbell bench press" \
+    "the excluded exercise is offered to nobody"
+run_default --rules "$PROJECT/r-excl.json"
+assert_exit_code 3 "$code" "a selection naming a now-excluded exercise is refused"
+assert_contains "$out" "not among the candidates" "says the exercise was never offered"
 
+# A must-include is flagged in the pool, not placed. Where it goes in the week
+# is a coaching decision, so the script marks it and stops there.
 printf '%s' '{"focus": {"must_include": ["dumbbell fly"]}}' > "$PROJECT/r-must.json"
-run_default --rules "$PROJECT/r-must.json" --write "$PROJECT/plan-must.json"
+run_brief --rules "$PROJECT/r-must.json"
 assert_exit_code 0 "$code" "a must-include runs clean"
-assert_contains "$(plan_names "$PROJECT/plan-must.json")" "dumbbell fly" \
-    "the pinned exercise is in the week"
+assert_contains "$out" '"must_include": true' "the pinned exercise is flagged in the candidates"
+echo ""
+
+echo "The brief is the half that stays reproducible"
+run_brief --write "$PROJECT/nope.json"
+assert_exit_code 0 "$code" "--brief ignores --write and prints"
+run_brief; printf '%s\n' "$out" > "$PROJECT/brief-a.json"
+run_brief; printf '%s\n' "$out" > "$PROJECT/brief-b.json"
+if cmp -s "$PROJECT/brief-a.json" "$PROJECT/brief-b.json"; then
+    _pass "two identical runs produce the same brief"
+else
+    _fail "two identical runs produce the same brief"
+fi
+assert_file_contains "$PROJECT/brief-a.json" '"max_exercises_per_session"' "budgets the session"
+assert_file_contains "$PROJECT/brief-a.json" '"sets_per_muscle"' "budgets each muscle per session"
+assert_file_contains "$PROJECT/brief-a.json" '"candidates"' "offers candidates"
+assert_file_absent "$PROJECT/nope.json" "--brief writes no file"
+echo ""
+
+echo "The two refusals"
+run_generate --profile "$PROFILE" --program "$PROGRAM" --dataset-dir "$PROJECT" --today "$TODAY"
+assert_exit_code 2 "$code" "writing a plan without a selection is a usage error"
+assert_contains "$out" "run --brief first" "points at the brief"
+
+bend_selection "$PROJECT/s-intruder.json" "d['sessions'][0]['exercises'][0]['id'] = 'not-real'"
+run_generate --profile "$PROFILE" --program "$PROGRAM" --dataset-dir "$PROJECT" \
+    --today "$TODAY" --selection "$PROJECT/s-intruder.json"
+assert_exit_code 3 "$code" "an exercise outside the candidate pool is refused"
+assert_contains "$out" "not among the candidates" "names what went wrong"
+
+bend_selection "$PROJECT/s-floor.json" "d['sessions'][0]['exercises'][0]['reps'] = '2'"
+run_generate --profile "$PROFILE" --program "$PROGRAM" --dataset-dir "$PROJECT" \
+    --today "$TODAY" --selection "$PROJECT/s-floor.json"
+assert_exit_code 3 "$code" "a rep target under the floor is refused"
+assert_contains "$out" "coaching.md" "points at the rule it is enforcing"
+
+bend_selection "$PROJECT/s-day.json" "d['sessions'] = d['sessions'][:3]"
+run_generate --profile "$PROFILE" --program "$PROGRAM" --dataset-dir "$PROJECT" \
+    --today "$TODAY" --selection "$PROJECT/s-day.json"
+assert_exit_code 3 "$code" "a selection missing a day is refused"
+assert_contains "$out" "the brief asked for" "says which days were expected"
 echo ""
 
 echo "A shortfall is never hidden"
 doctor "$PROGRAM" "$PROJECT/p-short.json" \
     "d['volume']['per_muscle_weekly_sets']['hamstrings'] = 60; d['volume']['exercises_per_session'] = 3"
 run_generate --profile "$PROFILE" --program "$PROJECT/p-short.json" \
-    --dataset-dir "$PROJECT" --today "$TODAY" --write-md "$PROJECT/short.md"
+    --dataset-dir "$PROJECT" --today "$TODAY" --selection "$SELECTION" \
+    --write-md "$PROJECT/short.md"
 assert_exit_code 0 "$code" "an unreachable allocation still produces a plan"
 assert_contains "$out" "short:hamstrings" "the plan reports the shortfall"
 assert_file_contains "$PROJECT/short.md" " short |" "the render flags the short row"

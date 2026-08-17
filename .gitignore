@@ -13,3 +13,7 @@ __pycache__/
 *.pyc
 
 .todos.md
+
+# Git worktrees created inside the checkout. Each is a working directory with
+# its own .git pointer, local to one machine and one branch — never content.
+.claude/worktrees/

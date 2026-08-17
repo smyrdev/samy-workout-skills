@@ -31,7 +31,7 @@ calves, core. The group's target is dropped, not spread over the others.
 
 ## Must include
 
-Guaranteed a slot when tier, benchmark gates and exclusions allow.
+Flagged for the coach to place when tier, benchmark gates and exclusions allow.
 
 - barbell bench press
 

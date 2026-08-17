@@ -30,16 +30,13 @@
     }
   },
 
-  "max_per_movement_group_per_session": 2,
-  "max_per_volume_profile_per_session": 1,
-  "repeat_penalty": 0.25,
   "focus_bonus": 0.5,
   "name_length_penalty": 0.02,
   "indirect_discount": 0.5,
-  "sets_max": 5,
   "short_tolerance_sets": 1.0,
   "compound_min_muscles": 3,
   "trailer_groups": ["core", "calves"],
+  "_trailer_comment": "What the trailer_groups_last order rule means. Travels in the brief; the coach applies it.",
 
   "reps_by_goal": {
     "hypertrophy": { "compound": "8-12", "isolation": "10-15" },
@@ -47,5 +44,24 @@
     "both": { "compound": "6-10", "isolation": "8-12" }
   },
 
-  "deload_sets_multiplier": 0.5
+  "deload_sets_multiplier": 0.5,
+
+  "_brief_comment": "How many candidates each muscle group offers, and how session length plus rest becomes an exercise ceiling. session_minutes_floor takes the low end of each bucket, so the ceiling is the one that fits the shortest session the answer allows.",
+
+  "candidates_per_muscle": 8,
+  "set_seconds": 45,
+  "rest_seconds_by_goal": {
+    "hypertrophy": { "compound": 150, "isolation": 90 },
+    "strength": { "compound": 210, "isolation": 120 },
+    "both": { "compound": 180, "isolation": 105 }
+  },
+  "session_minutes_floor": {
+    "up_to_20": 20, "20-40": 20, "40-60": 40,
+    "60-90": 60, "90-120": 90, "over_120": 120
+  },
+
+  "_floor_comment": "The one training rule the generator enforces — coaching.md 1.4. Scoped to the goals that include muscle growth, exactly as that rule scopes itself.",
+
+  "rep_floors": { "compound": 4, "isolation": 6 },
+  "rep_floor_goals": ["hypertrophy", "both"]
 }

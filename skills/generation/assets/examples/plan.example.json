@@ -41,15 +41,15 @@
   "targets": {
     "chest": {
       "allocated": 14,
-      "planned": 15.8
+      "planned": 15.0
     },
     "back": {
       "allocated": 17,
-      "planned": 18.0
+      "planned": 17.2
     },
     "shoulders": {
       "allocated": 16,
-      "planned": 16.5
+      "planned": 24.0
     },
     "biceps": {
       "allocated": 17,
@@ -57,27 +57,27 @@
     },
     "triceps": {
       "allocated": 16,
-      "planned": 18.0
+      "planned": 21.0
     },
     "quads": {
       "allocated": 16,
-      "planned": 18.0
+      "planned": 16.5
     },
     "hamstrings": {
       "allocated": 13,
-      "planned": 15.0
+      "planned": 19.5
     },
     "glutes": {
       "allocated": 13,
-      "planned": 18.0
+      "planned": 24.8
     },
     "calves": {
       "allocated": 12,
-      "planned": 14.2
+      "planned": 12.5
     },
     "core": {
       "allocated": 10,
-      "planned": 12.0
+      "planned": 15.0
     }
   },
   "sessions": [
@@ -86,48 +86,52 @@
       "focus": "upper",
       "exercises": [
         {
-          "id": "9012",
-          "name": "barbell bent over row",
-          "equipment": "barbell",
-          "movement_group": "Pulls",
-          "primary": "back",
-          "sets": 3,
-          "reps": "8-12",
-          "volume": {
-            "back": 1.0,
-            "biceps": 0.5,
-            "core": 0.5,
-            "shoulders": 0.5
-          }
-        },
-        {
-          "id": "9002",
-          "name": "push-up",
-          "equipment": "body weight",
-          "movement_group": "Chest",
-          "primary": "chest",
-          "sets": 3,
-          "reps": "8-12",
-          "volume": {
-            "chest": 1.0,
-            "core": 0.5,
-            "shoulders": 1.0,
-            "triceps": 1.0
-          }
-        },
-        {
           "id": "9001",
           "name": "barbell bench press",
           "equipment": "barbell",
           "movement_group": "Chest",
           "primary": "chest",
           "sets": 3,
-          "reps": "8-12",
+          "reps": "8-10",
           "volume": {
             "chest": 1.0,
             "shoulders": 1.0,
             "triceps": 1.0
-          }
+          },
+          "rir": 2,
+          "superset_group": "A"
+        },
+        {
+          "id": "9012",
+          "name": "barbell bent over row",
+          "equipment": "barbell",
+          "movement_group": "Pulls",
+          "primary": "back",
+          "sets": 3,
+          "reps": "8-10",
+          "volume": {
+            "back": 1.0,
+            "biceps": 0.5,
+            "core": 0.5,
+            "shoulders": 0.5
+          },
+          "rir": 2,
+          "superset_group": "A"
+        },
+        {
+          "id": "9020",
+          "name": "barbell overhead press",
+          "equipment": "barbell",
+          "movement_group": "Overhead presses",
+          "primary": "shoulders",
+          "sets": 3,
+          "reps": "8-10",
+          "volume": {
+            "back": 0.5,
+            "shoulders": 1.0,
+            "triceps": 1.0
+          },
+          "rir": 2
         },
         {
           "id": "9010",
@@ -136,23 +140,28 @@
           "movement_group": "Pulls",
           "primary": "back",
           "sets": 3,
-          "reps": "10-15",
+          "reps": "10-12",
           "volume": {
             "back": 1.0,
             "biceps": 0.5
-          }
+          },
+          "rir": 2
         },
         {
-          "id": "9030",
-          "name": "barbell curl",
+          "id": "9041",
+          "name": "barbell close-grip bench press",
           "equipment": "barbell",
-          "movement_group": "Biceps curls",
-          "primary": "biceps",
+          "movement_group": "Triceps extensions",
+          "primary": "triceps",
           "sets": 3,
-          "reps": "10-15",
+          "reps": "8-10",
           "volume": {
-            "biceps": 1.0
-          }
+            "chest": 1.0,
+            "shoulders": 0.5,
+            "triceps": 1.0
+          },
+          "rir": 2,
+          "superset_group": "B"
         },
         {
           "id": "9031",
@@ -160,11 +169,13 @@
           "equipment": "dumbbell",
           "movement_group": "Biceps curls",
           "primary": "biceps",
-          "sets": 3,
-          "reps": "10-15",
+          "sets": 4,
+          "reps": "10-12",
           "volume": {
             "biceps": 1.0
-          }
+          },
+          "rir": 1,
+          "superset_group": "B"
         }
       ]
     },
@@ -179,28 +190,46 @@
           "movement_group": "Squat movements",
           "primary": "quads",
           "sets": 3,
-          "reps": "8-12",
+          "reps": "8-10",
           "volume": {
             "calves": 0.5,
             "core": 0.5,
             "glutes": 1.0,
             "hamstrings": 0.5,
             "quads": 1.0
-          }
+          },
+          "rir": 2
         },
         {
-          "id": "9051",
-          "name": "dumbbell lunge",
-          "equipment": "dumbbell",
-          "movement_group": "Squat movements",
-          "primary": "quads",
+          "id": "9060",
+          "name": "barbell romanian deadlift",
+          "equipment": "barbell",
+          "movement_group": "Hip hinges",
+          "primary": "hamstrings",
           "sets": 3,
-          "reps": "8-12",
+          "reps": "8-10",
           "volume": {
-            "calves": 0.5,
+            "biceps": 0.5,
+            "core": 0.5,
             "glutes": 1.0,
-            "quads": 1.0
-          }
+            "hamstrings": 1.0
+          },
+          "rir": 2
+        },
+        {
+          "id": "9070",
+          "name": "barbell hip thrust",
+          "equipment": "barbell",
+          "movement_group": "Hip thrusts & kickbacks",
+          "primary": "glutes",
+          "sets": 3,
+          "reps": "10-12",
+          "volume": {
+            "glutes": 1.0,
+            "hamstrings": 0.5,
+            "quads": 0.5
+          },
+          "rir": 2
         },
         {
           "id": "9052",
@@ -209,10 +238,27 @@
           "movement_group": "Leg extensions",
           "primary": "quads",
           "sets": 3,
-          "reps": "10-15",
+          "reps": "13-15",
           "volume": {
             "quads": 1.0
-          }
+          },
+          "rir": 1,
+          "superset_group": "A"
+        },
+        {
+          "id": "9061",
+          "name": "lying leg curl",
+          "equipment": "leverage machine",
+          "movement_group": "Leg curls",
+          "primary": "hamstrings",
+          "sets": 3,
+          "reps": "13-15",
+          "volume": {
+            "calves": 0.5,
+            "hamstrings": 1.0
+          },
+          "rir": 1,
+          "superset_group": "A"
         },
         {
           "id": "9080",
@@ -220,23 +266,12 @@
           "equipment": "body weight",
           "movement_group": "Calf raises/jumps",
           "primary": "calves",
-          "sets": 3,
-          "reps": "10-15",
+          "sets": 4,
+          "reps": "13-15",
           "volume": {
             "calves": 1.0
-          }
-        },
-        {
-          "id": "9091",
-          "name": "plank",
-          "equipment": "body weight",
-          "movement_group": "Core",
-          "primary": "core",
-          "sets": 3,
-          "reps": "10-15",
-          "volume": {
-            "core": 1.0
-          }
+          },
+          "rir": 1
         }
       ]
     },
@@ -251,40 +286,14 @@
           "movement_group": "Chest",
           "primary": "chest",
           "sets": 3,
-          "reps": "8-12",
+          "reps": "10-12",
           "volume": {
             "chest": 1.0,
             "core": 0.5,
             "shoulders": 1.0,
             "triceps": 1.0
-          }
-        },
-        {
-          "id": "9001",
-          "name": "barbell bench press",
-          "equipment": "barbell",
-          "movement_group": "Chest",
-          "primary": "chest",
-          "sets": 3,
-          "reps": "8-12",
-          "volume": {
-            "chest": 1.0,
-            "shoulders": 1.0,
-            "triceps": 1.0
-          }
-        },
-        {
-          "id": "9014",
-          "name": "band pull-up",
-          "equipment": "band",
-          "movement_group": "Pulls",
-          "primary": "back",
-          "sets": 3,
-          "reps": "10-15",
-          "volume": {
-            "back": 1.0,
-            "biceps": 0.5
-          }
+          },
+          "rir": 1
         },
         {
           "id": "9013",
@@ -293,11 +302,55 @@
           "movement_group": "Pulls",
           "primary": "back",
           "sets": 3,
-          "reps": "10-15",
+          "reps": "10-12",
           "volume": {
             "back": 1.0,
             "biceps": 0.5
-          }
+          },
+          "rir": 2,
+          "superset_group": "A"
+        },
+        {
+          "id": "9021",
+          "name": "dumbbell lateral raise",
+          "equipment": "dumbbell",
+          "movement_group": "Lateral raises",
+          "primary": "shoulders",
+          "sets": 3,
+          "reps": "13-15",
+          "volume": {
+            "shoulders": 1.0
+          },
+          "rir": 1,
+          "superset_group": "A"
+        },
+        {
+          "id": "9022",
+          "name": "dumbbell rear delt fly",
+          "equipment": "dumbbell",
+          "movement_group": "Rear delt flys",
+          "primary": "shoulders",
+          "sets": 3,
+          "reps": "13-15",
+          "volume": {
+            "back": 0.5,
+            "shoulders": 1.0
+          },
+          "rir": 1
+        },
+        {
+          "id": "9042",
+          "name": "cable triceps pushdown",
+          "equipment": "cable",
+          "movement_group": "Triceps extensions",
+          "primary": "triceps",
+          "sets": 3,
+          "reps": "10-12",
+          "volume": {
+            "triceps": 1.0
+          },
+          "rir": 1,
+          "superset_group": "B"
         },
         {
           "id": "9030",
@@ -305,11 +358,13 @@
           "equipment": "barbell",
           "movement_group": "Biceps curls",
           "primary": "biceps",
-          "sets": 3,
-          "reps": "10-15",
+          "sets": 4,
+          "reps": "10-12",
           "volume": {
             "biceps": 1.0
-          }
+          },
+          "rir": 1,
+          "superset_group": "B"
         }
       ]
     },
@@ -318,47 +373,50 @@
       "focus": "lower",
       "exercises": [
         {
-          "id": "9050",
-          "name": "barbell squat",
-          "equipment": "barbell",
+          "id": "9051",
+          "name": "dumbbell lunge",
+          "equipment": "dumbbell",
           "movement_group": "Squat movements",
           "primary": "quads",
           "sets": 3,
-          "reps": "8-12",
+          "reps": "10-12",
           "volume": {
             "calves": 0.5,
-            "core": 0.5,
             "glutes": 1.0,
-            "hamstrings": 0.5,
             "quads": 1.0
-          }
+          },
+          "rir": 2
         },
         {
-          "id": "9053",
-          "name": "sled leg press",
-          "equipment": "sled machine",
-          "movement_group": "Squat movements",
-          "primary": "quads",
-          "sets": 3,
-          "reps": "8-12",
-          "volume": {
-            "glutes": 1.0,
-            "hamstrings": 0.5,
-            "quads": 1.0
-          }
-        },
-        {
-          "id": "9061",
-          "name": "lying leg curl",
-          "equipment": "leverage machine",
-          "movement_group": "Leg curls",
+          "id": "9060",
+          "name": "barbell romanian deadlift",
+          "equipment": "barbell",
+          "movement_group": "Hip hinges",
           "primary": "hamstrings",
           "sets": 3,
-          "reps": "10-15",
+          "reps": "10-12",
           "volume": {
-            "calves": 0.5,
+            "biceps": 0.5,
+            "core": 0.5,
+            "glutes": 1.0,
             "hamstrings": 1.0
-          }
+          },
+          "rir": 2
+        },
+        {
+          "id": "9071",
+          "name": "glute bridge",
+          "equipment": "body weight",
+          "movement_group": "Hip thrusts & kickbacks",
+          "primary": "glutes",
+          "sets": 3,
+          "reps": "10-12",
+          "volume": {
+            "core": 0.5,
+            "glutes": 1.0,
+            "hamstrings": 0.5
+          },
+          "rir": 1
         },
         {
           "id": "9062",
@@ -367,11 +425,12 @@
           "movement_group": "Leg curls",
           "primary": "hamstrings",
           "sets": 3,
-          "reps": "10-15",
+          "reps": "10-12",
           "volume": {
             "calves": 0.5,
             "hamstrings": 1.0
-          }
+          },
+          "rir": 2
         },
         {
           "id": "9081",
@@ -379,11 +438,27 @@
           "equipment": "weighted",
           "movement_group": "Calf raises/jumps",
           "primary": "calves",
-          "sets": 3,
-          "reps": "10-15",
+          "sets": 4,
+          "reps": "13-15",
           "volume": {
             "calves": 1.0
-          }
+          },
+          "rir": 1,
+          "superset_group": "A"
+        },
+        {
+          "id": "9090",
+          "name": "3/4 sit-up",
+          "equipment": "body weight",
+          "movement_group": "Core",
+          "primary": "core",
+          "sets": 3,
+          "reps": "13-15",
+          "volume": {
+            "core": 1.0
+          },
+          "rir": 1,
+          "superset_group": "A"
         }
       ]
     },
@@ -392,59 +467,80 @@
       "focus": "upper",
       "exercises": [
         {
-          "id": "9002",
-          "name": "push-up",
-          "equipment": "body weight",
+          "id": "9001",
+          "name": "barbell bench press",
+          "equipment": "barbell",
           "movement_group": "Chest",
           "primary": "chest",
           "sets": 3,
-          "reps": "8-12",
+          "reps": "10-12",
           "volume": {
             "chest": 1.0,
-            "core": 0.5,
             "shoulders": 1.0,
             "triceps": 1.0
-          }
+          },
+          "rir": 2,
+          "superset_group": "A"
         },
         {
-          "id": "9040",
-          "name": "bench dip",
-          "equipment": "body weight",
-          "movement_group": "Triceps extensions",
-          "primary": "triceps",
+          "id": "9012",
+          "name": "barbell bent over row",
+          "equipment": "barbell",
+          "movement_group": "Pulls",
+          "primary": "back",
           "sets": 3,
-          "reps": "8-12",
+          "reps": "10-12",
           "volume": {
-            "chest": 0.5,
-            "shoulders": 0.5,
+            "back": 1.0,
+            "biceps": 0.5,
+            "core": 0.5,
+            "shoulders": 0.5
+          },
+          "rir": 2,
+          "superset_group": "A"
+        },
+        {
+          "id": "9020",
+          "name": "barbell overhead press",
+          "equipment": "barbell",
+          "movement_group": "Overhead presses",
+          "primary": "shoulders",
+          "sets": 3,
+          "reps": "10-12",
+          "volume": {
+            "back": 0.5,
+            "shoulders": 1.0,
             "triceps": 1.0
-          }
+          },
+          "rir": 2
         },
         {
-          "id": "9011",
-          "name": "assisted pull-up",
-          "equipment": "leverage machine",
+          "id": "9003",
+          "name": "dumbbell fly",
+          "equipment": "dumbbell",
+          "movement_group": "Chest",
+          "primary": "chest",
+          "sets": 3,
+          "reps": "13-15",
+          "volume": {
+            "chest": 1.0,
+            "shoulders": 0.5
+          },
+          "rir": 1
+        },
+        {
+          "id": "9014",
+          "name": "band pull-up",
+          "equipment": "band",
           "movement_group": "Pulls",
           "primary": "back",
           "sets": 3,
-          "reps": "10-15",
+          "reps": "10-12",
           "volume": {
             "back": 1.0,
             "biceps": 0.5
-          }
-        },
-        {
-          "id": "9010",
-          "name": "pull-up",
-          "equipment": "body weight",
-          "movement_group": "Pulls",
-          "primary": "back",
-          "sets": 3,
-          "reps": "10-15",
-          "volume": {
-            "back": 1.0,
-            "biceps": 0.5
-          }
+          },
+          "rir": 1
         },
         {
           "id": "9031",
@@ -452,11 +548,12 @@
           "equipment": "dumbbell",
           "movement_group": "Biceps curls",
           "primary": "biceps",
-          "sets": 3,
-          "reps": "10-15",
+          "sets": 4,
+          "reps": "13-15",
           "volume": {
             "biceps": 1.0
-          }
+          },
+          "rir": 1
         }
       ]
     },
@@ -471,29 +568,59 @@
           "movement_group": "Squat movements",
           "primary": "quads",
           "sets": 3,
-          "reps": "8-12",
+          "reps": "10-12",
           "volume": {
             "calves": 0.5,
             "core": 0.5,
             "glutes": 1.0,
             "hamstrings": 0.5,
             "quads": 1.0
-          }
+          },
+          "rir": 2
         },
         {
-          "id": "9060",
-          "name": "barbell romanian deadlift",
+          "id": "9070",
+          "name": "barbell hip thrust",
           "equipment": "barbell",
-          "movement_group": "Hip hinges",
-          "primary": "hamstrings",
+          "movement_group": "Hip thrusts & kickbacks",
+          "primary": "glutes",
           "sets": 3,
-          "reps": "8-12",
+          "reps": "10-12",
           "volume": {
-            "biceps": 0.5,
-            "core": 0.5,
             "glutes": 1.0,
-            "hamstrings": 1.0
-          }
+            "hamstrings": 0.5,
+            "quads": 0.5
+          },
+          "rir": 2
+        },
+        {
+          "id": "9093",
+          "name": "45 degree hyperextension",
+          "equipment": "body weight",
+          "movement_group": "Hip hinges",
+          "primary": "core",
+          "sets": 3,
+          "reps": "10-12",
+          "volume": {
+            "core": 1.0,
+            "glutes": 0.5,
+            "hamstrings": 0.5
+          },
+          "rir": 1
+        },
+        {
+          "id": "9052",
+          "name": "leg extension",
+          "equipment": "leverage machine",
+          "movement_group": "Leg extensions",
+          "primary": "quads",
+          "sets": 3,
+          "reps": "13-15",
+          "volume": {
+            "quads": 1.0
+          },
+          "rir": 1,
+          "superset_group": "A"
         },
         {
           "id": "9061",
@@ -502,35 +629,26 @@
           "movement_group": "Leg curls",
           "primary": "hamstrings",
           "sets": 3,
-          "reps": "10-15",
+          "reps": "13-15",
           "volume": {
             "calves": 0.5,
             "hamstrings": 1.0
-          }
+          },
+          "rir": 1,
+          "superset_group": "A"
         },
         {
-          "id": "9080",
-          "name": "standing calf raise",
-          "equipment": "body weight",
-          "movement_group": "Calf raises/jumps",
-          "primary": "calves",
-          "sets": 3,
-          "reps": "10-15",
-          "volume": {
-            "calves": 1.0
-          }
-        },
-        {
-          "id": "9090",
-          "name": "3/4 sit-up",
+          "id": "9091",
+          "name": "plank",
           "equipment": "body weight",
           "movement_group": "Core",
           "primary": "core",
           "sets": 3,
-          "reps": "10-15",
+          "reps": "13-15",
           "volume": {
             "core": 1.0
-          }
+          },
+          "rir": 1
         }
       ]
     }

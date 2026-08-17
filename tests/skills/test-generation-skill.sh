@@ -125,6 +125,20 @@ for heading in "## Exclude exercises" "## Exclude equipment" "## Exclude movemen
     assert_file_contains "$FIELDS" "$heading" "documents the $heading section"
     assert_file_contains "$EXAMPLE_RULES" "$heading" "the sample has the $heading section"
 done
+echo ""
+
+echo "coaching.md says what is enforced and what is not"
+# The file is judgment, not contract, so almost nothing here is pinned. These
+# four claims are: they are what stops a later edit from quietly turning
+# guidance into a gate, or a gate into guidance.
+COACHING="$REPO_ROOT/skills/generation/references/coaching.md"
+assert_file_contains "$COACHING" "Enforced: \`rep_floors\`" "names the one training rule with teeth"
+assert_file_contains "$COACHING" "The script enforces almost none of it" "is honest about its own status"
+assert_file_contains "$COACHING" "coaching-deferred.md" "points at the rules that need session logging"
+assert_file_contains "$REPO_ROOT/skills/generation/references/coaching-deferred.md" "Out of scope for now."     "the deferred rules say why they are deferred"
+assert_file_not_contains "$COACHING" "Fatigue index" "no rule that needs per-set history is in the coach's read path"
+assert_file_contains "$COACHING" "say which one you followed and why" "requires a stated override"
+assert_file_not_contains "$COACHING" "HARD CAP" "no rule claims a cap the script does not apply"
 assert_file_contains "$FIELDS" "unknown_exclude_exercise:<name>" "names the unknown-exclusion warning"
 assert_file_contains "$FIELDS" "unmatched_must_include:<name>" "names the unplaceable-must-include warning"
 assert_file_contains "$FIELDS" '`chest`, `back`, `shoulders`, `biceps`, `triceps`,' "lists the muscle groups"
