@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Covers evals/judge.sh — the rubric-judging step of the eval pipeline.
+# Covers evals/judge.py — the rubric-judging step of the eval pipeline.
 #
 # Offline and deterministic: CLAUDE_BIN points at fake CLIs, same trick as
 # test-agent-harness.sh, so every failure path runs without spending a token.
@@ -16,7 +16,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$SCRIPT_DIR/test-helpers.sh"
 
-JUDGE="$REPO_ROOT/evals/judge.sh"
+JUDGE="$REPO_ROOT/evals/judge.py"
 RUNNER="$REPO_ROOT/evals/run-evals.sh"
 
 PROJECT=$(create_test_project)
@@ -113,7 +113,7 @@ chmod +x "$PROJECT/ok" "$PROJECT/garbage" "$PROJECT/flaky" \
 
 judge() {  # judge <fake> <out-dir> [extra flags...]
     local fake="$1" out="$2"; shift 2
-    CLAUDE_BIN="$PROJECT/$fake" bash "$JUDGE" \
+    CLAUDE_BIN="$PROJECT/$fake" python "$JUDGE" \
         "$PROJECT/rubric.md" "$PROJECT/persona.yaml" "$PROJECT/plan.md" \
         "$out" "$@"
 }
