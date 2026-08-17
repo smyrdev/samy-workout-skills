@@ -19,11 +19,14 @@ run goes indeterminate, the postmortem is already on disk.
 
 import argparse
 import json
+import os
 import re
 import statistics
 import subprocess
 import sys
 from pathlib import Path
+
+os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 
 EVALS_DIR = Path(__file__).resolve().parent
 CALL_CLI = EVALS_DIR / "scripts" / "call-cli.sh"

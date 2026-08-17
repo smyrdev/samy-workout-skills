@@ -25,6 +25,8 @@ from pathlib import Path
 
 import judge
 
+os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+
 EVALS_DIR = Path(__file__).resolve().parent
 REPO_ROOT = EVALS_DIR.parent
 GENERATE = REPO_ROOT / "skills" / "generation" / "scripts" / "generate.py"
@@ -72,32 +74,44 @@ def generate_plan(src, pdir, dataset_dir, run_date):
     return False
 
 
+def classify_persona(pdir):
+    """Read one persona's outcome back off disk, rather than threading it
+    through in memory: gen-error.txt present = generation-failed,
+    verdict.json's outcome field says scored or indeterminate, a plan with
+    neither = generated but not judged. A human can re-derive the same
+    table.
+
+    Returns (status, data, extra): data is the (scores, overall, red-flag
+    count) tuple for "scored", else None; extra is the text that belongs to
+    that status — the generation stderr, the judge summary, or the
+    indeterminate reason — else None."""
+    gen_error = pdir / "gen-error.txt"
+    verdict_file = pdir / "verdict.json"
+    if gen_error.exists():
+        return "generation-failed", None, gen_error.read_text(encoding="utf-8").strip()
+    if verdict_file.exists():
+        v = json.loads(verdict_file.read_text(encoding="utf-8"))
+        if v.get("outcome") == "scored":
+            scores = {c["name"]: c["score"] for c in v["criteria"]}
+            data = (scores, v["overall"], len(v["red_flags"]))
+            return "scored", data, v["summary"]
+        return "indeterminate", None, v.get("reason", "no reason recorded")
+    return "generated", None, None
+
+
 def compose_report(run_dir):
-    """Compose report.md from what is on disk. Outcomes are deliberately read
-    back from files rather than threaded through in memory: gen-error.txt
-    present = generation-failed, verdict.json's outcome field says scored or
-    indeterminate, a plan with neither = generated but not judged. A human
-    can re-derive the same table."""
+    """Compose report.md from what classify_persona reads off disk."""
     rows, summaries, failures, indets = [], [], [], []
     for pdir in sorted(d for d in run_dir.iterdir() if d.is_dir()):
         p = pdir.name
-        gen_error = pdir / "gen-error.txt"
-        verdict_file = pdir / "verdict.json"
-        if gen_error.exists():
-            rows.append((p, "generation-failed", None))
-            failures.append((p, gen_error.read_text(encoding="utf-8").strip()))
-        elif verdict_file.exists():
-            v = json.loads(verdict_file.read_text(encoding="utf-8"))
-            if v.get("outcome") == "scored":
-                scores = {c["name"]: c["score"] for c in v["criteria"]}
-                rows.append((p, "scored",
-                             (scores, v["overall"], len(v["red_flags"]))))
-                summaries.append((p, v["summary"]))
-            else:
-                rows.append((p, "indeterminate", None))
-                indets.append((p, v.get("reason", "no reason recorded")))
-        else:
-            rows.append((p, "generated", None))
+        status, data, extra = classify_persona(pdir)
+        rows.append((p, status, data))
+        if status == "generation-failed":
+            failures.append((p, extra))
+        elif status == "scored":
+            summaries.append((p, extra))
+        elif status == "indeterminate":
+            indets.append((p, extra))
 
     lines = [f"# Eval report — {run_dir.name}", ""]
     lines.append("| persona | " + " | ".join(judge.CRITERIA) + " | overall | red flags |")
@@ -137,6 +151,42 @@ def compose_report(run_dir):
     report = run_dir / "report.md"
     report.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"report: {report}")
+
+
+def run_personas(personas, personas_dir, run_dir, args, run_date):
+    """Generate then judge every persona, one artifact folder each under
+    run_dir. Returns 1 if any judging went indeterminate, 0 otherwise —
+    the infrastructure signal main returns as its exit code."""
+    indeterminate = 0
+    for p in personas:
+        src = personas_dir / p
+        pdir = run_dir / p
+        pdir.mkdir(parents=True)
+
+        if not generate_plan(src, pdir, args.dataset_dir, run_date):
+            print(f"{p}: generation-failed (stderr saved)")
+            continue
+        if args.skip_judge:
+            print(f"{p}: generated")
+            continue
+
+        try:
+            rc = judge.judge(EVALS_DIR / "rubric" / "plan-quality.md",
+                             src / "persona.yaml", pdir / "plan.md", pdir,
+                             timeout=args.timeout, judges=args.judges)
+        except Exception as e:
+            # judge.sh used to run as a subprocess, so an unexpected crash
+            # there only took down that persona. In-process, mirror that
+            # boundary by hand: this persona goes indeterminate, the run
+            # continues.
+            judge.write_indeterminate(pdir, f"judging crashed: {e!r}")
+            rc = 1
+        if rc == 0:
+            print(f"{p}: scored")
+        else:
+            print(f"{p}: indeterminate")
+            indeterminate = 1
+    return indeterminate
 
 
 def main(argv=None):
@@ -182,27 +232,7 @@ def main(argv=None):
     run_dir = fresh_run_dir(args.results_dir)
 
     # --- generate, then judge --------------------------------------------
-    indeterminate = 0
-    for p in personas:
-        src = personas_dir / p
-        pdir = run_dir / p
-        pdir.mkdir(parents=True)
-
-        if not generate_plan(src, pdir, args.dataset_dir, run_date):
-            print(f"{p}: generation-failed (stderr saved)")
-            continue
-        if args.skip_judge:
-            print(f"{p}: generated")
-            continue
-
-        rc = judge.judge(EVALS_DIR / "rubric" / "plan-quality.md",
-                         src / "persona.yaml", pdir / "plan.md", pdir,
-                         timeout=args.timeout, judges=args.judges)
-        if rc == 0:
-            print(f"{p}: scored")
-        else:
-            print(f"{p}: indeterminate")
-            indeterminate = 1
+    indeterminate = run_personas(personas, personas_dir, run_dir, args, run_date)
 
     try:
         compose_report(run_dir)
