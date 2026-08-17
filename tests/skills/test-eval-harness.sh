@@ -236,6 +236,23 @@ assert_file_contains "$PROJECT/out-badflags/verdict.json" \
     '"outcome": "indeterminate"' "and the verdict is indeterminate"
 echo ""
 
+echo "Non-UTF-8 bytes are rejected, not crashed on"
+# A response that isn't valid UTF-8 at all used to raise UnicodeDecodeError
+# straight through validate()'s bare OSError catch, killing the process
+# before any verdict.json was written.
+cat > "$PROJECT/badutf8" <<EOF
+#!/usr/bin/env bash
+echo call >> "$PROJECT/badutf8-calls.log"
+printf '\xff\xfe not valid utf-8'
+EOF
+chmod +x "$PROJECT/badutf8"
+judge badutf8 "$PROJECT/out-badutf8" > /dev/null 2>&1
+rc=$?
+assert_exit_code 1 "$rc" "invalid UTF-8 bytes exit 1, not a crash"
+assert_file_contains "$PROJECT/out-badutf8/verdict.json" \
+    '"outcome": "indeterminate"' "and the verdict is indeterminate"
+echo ""
+
 echo ""
 echo "--- run-evals.sh ---"
 echo ""

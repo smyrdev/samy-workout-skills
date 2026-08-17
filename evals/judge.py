@@ -102,7 +102,9 @@ def validate(response_file):
     """
     try:
         raw = response_file.read_text(encoding="utf-8")
-    except OSError as e:
+    except (OSError, ValueError) as e:
+        # ValueError covers UnicodeDecodeError: non-UTF-8 bytes from a CLI
+        # response are an invalid-response case, not a crash.
         return None, f"cannot read response: {e}"
 
     try:
