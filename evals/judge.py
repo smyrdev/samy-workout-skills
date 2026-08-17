@@ -27,6 +27,11 @@ import sys
 from pathlib import Path
 
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+# PYTHONIOENCODING only reaches child processes (generate.py's stderr, which
+# lands verbatim in the report); the interpreter's own streams were already
+# built by then, so reconfigure them too.
+sys.stdout.reconfigure(encoding="utf-8")
+sys.stderr.reconfigure(encoding="utf-8")
 
 EVALS_DIR = Path(__file__).resolve().parent
 CALL_CLI = EVALS_DIR / "scripts" / "call-cli.sh"

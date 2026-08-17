@@ -312,6 +312,26 @@ assert_file_contains "$run_dir/report.md" "## Indeterminate" \
     "the report carries the reason section"
 echo ""
 
+echo "A crashing judging is isolated to its persona"
+CLAUDE_BIN="$PROJECT/ok" python - "$REPO_ROOT/evals/run-evals.py" "$FIXDS" "$PROJECT/results-crash" <<'EOF'
+import sys, pathlib, importlib.util
+sys.path.insert(0, str(pathlib.Path(sys.argv[1]).parent))
+spec = importlib.util.spec_from_file_location("run_evals", sys.argv[1])
+m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+def boom(*a, **k): raise RuntimeError("judge exploded")
+m.judge.judge = boom
+sys.exit(m.main(["--persona", "mira", "--dataset-dir", sys.argv[2],
+                 "--results-dir", sys.argv[3]]))
+EOF
+rc=$?
+assert_exit_code 1 "$rc" "a judge crash is an infra failure: exit 1"
+run_dir=$(ls -d "$PROJECT/results-crash"/*/ 2>/dev/null | head -1)
+assert_file_contains "$run_dir/mira/verdict.json" '"outcome": "indeterminate"' \
+    "the crashed persona still gets an indeterminate verdict"
+assert_file_contains "$run_dir/report.md" "judging crashed" \
+    "and the report carries the crash reason"
+echo ""
+
 echo "A missing dataset dir fails preflight, helpfully"
 output=$(python "$RUNNER" --skip-judge --dataset-dir "$PROJECT/no-dataset-here" \
     --results-dir "$PROJECT/results-nods" 2>&1)

@@ -26,6 +26,11 @@ from pathlib import Path
 import judge
 
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+# PYTHONIOENCODING only reaches child processes (generate.py's stderr, which
+# lands verbatim in the report); the interpreter's own streams were already
+# built by then, so reconfigure them too.
+sys.stdout.reconfigure(encoding="utf-8")
+sys.stderr.reconfigure(encoding="utf-8")
 
 EVALS_DIR = Path(__file__).resolve().parent
 REPO_ROOT = EVALS_DIR.parent
@@ -102,7 +107,7 @@ def classify_persona(pdir):
 def compose_report(run_dir):
     """Compose report.md from what classify_persona reads off disk."""
     rows, summaries, failures, indets = [], [], [], []
-    for pdir in sorted(d for d in run_dir.iterdir() if d.is_dir()):
+    for pdir in sorted((d for d in run_dir.iterdir() if d.is_dir()), key=lambda d: d.name):
         p = pdir.name
         status, data, extra = classify_persona(pdir)
         rows.append((p, status, data))
@@ -175,10 +180,10 @@ def run_personas(personas, personas_dir, run_dir, args, run_date):
                              src / "persona.yaml", pdir / "plan.md", pdir,
                              timeout=args.timeout, judges=args.judges)
         except Exception as e:
-            # judge.sh used to run as a subprocess, so an unexpected crash
-            # there only took down that persona. In-process, mirror that
-            # boundary by hand: this persona goes indeterminate, the run
-            # continues.
+            # judging used to run as a subprocess (the old judge.sh, removed
+            # 2026-08-17), so an unexpected crash there only took down that
+            # persona. In-process, mirror that boundary by hand: this persona
+            # goes indeterminate, the run continues.
             judge.write_indeterminate(pdir, f"judging crashed: {e!r}")
             rc = 1
         if rc == 0:
