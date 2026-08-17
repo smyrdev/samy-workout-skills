@@ -17,7 +17,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$SCRIPT_DIR/test-helpers.sh"
 
 JUDGE="$REPO_ROOT/evals/judge.py"
-RUNNER="$REPO_ROOT/evals/run-evals.sh"
+RUNNER="$REPO_ROOT/evals/run-evals.py"
 
 PROJECT=$(create_test_project)
 trap 'cleanup_test_project "$PROJECT"' EXIT
@@ -265,7 +265,7 @@ cp "$REPO_ROOT/skills/generation/scripts/generate.fixture.json" \
    "$FIXDS/data/exercises.json"
 
 echo "Smoke: one persona, fixture dataset, fake judge"
-CLAUDE_BIN="$PROJECT/ok" bash "$RUNNER" --persona mira \
+CLAUDE_BIN="$PROJECT/ok" python "$RUNNER" --persona mira \
     --dataset-dir "$FIXDS" --results-dir "$PROJECT/results" > /dev/null 2>&1
 rc=$?
 assert_exit_code 0 "$rc" "the smoke run exits 0"
@@ -286,7 +286,7 @@ assert_file_contains "$run_dir/report.md" "Weakest criterion" \
 echo ""
 
 echo "--skip-judge needs no CLI at all"
-CLAUDE_BIN="$PROJECT/no-such-cli" bash "$RUNNER" --persona mira --skip-judge \
+CLAUDE_BIN="$PROJECT/no-such-cli" python "$RUNNER" --persona mira --skip-judge \
     --dataset-dir "$FIXDS" --results-dir "$PROJECT/results-nojudge" > /dev/null 2>&1
 rc=$?
 assert_exit_code 0 "$rc" "generate-only exits 0 with a broken CLAUDE_BIN"
@@ -301,7 +301,7 @@ assert_file_contains "$run_dir/report.md" "generated" \
 echo ""
 
 echo "An indeterminate judging fails the run, and the report says so"
-CLAUDE_BIN="$PROJECT/garbage" bash "$RUNNER" --persona mira \
+CLAUDE_BIN="$PROJECT/garbage" python "$RUNNER" --persona mira \
     --dataset-dir "$FIXDS" --results-dir "$PROJECT/results-indet" > /dev/null 2>&1
 rc=$?
 assert_exit_code 1 "$rc" "indeterminate is an infra failure: exit 1"
@@ -313,7 +313,7 @@ assert_file_contains "$run_dir/report.md" "## Indeterminate" \
 echo ""
 
 echo "A missing dataset dir fails preflight, helpfully"
-output=$(bash "$RUNNER" --skip-judge --dataset-dir "$PROJECT/no-dataset-here" \
+output=$(python "$RUNNER" --skip-judge --dataset-dir "$PROJECT/no-dataset-here" \
     --results-dir "$PROJECT/results-nods" 2>&1)
 rc=$?
 assert_exit_code 2 "$rc" "preflight failure is non-zero"
