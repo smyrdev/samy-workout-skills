@@ -15,7 +15,7 @@
         "Before any file is written, the transcript shows a summary of the answers and names both target paths (profile/profile.json and profile/programs/program-<date>.json)",
         "profile/profile.json exists and validates against skills/onboarding/assets/schema/profile.schema.json",
         "Exactly one file exists under profile/programs/, named program-YYYY-MM-DD.json, and it validates against skills/onboarding/assets/schema/program.schema.json",
-        "Stored values are the option values, not labels: basics.bodyfat_bracket is '21-25', gym.type is 'garage_gym', program.split is 'upper_lower', program.session_minutes is '60-90'",
+        "Stored values are the option values, not labels: basics.bodyfat_bracket is one of the two schema brackets that '21-25%' straddles ('18-23' or '24-29') and the transcript either asked which or said which it chose, gym.type is 'garage_gym', program.split is 'upper_lower', program.session_minutes is '60-90'",
         "strength_benchmarks.pullups_5 and pullups_10 are both false; pushups_15, dips_10 and bench_press_10 are true; incline_press_10 and overhead_press_10 are false",
         "No age field is stored anywhere; basics.date_of_birth is '1991-03-22'",
         "The program file's volume block is non-null and its per_muscle_weekly_sets sums to weekly_sets_allocated (i.e. scripts/volume.py was run, not hand-computed)",
