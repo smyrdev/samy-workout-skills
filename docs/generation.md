@@ -110,7 +110,10 @@ exercises, not a longer workout. Both remain ceilings, never quotas.
 
 Then `--selection` takes the choices back and recomputes everything: what the week delivers per
 muscle against what was allocated, with any shortfall reported in `warnings` — never silently
-absorbed.
+absorbed. Run without `--write` this is the **check**: the plan JSON goes to stdout and the
+allocated-versus-planned table with the warnings goes to stderr, so the coach shows the
+generator's numbers before anything is written. The same command with `--write`/`--write-md`
+is the write; nothing about the arithmetic changes between the two.
 
 Deliberate calibrations, all tunable in `generate.config.json`:
 
