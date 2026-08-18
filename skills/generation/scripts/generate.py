@@ -1113,4 +1113,9 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
+    # Program emoji and en dashes reach stdout; a cp1252 console (Windows) would
+    # otherwise die on them. Bytes on disk are always UTF-8 regardless.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
     main()
