@@ -465,6 +465,7 @@ def rank_candidates(rows, targets, rules, config, pinned):
             "kind": exercise_kind(r, config),
             "must_include": r["id"] in pinned,
             "volume": r["muscles"],
+            "effective_volume": r["effective"],
         } for r in rows_here[:limit]]
     return pools
 
@@ -900,6 +901,18 @@ def run_self_test(config, descriptor):
     check(brief["max_exercises_per_session"] <= 6, "budget exceeds exercises_per_session")
     check(all(brief["candidates"][g] for g in brief["targets"]),
           "a muscle group was offered no candidates at all")
+
+    # 2b. What the coach is told each candidate is worth is what the generator
+    # will count: raw coefficients at or above 1.0 pass through, everything
+    # under counts at the config's indirect discount. Same key set, no more.
+    discount = config["indirect_discount"]
+    for pool in brief["candidates"].values():
+        for c in pool:
+            raw, eff = c["volume"], c["effective_volume"]
+            check(set(raw) == set(eff), f"{c['name']}: effective_volume keys differ from volume")
+            check(all(abs(eff[g] - (v if v >= 1.0 else v * discount)) < 1e-9
+                      for g, v in raw.items()),
+                  f"{c['name']}: effective_volume does not apply indirect_discount")
 
     # 3. Equipment tier: at tier 1 no machine equipment is offered.
     tier1 = brief_for(fixture_profile(), fixture_program_data(
