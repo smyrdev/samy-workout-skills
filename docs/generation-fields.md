@@ -51,9 +51,8 @@ coach applies these, not the script — the list is your standing instruction. N
 does not exist is still refused, so a typo is caught rather than ignored.
 
 Rest intervals are not a `rules.md` section. They come from your goal, in
-`scripts/generate.config.json` — and they matter here because the exercise ceiling is worked out
-from your session length *and* your rest interval, so longer rests mean fewer exercises rather
-than a longer workout.
+`scripts/generate.config.json`. The exercise ceiling comes from your session-length answer via
+`volume.py`; a coach who lengthens rests should fill fewer of those slots, not run over.
 
 ## `profile/plans/plan-YYYY-MM-DD.md` — also yours
 

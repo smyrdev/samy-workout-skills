@@ -70,7 +70,7 @@ assert_file_contains "$WRAPPER" "AskUserQuestion" "binds the question tool"
 assert_file_contains "$WRAPPER" "Bash" "binds the shell for the clone and the script"
 assert_file_contains "$WRAPPER" "scripts/generate.py" "binds the generator step"
 assert_file_contains "$WRAPPER" "three times" "runs the generator three times: brief, check, write"
-assert_file_contains "$WRAPPER" "stop after the echo" "binds the no-question-tool fallback to a stop"
+assert_file_contains "$WRAPPER" "Before writing" "points the no-question-tool fallback at rules.md rather than restating it"
 assert_file_contains "$WRAPPER" "--dataset" "documents the dataset argument"
 assert_file_not_contains "$WRAPPER" "upper_lower" "holds no enum values either"
 assert_file_not_contains "$WRAPPER" "must_include_first" "holds no order rule names either"
@@ -148,13 +148,11 @@ echo ""
 
 echo "coaching.md says what is enforced and what is not"
 # The file is judgment, not contract, so almost nothing here is pinned. These
-# four claims are: they are what stops a later edit from quietly turning
+# claims are: they are what stops a later edit from quietly turning
 # guidance into a gate, or a gate into guidance.
 COACHING="$REPO_ROOT/skills/generation/references/coaching.md"
 assert_file_contains "$COACHING" "Enforced: \`rep_floors\`" "names the one training rule with teeth"
 assert_file_contains "$COACHING" "The script enforces almost none of it" "is honest about its own status"
-assert_file_contains "$COACHING" "coaching-deferred.md" "points at the rules that need session logging"
-assert_file_contains "$REPO_ROOT/skills/generation/references/coaching-deferred.md" "Out of scope for now."     "the deferred rules say why they are deferred"
 assert_file_not_contains "$COACHING" "Fatigue index" "no rule that needs per-set history is in the coach's read path"
 assert_file_contains "$COACHING" "say which one you followed and why" "requires a stated override"
 assert_file_not_contains "$COACHING" "HARD CAP" "no rule claims a cap the script does not apply"

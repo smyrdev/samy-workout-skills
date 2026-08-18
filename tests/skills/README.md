@@ -104,7 +104,6 @@ tokens, so this file asserts only what is left over:
   suffix rather than overwrite
 - `references/coaching.md` keeps saying which of its rules the script actually enforces, and
   which it does not — the one line that stops guidance drifting into a gate, or a gate into guidance
-  — and keeps the rules that need session logging in `coaching-deferred.md`, out of its read path
 - `docs/generation-fields.md` keeps the warning names, the ten muscle groups and all five order rules
 
 ### test-generation-script.sh

@@ -636,25 +636,30 @@ def check_datasets_descriptor(program_schema):
                 fail(f"assets/datasets.json[{name}]: benchmark_gates key {bench_key!r} is not a "
                      f"profile strength benchmark")
 
-    # The default descriptor must fully cover the bundled fixture's vocabulary — the offline
-    # stand-in for the real dataset. Unmapped real-dataset muscles are refused at run time.
-    fixture = load_json(GEN_DIR / "scripts" / "generate.fixture.json")
-    if fixture is None:
-        fail("skills/generation/scripts/generate.fixture.json: not valid JSON")
+    # The default descriptor must fully cover every bundled fixture's vocabulary — the offline
+    # stand-ins for the real dataset. Unmapped real-dataset muscles are refused at run time,
+    # so an unmapped fixture muscle silently breaks the self-test or every eval case.
+    if default not in datasets:
         return
-    if default in datasets:
-        ds = datasets[default]
-        known = set(ds["muscle_map"]) | set(ds["muscle_ignore"])
-        tiered = set(seen for tier in ds["equipment_tiers"].values() for seen in tier)
+    ds = datasets[default]
+    known = set(ds["muscle_map"]) | set(ds["muscle_ignore"])
+    tiered = set(seen for tier in ds["equipment_tiers"].values() for seen in tier)
+    for fixture_path in (GEN_DIR / "scripts" / "generate.fixture.json",
+                         GEN_DIR / "evals" / "files" / "data" / "exercises.json"):
+        rel = fixture_path.relative_to(ROOT).as_posix()
+        fixture = load_json(fixture_path)
+        if fixture is None:
+            fail(f"{rel}: not valid JSON")
+            continue
         for rec in fixture:
             muscles = set(rec.get("volume", {})) | (
                 {rec["primary_muscle"]} if rec.get("primary_muscle") else set())
             unmapped = sorted(muscles - known)
             if unmapped:
-                fail(f"fixture record {rec.get('id')}: muscles {unmapped} not covered by "
+                fail(f"{rel} record {rec.get('id')}: muscles {unmapped} not covered by "
                      f"assets/datasets.json[{default}] muscle_map/muscle_ignore")
             if rec.get("equipment") not in tiered:
-                fail(f"fixture record {rec.get('id')}: equipment {rec.get('equipment')!r} "
+                fail(f"{rel} record {rec.get('id')}: equipment {rec.get('equipment')!r} "
                      f"not in any tier of assets/datasets.json[{default}]")
 
 

@@ -14,8 +14,7 @@ Three bindings for this environment:
 
 - Use `AskUserQuestion` for the pre-filled re-confirm batch (offer "same as last time" as the
   first option) and for the veto/adjust loop before writing. Free-text answers arrive through
-  that tool's **Other** option. If that tool is unavailable, keep the saved answers, say so in a
-  line, and stop after the echo (`references/rules.md` § Before writing).
+  that tool's **Other** option. Without it, `references/rules.md` § Before writing says what to do.
 - Use `Bash` for the dataset clone (`references/rules.md` § Dataset cache) and to run
   `scripts/generate.py` three times — brief, check, write (`references/rules.md` § Running the
   generator). Use `Write` for the selection file itself, to a scratch path outside `profile/`.

@@ -83,8 +83,8 @@ def load_config(path):
         "default_rules", "split_sessions", "focus_bonus", "name_length_penalty",
         "indirect_discount", "short_tolerance_sets", "compound_min_muscles",
         "trailer_groups", "reps_by_goal", "deload_sets_multiplier",
-        "candidates_per_muscle", "set_seconds", "rest_seconds_by_goal",
-        "session_minutes_floor", "rep_floors", "rep_floor_goals",
+        "candidates_per_muscle", "rest_seconds_by_goal",
+        "rep_floors", "rep_floor_goals",
     ]
     missing = [k for k in required if k not in cfg]
     if missing:
@@ -425,23 +425,6 @@ def rest_for(goal, config):
     return config["rest_seconds_by_goal"][goal]
 
 
-def session_capacity(program, volume_block, config):
-    """How many exercises fit a session. The volume model already derived a
-    ceiling from the session-length answer; rest intervals give a second one,
-    and the tighter of the two wins. Both are ceilings, never quotas."""
-    minutes = program["session_minutes"]
-    if minutes not in config["session_minutes_floor"]:
-        fail_input(f"unknown session length: {minutes!r} — add it to session_minutes_floor "
-                   f"in generate.config.json")
-    rest = rest_for(program["primary_goal"], config)
-    sets = volume_block["sets_per_exercise"]
-    # Costed at the compound rest interval: a ceiling that holds for the
-    # heaviest session the coach might build, not only the lightest.
-    per_exercise = sets * (config["set_seconds"] + rest["compound"])
-    fits = (config["session_minutes_floor"][minutes] * 60) // per_exercise
-    return max(1, min(volume_block["exercises_per_session"], int(fits))), rest
-
-
 def rank_candidates(rows, targets, rules, config, pinned):
     """One ranked pool per muscle group. The score is marginal volume against
     the full week's targets — a starting order, not a verdict. Everything that would make it a verdict lives in coaching.md."""
@@ -559,7 +542,6 @@ def build_brief(ctx, config):
     """What the coach is given: the budget, and the legal candidates. No
     exercise is chosen here, and no session is ordered."""
     program, volume_block = ctx["program"], ctx["volume"]
-    max_exercises, rest = session_capacity(program, volume_block, config)
     per_day = distribute_sets(ctx["sessions"], ctx["targets"])
     goal = program["primary_goal"]
 
@@ -568,8 +550,9 @@ def build_brief(ctx, config):
         "program": program,
         "dataset": {"name": ctx["ds_name"], "repo": ctx["ds"]["repo"], "ref": ctx["ds"]["ref"]},
         "sets_per_exercise": volume_block["sets_per_exercise"],
-        "max_exercises_per_session": max_exercises,
-        "rest_seconds": rest,
+        # The volume model owns this ceiling; it is passed through, never adjusted.
+        "max_exercises_per_session": volume_block["exercises_per_session"],
+        "rest_seconds": rest_for(goal, config),
         "reps_band": config["reps_by_goal"][goal],
         "trailer_groups": config["trailer_groups"],
         "rep_floors": config["rep_floors"] if goal in config["rep_floor_goals"] else None,
@@ -597,16 +580,53 @@ def reps_low(reps):
     return int(digits) if digits else None
 
 
+SELECTION_TOP_KEYS = {"$schema_version", "sessions"}
+SESSION_KEYS = {"day", "exercises"}
 SELECTION_KEYS = {"id", "sets", "reps", "rir", "rest_seconds", "superset_group"}
+
+
+def _selection_shape(selection):
+    """assets/schema/selection.schema.json, enforced here so the schema and the
+    script are one contract: known keys, an integer day, typed optional fields."""
+    if not isinstance(selection, dict) or not isinstance(selection.get("sessions"), list):
+        fail_input("selection file has no \"sessions\" array")
+    unknown = sorted(set(selection) - SELECTION_TOP_KEYS)
+    if unknown:
+        fail_input(f"selection has unknown top-level keys {unknown} — "
+                   f"see assets/schema/selection.schema.json")
+    for session in selection["sessions"]:
+        if not isinstance(session, dict) or not isinstance(session.get("day"), int):
+            fail_input("every selection session needs an integer \"day\"")
+        unknown = sorted(set(session) - SESSION_KEYS)
+        if unknown:
+            fail_input(f"day {session['day']}: unknown keys {unknown} — "
+                       f"see assets/schema/selection.schema.json")
+        if not isinstance(session.get("exercises", []), list):
+            fail_input(f"day {session['day']}: \"exercises\" must be a list")
+        for ex in session.get("exercises", []):
+            if not isinstance(ex, dict):
+                fail_input(f"day {session['day']}: every exercise must be an object")
+            ex_id = ex.get("id")
+            unknown = sorted(set(ex) - SELECTION_KEYS)
+            if unknown:
+                fail_input(f"day {session['day']}: {ex_id!r} has unknown keys {unknown} — "
+                           f"see assets/schema/selection.schema.json")
+            if not isinstance(ex.get("sets"), int) or ex["sets"] < 1:
+                fail_input(f"day {session['day']}: {ex_id!r} needs a whole number of sets, at least 1")
+            for key in ("rir", "rest_seconds"):
+                if key in ex and (not isinstance(ex[key], int) or ex[key] < 0):
+                    fail_input(f"day {session['day']}: {ex_id!r} {key} must be a whole number, 0 or more")
+            for key in ("reps", "superset_group"):
+                if key in ex and (not isinstance(ex[key], str) or not ex[key]):
+                    fail_input(f"day {session['day']}: {ex_id!r} {key} must be a non-empty string")
 
 
 def check_selection(ctx, selection, brief, config):
     """The two training refusals — an exercise never offered, a rep target under
-    the floor — plus the integrity checks that make a selection readable at all
+    the floor — plus the shape checks that make a selection readable at all
     (every day present, whole sets, known keys). Everything else the coach
     decided is theirs to defend."""
-    if not isinstance(selection, dict) or not isinstance(selection.get("sessions"), list):
-        fail_input("selection file has no \"sessions\" array")
+    _selection_shape(selection)
 
     legal = {}
     for session in brief["sessions"]:
@@ -616,7 +636,7 @@ def check_selection(ctx, selection, brief, config):
         legal[session["day"]] = ids
 
     want_days = sorted(legal)
-    got_days = sorted(s.get("day") for s in selection["sessions"])
+    got_days = sorted(s["day"] for s in selection["sessions"])
     if got_days != want_days:
         fail_input(f"selection covers days {got_days} but the brief asked for {want_days}")
 
@@ -628,12 +648,6 @@ def check_selection(ctx, selection, brief, config):
             if ex_id not in legal[day]:
                 fail_input(f"day {day}: {ex_id!r} was not among the candidates offered for that "
                            f"session — pick from the brief, or re-run it with changed rules")
-            if not isinstance(ex.get("sets"), int) or ex["sets"] < 1:
-                fail_input(f"day {day}: {ex_id!r} needs a whole number of sets, at least 1")
-            unknown = sorted(set(ex) - SELECTION_KEYS)
-            if unknown:
-                fail_input(f"day {day}: {ex_id!r} has unknown keys {unknown} — "
-                           f"see assets/schema/selection.schema.json")
             row = ctx["rows_by_id"][ex_id]
             if not ex.get("reps"):
                 ex["reps"] = reps_for(row, ctx["program"]["primary_goal"], config)

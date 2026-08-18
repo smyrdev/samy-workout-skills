@@ -8,7 +8,7 @@ Everything here is guidance except where marked *Enforced*. The script enforces 
 see [What the script actually enforces](#what-the-script-actually-enforces). That is deliberate: a
 number the script can compute is a number you should see, not a gate it should close behind you.
 Where a rule matters and is not enforced, honour it and say when you do not. Rules that need
-per-set performance history live in `coaching-deferred.md` until session logging exists.
+per-set performance history are out of scope until session logging exists.
 
 ## 1. Training intensity and rep targets
 
@@ -96,7 +96,10 @@ brief). Within a session, order is yours; the person's `## Order` rules travel i
 `trailer_groups_last` means. Beyond that: put the most strenuous session immediately before the
 longest rest gap, the easiest immediately before the most important, and priority work first
 within a session so it is done unfatigued. Which session is "most strenuous" and which "most
-important" is a judgment about this client — nothing in the data decides it.
+important" is a judgment about this client — nothing in the data decides it. Rest costs time:
+`max_exercises_per_session` is a ceiling from the session-length answer, not a quota, and a
+session filled to it at strength rests may not fit its slot — longer rests mean fewer exercises,
+never a longer workout.
 
 ## 5. Exercise selection — the six principles
 
@@ -247,7 +250,7 @@ fact — check it against genetic potential first. If genuinely more than 10% be
 order: is enough weekly volume allocated, are all its muscle functions trained (7.2), is it early
 enough in the session order. Specialisation is only for the time-constrained; with enough training
 days, train everything at its optimum and lagging parts catch up as growth slows near potential.
-Correcting a measured asymmetry needs per-limb strength data this skill lacks — `coaching-deferred.md`.
+Correcting a measured asymmetry needs per-limb strength data this skill lacks — out of scope.
 
 ## What the script actually enforces
 

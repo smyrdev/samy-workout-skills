@@ -46,20 +46,14 @@
 
   "deload_sets_multiplier": 0.5,
 
-  "_brief_comment": "How many candidates each muscle group offers, and how session length plus rest becomes an exercise ceiling. session_minutes_floor takes the low end of each bucket, so the ceiling is the one that fits the shortest session the answer allows.",
+  "_brief_comment": "How many candidates each muscle group offers, and the rest interval per goal. The exercises-per-session ceiling is the volume block's and is passed through untouched.",
 
   "candidates_per_muscle": 8,
-  "set_seconds": 45,
   "rest_seconds_by_goal": {
     "hypertrophy": { "compound": 150, "isolation": 90 },
     "strength": { "compound": 210, "isolation": 120 },
     "both": { "compound": 180, "isolation": 105 }
   },
-  "session_minutes_floor": {
-    "up_to_20": 20, "20-40": 20, "40-60": 40,
-    "60-90": 60, "90-120": 90, "over_120": 120
-  },
-
   "_floor_comment": "The one training rule the generator enforces — coaching.md 1.4. Scoped to the goals that include muscle growth, exactly as that rule scopes itself.",
 
   "rep_floors": { "compound": 4, "isolation": 6 },

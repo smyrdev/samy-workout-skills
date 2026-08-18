@@ -506,6 +506,13 @@ run_generate --profile "$PROFILE" --program "$PROGRAM" --dataset-dir "$PROJECT" 
     --today "$TODAY" --selection "$PROJECT/s-day.json"
 assert_exit_code 3 "$code" "a selection missing a day is refused"
 assert_contains "$out" "the brief asked for" "says which days were expected"
+
+# The schema and the script are one contract: a typed field the schema would
+# reject is refused here too, not copied into a plan that then fails its schema.
+bend_selection "$PROJECT/s-typed.json" "d['sessions'][0]['exercises'][0]['rir'] = '2'"
+run_generate --profile "$PROFILE" --program "$PROGRAM" --dataset-dir "$PROJECT"     --today "$TODAY" --selection "$PROJECT/s-typed.json"
+assert_exit_code 3 "$code" "a string rir is refused"
+assert_contains "$out" "whole number" "says what type was expected"
 echo ""
 
 echo "A shortfall is never hidden"

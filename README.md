@@ -156,8 +156,8 @@ Your files are plain JSON you can read, edit, back up, or delete. Nothing else t
   exactly that reason.
 - **No weights or progression yet.** A plan says movements, sets, reps and how close to failure;
   picking loads and progressing them week to week is the session-logging feature's job, when it
-  exists. Without that history, the work-capacity and asymmetry rules sit in
-  `coaching-deferred.md`, out of the coach's read path.
+  exists. Rules that need that history (work capacity, asymmetry correction) are out of scope
+  until then.
 - **Exercise choice is a judgment, not a calculation.** Ask twice and you may get two different
   weeks, both hitting the same allocation. The budget and the candidate pool are reproducible;
   what gets chosen from them is reasoned, and you can ask why.
@@ -206,7 +206,6 @@ skills/onboarding/evals/                       test cases, trigger queries, fixt
 skills/generation/SKILL.md                     the generation flow — vendor-neutral, pointers + gotchas
 skills/generation/references/rules.md          dataset cache, personal rules, choosing, echo-before-write
 skills/generation/references/coaching.md       training-design rules — how to choose, and why
-skills/generation/references/coaching-deferred.md  rules that wait for session logging; not in the flow
 skills/generation/assets/datasets.json         dataset registry — all dataset-specific knowledge
 skills/generation/assets/schema/               plan, selection and rules contracts, machine-readable
 skills/generation/assets/examples/             copy-to-start samples

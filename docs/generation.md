@@ -103,10 +103,9 @@ the same as no pool.
 
 The budget has two halves. Each muscle's weekly allocation is spread as evenly as it divides
 across the days that train it (17 sets over 3 sessions comes out 6/6/5), and the session's
-exercise ceiling is the tighter of two numbers: the one the volume model already derived from the
-session-length answer, and the one that falls out of session length divided by the time a set
-actually takes — `set_seconds` plus the rest interval for the goal. Longer rests buy fewer
-exercises, not a longer workout. Both remain ceilings, never quotas.
+exercise ceiling is the volume block's `exercises_per_session`, passed through untouched — one
+owner per number. It is a ceiling, never a quota; whether a session at that ceiling actually fits
+its slot at the goal's rest interval is a coaching judgment (`coaching.md` § 4).
 
 Then `--selection` takes the choices back and recomputes everything: what the week delivers per
 muscle against what was allocated, with any shortfall reported in `warnings` — never silently
@@ -127,9 +126,9 @@ Deliberate calibrations, all tunable in `generate.config.json`:
 - **The exercise ceiling is a ceiling.** Compounds deliver several groups per set, so an
   allocation is often met with fewer exercises than the ceiling allows. Filling a session to the
   ceiling for its own sake overshoots the volume model's targets.
-- **Only two training rules are refused** — an exercise outside the offered pool, and a rep
-  target under `rep_floors` on the goals `rep_floor_goals` names. Everything else in `coaching.md`
-  is guidance: a number the script can compute is a number the coach should see, not a gate.
+- **Almost nothing in `coaching.md` is enforced.** Its closing section, *What the script actually
+  enforces*, is the one canonical statement of what `--selection` refuses; everything else there is
+  guidance — a number the script can compute is a number the coach should see, not a gate.
 
 **The brief is deterministic; the plan is not.** Stable sorts, explicit tie-breaks (name, then
 id), no randomness, no clock except `--today` — the same inputs always produce a byte-identical
@@ -155,8 +154,8 @@ auditable after the dataset cache is deleted or the upstream moves on.
 
 - **No weights, no progression.** The plan says movements, sets, reps and effort. Load selection
   and week-to-week progression are the session-logging feature's job, when it exists. That
-  absence is also why asymmetry correction, work capacity and the fatigue index sit in
-  `coaching-deferred.md` rather than `coaching.md`: every one of them needs per-set history.
+  absence is also why asymmetry correction, work capacity and a fatigue index are not in
+  `coaching.md`: every one of them needs per-set history.
 - **No multi-week block.** A plan is one week plus a deload multiplier. RIR is prescribed per
   exercise and does not ramp across a mesocycle.
 - **No cardio or mobility programming.** The dataset's cardio and stretch categories are
