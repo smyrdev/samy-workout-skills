@@ -30,7 +30,7 @@ to this skill's directory when they start with `references/`, `assets/` or `scri
 6. **Choose the week from that brief** — which candidate, in what order, paired with what, at what
    effort — reading `references/coaching.md` first; `references/rules.md` § Choosing from the
    brief. Hand the choices back to the same script **without `--write` first**: it checks them
-   and prints the allocated-versus-planned table and warnings, and that output is the echo
+   and prints the allocated-versus-planned table and warnings, and that output is what the echo is built from
    (§ Running the generator).
 7. **Echo before writing** — `references/rules.md` § Before writing.
 8. **Write only under `profile/plans/`** — never to `profile.json`, never under `programs/`.

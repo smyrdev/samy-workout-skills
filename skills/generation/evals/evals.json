@@ -20,7 +20,7 @@
         "profile/plans/ contains exactly one .json and one .md with the same date stem, and the .json validates against skills/generation/assets/schema/plan.schema.json",
         "The plan's per-muscle targets equal the program file's volume.per_muscle_weekly_sets exactly (no recomputation)",
         "profile/profile.json and profile/programs/program-2026-08-06.json are byte-identical to the fixtures, and no profile/rules.md was created",
-        "The transcript shows scripts/generate.py invoked twice — once with --brief, once with --selection plus --write and --write-md; the week was chosen from the brief, not composed by hand"
+        "The transcript shows scripts/generate.py invoked three times — once with --brief, once with --selection and no --write (the check, whose table is shown before writing), and once with --selection plus --write and --write-md; the week was chosen from the brief, not composed by hand"
       ]
     },
     {

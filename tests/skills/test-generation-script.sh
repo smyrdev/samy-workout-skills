@@ -179,20 +179,20 @@ first="$out"
 echo ""
 
 echo "The check step: a selection without --write shows the table and writes nothing"
-CHECK_DIR="$PROJECT/check-plans"
-mkdir -p "$CHECK_DIR"
+before=$(find "$PROJECT" -type f | sort)
 run_default
+after=$(find "$PROJECT" -type f | sort)
 assert_exit_code 0 "$code" "composing without --write succeeds"
 assert_contains "$out" "check: allocated vs planned" "prints the check header"
 for group in chest back shoulders biceps triceps quads hamstrings glutes calves core; do
     assert_contains "$out" "^  $group " "the check table has a $group row"
 done
 assert_contains "$out" "warnings: none" "says when there is nothing to warn about"
-assert_file_absent "$CHECK_DIR/plan.json" "the check step writes no plan"
-if [ -z "$(ls -A "$CHECK_DIR")" ]; then
-    _pass "the check step leaves the plans directory empty"
+if [ "$before" = "$after" ]; then
+    _pass "the check step writes no file anywhere under the project"
 else
-    _fail "the check step leaves the plans directory empty"
+    _fail "the check step writes no file anywhere under the project"
+    echo "    New files:"; comm -13 <(printf '%s\n' "$before") <(printf '%s\n' "$after") | sed 's/^/      /'
 fi
 # The table is stderr, so a caller redirecting stdout to a file still sees it.
 stdout_only=$(PYTHONIOENCODING=utf-8 python "$GENERATE" --profile "$PROFILE" --program "$PROGRAM" \

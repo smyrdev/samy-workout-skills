@@ -22,8 +22,10 @@ Usage:
 
     generate.py --self-test
 
-Without --write the plan JSON is printed to stdout. --write refuses to
-overwrite an existing file — pick the next -2/-3 suffix instead.
+Without --write the plan JSON is printed to stdout. On every --selection run
+the allocated-versus-planned table and the warnings go to stderr — the check
+the coach shows before writing. --write refuses to overwrite an existing
+file — pick the next -2/-3 suffix instead.
 
 Exit codes: 0 success, 2 usage error, 3 input error (a file or a value inside
 it is missing or unrecognized). Volume targets are never computed here — they
@@ -716,7 +718,7 @@ def print_check(plan, stream=None):
     this table — never a hand tally — before deciding to write. stdout is left
     alone: it still carries the plan JSON, or the `wrote …` lines."""
     stream = stream if stream is not None else sys.stderr
-    warnings = plan.get("warnings", [])
+    warnings = plan["warnings"]
     short = {w.split(":", 1)[1] for w in warnings if w.startswith("short:")}
     print("check: allocated vs planned (generator's numbers — show this before writing)",
           file=stream)

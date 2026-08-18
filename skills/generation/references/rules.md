@@ -81,10 +81,10 @@ python skills/generation/scripts/generate.py \
 
 This is the check. It composes the week, prints the plan JSON to stdout and, on stderr, the
 allocated-versus-planned table with every warning. That table is what the echo step shows —
-[Before writing](#before-writing) — and the planned column is the generator's number, never a hand tally:
-indirect volume is discounted, and a coach's sum will disagree with the script's.
-If a target is short or a choice looks wrong, change the selection and run the check again;
-nothing has been written yet.
+[Before writing](#before-writing) — and the planned column is the generator's number,
+never a hand tally: indirect volume is discounted, and a coach's sum will disagree with
+the script's. If a target is short or a choice looks wrong, change the selection and run
+the check again; nothing has been written yet.
 
 Only when the person has seen it and not vetoed, run the same command once more with the
 outputs added:
