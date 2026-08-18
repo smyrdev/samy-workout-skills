@@ -42,8 +42,9 @@ and `assets/examples/rules.example.md`.
 
 Each of these has produced a wrong plan. The section named holds the detail.
 
-- A program file without a volume block is not an invitation to estimate one — run onboarding's
-  volume step first; the generator refuses without it (§ Program answers and volume).
+- A program file without a volume block is not an invitation to estimate one — say so in a line,
+  then run onboarding's volume step; the generator refuses without it (§ Program answers and
+  volume).
 - No dataset cache and no way to clone → stop and say so. Never generate from memory of what
   the dataset probably contains (§ Dataset cache).
 - The generator will not run by hand. If it cannot execute here, write nothing and hand back

@@ -14,7 +14,7 @@
       "prompt": "make me this week's plan",
       "expected_output": "Reads the profile and the latest program file, re-confirms the five program answers in one pre-filled batch (keeping all is one choice), notes no rules.md is present, uses the local dataset cache, runs scripts/generate.py --brief, chooses a week from the brief and hands it back with --selection, shows the planned-versus-allocated table, the week and every warning plus the two exact paths before writing, then writes profile/plans/plan-<today>.json and plan-<today>.md and nothing else.",
       "assertions": [
-        "The transcript re-confirms goal, days per week, session length, split and deload with their saved values before generating",
+        "The transcript re-confirms goal, days per week, session length, split and deload with their saved values before generating — or, with no way to ask, states them as kept and invites corrections in one line",
         "The transcript shows a per-muscle planned-versus-allocated table and the day-by-day week before any plan file is written",
         "The transcript names both output paths under profile/plans/ before writing them",
         "profile/plans/ contains exactly one .json and one .md with the same date stem, and the .json validates against skills/generation/assets/schema/plan.schema.json",
@@ -35,7 +35,7 @@
       "prompt": "give me a plan for this cycle",
       "expected_output": "Notices volume is null in the latest program file, refuses to estimate targets, and either runs the onboarding volume step (python skills/onboarding/scripts/volume.py --profile profile/profile.json --write profile/programs/program-2026-08-06.json) or hands that exact command back — then continues only once the block exists. Under no circumstances does it invent per-muscle set targets.",
       "assertions": [
-        "The transcript states that the program file has no volume block before doing anything else with the dataset",
+        "The transcript says, before anything is done with the dataset, that the program file has no volume block and that onboarding's volume.py is being run (or handed back) — not discovered silently and mentioned only at the end",
         "The transcript contains the volume.py command with --profile and --write pointing at the real files, either run or handed back",
         "No plan file is written while volume is still null",
         "If a plan was written, the program file now has a non-null volume block that volume.py produced (integer per_muscle_weekly_sets summing to weekly_sets_allocated) and the plan targets equal it",
