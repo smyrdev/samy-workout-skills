@@ -57,7 +57,8 @@ vocabulary is not fully mapped.
 
 ## Running the generator
 
-Two commands. The first asks what the week may contain; the second says what it will.
+Three commands. The first asks what the week may contain; the second says what the chosen week
+delivers, without writing; the third writes it.
 
 ```
 python skills/generation/scripts/generate.py --brief \
@@ -67,7 +68,26 @@ python skills/generation/scripts/generate.py --brief \
 ```
 
 That prints the budget and the candidate pools, and writes nothing. Choose from it —
-[Choosing from the brief](#choosing-from-the-brief) — then hand the choices back:
+[Choosing from the brief](#choosing-from-the-brief) — then hand the choices back **without**
+`--write`:
+
+```
+python skills/generation/scripts/generate.py \
+  --profile profile/profile.json \
+  --program profile/programs/program-<date>.json \
+  --dataset-dir datasets/<name> \
+  --selection <selection>.json
+```
+
+This is the check. It composes the week, prints the plan JSON to stdout and, on stderr, the
+allocated-versus-planned table with every warning. That table is what the echo step shows —
+[Before writing](#before-writing) — and the planned column is the generator's number, never a hand tally:
+indirect volume is discounted, and a coach's sum will disagree with the script's.
+If a target is short or a choice looks wrong, change the selection and run the check again;
+nothing has been written yet.
+
+Only when the person has seen it and not vetoed, run the same command once more with the
+outputs added:
 
 ```
 python skills/generation/scripts/generate.py \
@@ -79,7 +99,7 @@ python skills/generation/scripts/generate.py \
   --write-md profile/plans/plan-<today>.md
 ```
 
-Add `--rules profile/rules.md` to both when it exists. If today's filename is taken,
+Add `--rules profile/rules.md` to all three when it exists. If today's filename is taken,
 suffix `-2`, then `-3` — the generator refuses to overwrite a plan, and so does this skill; old
 plans are records, never edited or deleted. The selection file is working material, not a record:
 it belongs in a scratch location, never under `profile/`. Everything tunable lives in

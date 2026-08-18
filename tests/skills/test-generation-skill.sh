@@ -114,6 +114,8 @@ assert_file_contains "$RULES" "The **week itself**" "shows the week itself"
 assert_file_contains "$RULES" "**Every warning**" "shows every warning"
 assert_file_contains "$RULES" "The **exact paths** about to be written." "names the exact paths"
 assert_file_contains "$RULES" "If they abandon here, write nothing." "an abandoned review writes nothing"
+assert_file_contains "$RULES" "Three commands" "documents brief, check, write as three commands"
+assert_file_contains "$RULES" "never a hand tally" "the planned column is the generator's number"
 echo ""
 
 echo "docs/generation-fields.md stays the hand-editing contract"
