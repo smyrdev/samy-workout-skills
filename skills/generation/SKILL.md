@@ -29,7 +29,9 @@ to this skill's directory when they start with `references/`, `assets/` or `scri
    returns the budget and the legal candidates, and writes nothing.
 6. **Choose the week from that brief** — which candidate, in what order, paired with what, at what
    effort — reading `references/coaching.md` first; `references/rules.md` § Choosing from the
-   brief. Hand the choices back to the same script to be checked, rendered and written.
+   brief. Hand the choices back to the same script **without `--write` first**: it checks them
+   and prints the allocated-versus-planned table and warnings, and that output is the echo
+   (§ Running the generator).
 7. **Echo before writing** — `references/rules.md` § Before writing.
 8. **Write only under `profile/plans/`** — never to `profile.json`, never under `programs/`.
 
@@ -49,6 +51,9 @@ Each of these has produced a wrong plan. The section named holds the detail.
 - "Swap X for Y" is another choice and another compose — or a rules change if it should stick —
   so the volume arithmetic stays true; never hand-edit an exercise into the written plan
   (§ Before writing).
+- check first, write second. Sum sets by hand and the table will disagree with the generator's
+  (indirect volume is discounted); one run did exactly that, wrote, and then wrote a second
+  `-2` pair. The check run costs nothing and writes nothing (§ Running the generator).
 - `profile/rules.md` is the person's file — plain Markdown, `## Section` headings and `- item`
   bullets: read it, offer Markdown snippets for it, never write it (§ Personal rules).
 - A same-day re-run gets a `-2` suffix; old plans are records, never edited or deleted
