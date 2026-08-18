@@ -51,7 +51,7 @@ Each of these has produced a wrong plan. The section named holds the detail.
 - "Swap X for Y" is another choice and another compose — or a rules change if it should stick —
   so the volume arithmetic stays true; never hand-edit an exercise into the written plan
   (§ Before writing).
-- check first, write second. Sum sets by hand and the table will disagree with the generator's
+- Check first, write second. Sum sets by hand and the table will disagree with the generator's
   (indirect volume is discounted); one run did exactly that, wrote, and then wrote a second
   `-2` pair. The check run costs nothing and writes nothing (§ Running the generator).
 - `profile/rules.md` is the person's file — plain Markdown, `## Section` headings and `- item`
