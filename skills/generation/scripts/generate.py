@@ -710,6 +710,23 @@ def compose_plan(ctx, selection, brief, config, today, commit=None):
     }
 
 
+def print_check(plan, stream=None):
+    """The check step. Every --selection run prints the generator's own
+    allocated-versus-planned numbers and warnings to stderr, so the coach shows
+    this table — never a hand tally — before deciding to write. stdout is left
+    alone: it still carries the plan JSON, or the `wrote …` lines."""
+    stream = stream if stream is not None else sys.stderr
+    warnings = plan.get("warnings", [])
+    short = {w.split(":", 1)[1] for w in warnings if w.startswith("short:")}
+    print("check: allocated vs planned (generator's numbers — show this before writing)",
+          file=stream)
+    print(f"  {'muscle':<12}{'allocated':>10}{'planned':>9}", file=stream)
+    for group, row in plan["targets"].items():
+        marker = "   short" if group in short else ""
+        print(f"  {group:<12}{row['allocated']:>10}{row['planned']:>9.1f}{marker}", file=stream)
+    print("  warnings: " + (", ".join(warnings) if warnings else "none"), file=stream)
+
+
 def render_markdown(plan):
     program = plan["program"]
     lines = []
@@ -1084,6 +1101,7 @@ def main(argv=None):
     selection = load_json(args.selection, "selection file")
     plan = compose_plan(ctx, selection, brief, config, today,
                         commit=dataset_commit(dataset_dir))
+    print_check(plan)
 
     # Both targets are checked before either is written: a refused run must
     # not leave an orphan half of the dated .json/.md pair behind.

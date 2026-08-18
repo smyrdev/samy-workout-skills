@@ -178,6 +178,29 @@ assert_order "$out" '"calves"' '"core"' "targets are in canonical order (calves 
 first="$out"
 echo ""
 
+echo "The check step: a selection without --write shows the table and writes nothing"
+CHECK_DIR="$PROJECT/check-plans"
+mkdir -p "$CHECK_DIR"
+run_default
+assert_exit_code 0 "$code" "composing without --write succeeds"
+assert_contains "$out" "check: allocated vs planned" "prints the check header"
+for group in chest back shoulders biceps triceps quads hamstrings glutes calves core; do
+    assert_contains "$out" "^  $group " "the check table has a $group row"
+done
+assert_contains "$out" "warnings: none" "says when there is nothing to warn about"
+assert_file_absent "$CHECK_DIR/plan.json" "the check step writes no plan"
+if [ -z "$(ls -A "$CHECK_DIR")" ]; then
+    _pass "the check step leaves the plans directory empty"
+else
+    _fail "the check step leaves the plans directory empty"
+fi
+# The table is stderr, so a caller redirecting stdout to a file still sees it.
+stdout_only=$(PYTHONIOENCODING=utf-8 python "$GENERATE" --profile "$PROFILE" --program "$PROGRAM" \
+    --dataset-dir "$PROJECT" --today "$TODAY" --selection "$SELECTION" 2>/dev/null)
+assert_not_contains "$stdout_only" "check: allocated vs planned" "the table is not on stdout"
+assert_contains "$stdout_only" '"sessions"' "stdout is still the plan JSON"
+echo ""
+
 echo "Determinism"
 run_default
 if [ "$first" = "$out" ]; then
