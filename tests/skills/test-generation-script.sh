@@ -490,6 +490,17 @@ fi
 assert_file_absent "$PROJECT/nope.json" "--brief writes no file"
 echo ""
 
+echo "The console encoding is not the script's problem"
+# run_generate sets PYTHONIOENCODING, which is why the suite never saw the
+# cp1252 crash the emoji caused on a real Windows console. This one call runs
+# bare: no PYTHONIOENCODING, no PYTHONUTF8, stdout a pipe (locale-encoded).
+bare=$(env -u PYTHONIOENCODING -u PYTHONUTF8 python "$GENERATE" --profile "$PROFILE"     --program "$PROGRAM" --dataset-dir "$PROJECT" --today "$TODAY" --brief 2>&1)
+bare_code=$?
+assert_exit_code 0 "$bare_code" "--brief survives a console that cannot encode the program emoji"
+assert_not_contains "$bare" "UnicodeEncodeError" "no encoding traceback"
+assert_contains "$bare" '"emoji"' "the program emoji field still reaches stdout"
+echo ""
+
 echo "The two refusals"
 run_generate --profile "$PROFILE" --program "$PROGRAM" --dataset-dir "$PROJECT" --today "$TODAY"
 assert_exit_code 2 "$code" "writing a plan without a selection is a usage error"
