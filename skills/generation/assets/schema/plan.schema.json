@@ -82,7 +82,7 @@
       }
     },
     "targets": {
-      "description": "Per muscle group: the sets volume.py allocated, and the fractional sets this plan actually delivers (each set adds 1.0 for direct muscles, 0.5 for indirect ones). Groups excluded by rules are absent.",
+      "description": "Per muscle group: the sets volume.py allocated, and the fractional sets this plan actually delivers (each set adds the exercise's coefficient for direct muscles, and the coefficient times the config's indirect discount for indirect ones). Groups excluded by rules are absent.",
       "type": "object"
     },
     "sessions": {

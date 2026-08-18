@@ -257,8 +257,9 @@ floors**, on the growth goals only. Per-muscle weekly allocation is *reported*, 
 group under target is named in `warnings` and said out loud before anything is written.
 
 Everything else here is yours to weigh. The script computes and reports — sets per muscle per
-session, what the week delivers against each target, what each candidate is worth — and stops
-there. It has no opinion about whether 12 sets of chest on one day is a good idea; you do.
+session, what the week delivers against each target, what each candidate is worth
+(`effective_volume` in the brief — the only column whose sum matches the check table) — and
+stops there. It has no opinion about whether 12 sets of chest on one day is a good idea; you do.
 
 Where two rules conflict, say which one you followed and why. A stated override is a coaching
 decision; a silent one is a bug.

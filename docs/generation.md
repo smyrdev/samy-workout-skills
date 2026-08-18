@@ -120,8 +120,10 @@ Deliberate calibrations, all tunable in `generate.config.json`:
 - **Indirect volume counts at a discount** (`indirect_discount`, default half — so a 0.5
   synergist coefficient counts 0.25). At face value, the 0.5s from heavy compounds "cover" arms,
   shoulders and core before a single direct exercise for them is chosen; the discount forces
-  every group to earn real direct work. The plan JSON embeds each exercise's raw volume map, so
-  any other accounting can be recomputed from the record.
+  every group to earn real direct work. The brief shows both: `volume` is the raw map the plan
+  records, `effective_volume` is what the generator will actually count — sum that column, not
+  the raw one. The plan JSON embeds each exercise's raw volume map, so any other accounting can
+  be recomputed from the record.
 - **The exercise ceiling is a ceiling.** Compounds deliver several groups per set, so an
   allocation is often met with fewer exercises than the ceiling allows. Filling a session to the
   ceiling for its own sake overshoots the volume model's targets.
