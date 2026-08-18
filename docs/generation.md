@@ -58,7 +58,7 @@ The default entry describes
 which ~1,100 carry a `volume` map — per-muscle involvement following the fractional-set
 convention (1.0 = prime mover, 0.5 = meaningful synergist, after Schoenfeld et al. 2019). Each
 performed set of an exercise adds its coefficients to the week's per-muscle totals; that is the
-arithmetic the fit works against.
+arithmetic the volume targets are counted in.
 
 ### Muscle mapping
 
@@ -96,8 +96,8 @@ how much does each muscle need this week, and how much fits in a session. It han
 candidate pool per muscle group and a budget. It does not pick anything.
 
 The pool is what survives filtering: the dataset's category filter, the equipment tier from the
-volume block, the benchmark gates, and the person's own exclusions. The ranking is the old fit's
-marginal-volume score, frozen against the full week's targets — a sensible reading order, not a
+volume block, the benchmark gates, and the person's own exclusions. The ranking is a
+marginal-volume score against the full week's targets — a sensible reading order, not a
 verdict. `candidates_per_muscle` bounds how many are offered, because a pool nobody can read is
 the same as no pool.
 
@@ -137,9 +137,7 @@ id), no randomness, no clock except `--today` — the same inputs always produce
 its inputs alone. What replaces reproducibility is **auditability**: the brief can be regenerated
 and says exactly what was on offer and what each muscle was owed; composing a selection recomputes
 every number from scratch; and a surprising plan is explainable either by an input that changed
-or by a choice someone made and can be asked about. The old fit could not express the second kind
-at all — it broke ties by penalising long exercise names, arithmetic standing in for a judgment
-nobody could argue with.
+or by a choice someone made and can be asked about.
 
 Session ordering (`## Order` in `rules.md`, see `docs/generation-fields.md`) is no longer a sort
 the script performs: the list travels in the brief as the person's standing instruction and the

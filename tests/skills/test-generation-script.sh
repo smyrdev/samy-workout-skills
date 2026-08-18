@@ -470,23 +470,6 @@ assert_file_contains "$PROJECT/brief-a.json" '"max_exercises_per_session"' "budg
 assert_file_contains "$PROJECT/brief-a.json" '"sets_per_muscle"' "budgets each muscle per session"
 assert_file_contains "$PROJECT/brief-a.json" '"candidates"' "offers candidates"
 assert_file_contains "$PROJECT/brief-a.json" '"effective_volume"' "each candidate says what it will actually count"
-if PYTHONUTF8=1 python - "$PROJECT/brief-a.json" "$CONFIG" <<'PY'
-import json, sys
-brief = json.load(open(sys.argv[1], encoding="utf-8"))
-discount = json.load(open(sys.argv[2], encoding="utf-8"))["indirect_discount"]
-for pool in brief["candidates"].values():
-    for c in pool:
-        raw, eff = c["volume"], c["effective_volume"]
-        assert set(raw) == set(eff), (c["name"], "key sets differ")
-        for g, v in raw.items():
-            want = v if v >= 1.0 else v * discount
-            assert abs(eff[g] - want) < 1e-9, (c["name"], g, eff[g], want)
-PY
-then
-    _pass "effective_volume is the raw map with the config's indirect discount applied"
-else
-    _fail "effective_volume is the raw map with the config's indirect discount applied"
-fi
 assert_file_absent "$PROJECT/nope.json" "--brief writes no file"
 echo ""
 

@@ -112,7 +112,7 @@ yours: which candidate fills a slot, what order the session runs in, what pairs 
 many reps inside the band, and how close to failure each exercise sits. `coaching.md` is what to
 decide it with — read it before choosing, not after.
 
-- **The pool is a boundary, not a ranking to obey.** Its order is the old fit's arithmetic, kept
+- **The pool is a boundary, not a ranking to obey.** Its order is a marginal-volume score, kept
   as a starting point. An exercise further down that suits this person better is the right answer.
 - **Choose an exercise the brief did not offer and the run is refused**, by name — the pool
   already had the equipment, benchmarks and exclusions applied. Widen it by changing the rules and

@@ -134,6 +134,18 @@ for heading in "## Exclude exercises" "## Exclude equipment" "## Exclude movemen
 done
 echo ""
 
+assert_file_contains "$FIELDS" "unknown_exclude_exercise:<name>" "names the unknown-exclusion warning"
+assert_file_contains "$FIELDS" "unmatched_must_include:<name>" "names the unplaceable-must-include warning"
+assert_file_contains "$FIELDS" '`chest`, `back`, `shoulders`, `biceps`, `triceps`,' "lists the muscle groups"
+assert_file_contains "$FIELDS" '`quads`, `hamstrings`, `glutes`, `calves`,' "lists the rest of them"
+assert_file_contains "$FIELDS" '`must_include_first`' "documents the order rule"
+assert_file_contains "$FIELDS" '`trailer_groups_last`' "documents the order rule"
+assert_file_contains "$FIELDS" '`compound_before_isolation`' "documents the order rule"
+assert_file_contains "$FIELDS" '`focus_muscles_first`' "documents the order rule"
+assert_file_contains "$FIELDS" '`large_groups_before_small`' "documents the order rule"
+assert_file_contains "$FIELDS" "generated, not hand-written" "the plan JSON is not for hand-editing"
+echo ""
+
 echo "coaching.md says what is enforced and what is not"
 # The file is judgment, not contract, so almost nothing here is pinned. These
 # four claims are: they are what stops a later edit from quietly turning
@@ -146,17 +158,6 @@ assert_file_contains "$REPO_ROOT/skills/generation/references/coaching-deferred.
 assert_file_not_contains "$COACHING" "Fatigue index" "no rule that needs per-set history is in the coach's read path"
 assert_file_contains "$COACHING" "say which one you followed and why" "requires a stated override"
 assert_file_not_contains "$COACHING" "HARD CAP" "no rule claims a cap the script does not apply"
-assert_file_contains "$FIELDS" "unknown_exclude_exercise:<name>" "names the unknown-exclusion warning"
-assert_file_contains "$FIELDS" "unmatched_must_include:<name>" "names the unplaceable-must-include warning"
-assert_file_contains "$FIELDS" '`chest`, `back`, `shoulders`, `biceps`, `triceps`,' "lists the muscle groups"
-assert_file_contains "$FIELDS" '`quads`, `hamstrings`, `glutes`, `calves`,' "lists the rest of them"
-assert_file_contains "$FIELDS" '`must_include_first`' "documents the order rule"
-assert_file_contains "$FIELDS" '`trailer_groups_last`' "documents the order rule"
-assert_file_contains "$FIELDS" '`compound_before_isolation`' "documents the order rule"
-assert_file_contains "$FIELDS" '`focus_muscles_first`' "documents the order rule"
-assert_file_contains "$FIELDS" '`large_groups_before_small`' "documents the order rule"
-assert_file_contains "$FIELDS" "generated, not hand-written" "the plan JSON is not for hand-editing"
-echo ""
 
 echo "The registries say where knowledge lives"
 assert_file_contains "$DESCRIPTOR" "scripts/generate.py contains none of it" \

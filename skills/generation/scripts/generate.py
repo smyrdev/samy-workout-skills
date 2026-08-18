@@ -374,14 +374,14 @@ def must_include_ids(sessions, rows_by_name, rules, warnings):
     return pinned
 
 
-def marginal_score(row, remaining, groups, rules, config):
-    """How much of the week's outstanding volume one set of this row would
+def marginal_score(row, targets, rules, config):
+    """How much of the week's target volume one set of this row would
     deliver — the reading order of a candidate pool, not a verdict."""
     score = 0.0
     for group, coeff in row["effective"].items():
-        if group in groups and remaining.get(group, 0.0) > 0:
-            score += min(remaining[group], coeff)
-    if row["primary"] in rules["focus"]["muscles"] and remaining.get(row["primary"], 0.0) > 0:
+        if targets.get(group, 0.0) > 0:
+            score += min(targets[group], coeff)
+    if row["primary"] in rules["focus"]["muscles"] and targets.get(row["primary"], 0.0) > 0:
         score += config["focus_bonus"]
     # Short names are the canonical movements ("barbell bench press" over
     # "barbell bench press wide reverse grip") — a mild steer, not a rule.
@@ -415,8 +415,6 @@ def exercise_kind(row, config):
 
 
 def reps_for(row, goal, config):
-    if goal not in config["reps_by_goal"]:
-        fail_input(f"unknown goal: {goal!r} — add it to reps_by_goal in generate.config.json")
     return config["reps_by_goal"][goal][exercise_kind(row, config)]
 
 
@@ -445,16 +443,14 @@ def session_capacity(program, volume_block, config):
 
 
 def rank_candidates(rows, targets, rules, config, pinned):
-    """One ranked pool per muscle group. The score is the old fit's marginal
-    usefulness, frozen against the full week's targets — a starting order, not a
-    verdict. Everything that would make it a verdict lives in coaching.md."""
+    """One ranked pool per muscle group. The score is marginal volume against
+    the full week's targets — a starting order, not a verdict. Everything that would make it a verdict lives in coaching.md."""
     limit = config["candidates_per_muscle"]
     pools = {}
-    groups = list(targets)
-    for group in groups:
+    for group in targets:
         rows_here = [r for r in rows if r["primary"] == group]
         rows_here.sort(key=lambda r: (
-            -marginal_score(r, targets, groups, rules, config), r["name"], r["id"]))
+            -marginal_score(r, targets, rules, config), r["name"], r["id"]))
         pools[group] = [{
             "id": r["id"],
             "name": r["name"],

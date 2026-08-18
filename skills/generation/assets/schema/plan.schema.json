@@ -53,7 +53,7 @@
       }
     },
     "rules_applied": {
-      "description": "The merged rules snapshot (defaults + personal rules.json) the fit actually used.",
+      "description": "The merged rules snapshot (defaults + personal rules.md) the run used.",
       "type": "object",
       "required": ["exclude", "focus", "order"],
       "additionalProperties": false,
