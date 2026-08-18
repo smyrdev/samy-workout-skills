@@ -147,6 +147,8 @@ Let the person veto or adjust. An exercise swap is a changed selection and anoth
 choice was yours to make, so remaking it is cheap, and a preference they want to last still
 belongs in their `rules.md`. Either route recomputes the volume arithmetic, which is why you
 never hand-edit an exercise into the generator's output. If they abandon here, write nothing.
+The echo ends the turn: write only after they answer, in a later turn. With no way to ask (no
+question tool, a non-interactive session), show the same four things as text and stop.
 
 ## What this skill never does
 

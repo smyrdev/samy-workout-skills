@@ -14,10 +14,11 @@ Three bindings for this environment:
 
 - Use `AskUserQuestion` for the pre-filled re-confirm batch (offer "same as last time" as the
   first option) and for the veto/adjust loop before writing. Free-text answers arrive through
-  that tool's **Other** option.
+  that tool's **Other** option. If that tool is unavailable, keep the saved answers, say so in a
+  line, and stop after the echo (`references/rules.md` § Before writing).
 - Use `Bash` for the dataset clone (`references/rules.md` § Dataset cache) and to run
-  `scripts/generate.py` twice — once for the brief, once with the selection
-  (`references/rules.md` § Running the generator). Use `Write` for the selection file itself, to
-  a scratch path outside `profile/`. If `Bash` is unavailable in this session, fall back to
-  `references/rules.md` § No Python rather than choosing exercises against an unfiltered dataset.
+  `scripts/generate.py` three times — brief, check, write (`references/rules.md` § Running the
+  generator). Use `Write` for the selection file itself, to a scratch path outside `profile/`.
+  If `Bash` is unavailable in this session, fall back to `references/rules.md` § No Python rather
+  than choosing exercises against an unfiltered dataset.
 - `--dataset` picks a non-default entry from `skills/generation/assets/datasets.json`.
