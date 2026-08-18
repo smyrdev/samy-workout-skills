@@ -1,10 +1,13 @@
 # Generation — rationale
 
 The machine-readable contracts are
-[`skills/generation/assets/schema/plan.schema.json`](../skills/generation/assets/schema/plan.schema.json) and
-[`skills/generation/assets/schema/rules.schema.json`](../skills/generation/assets/schema/rules.schema.json),
+[`skills/generation/assets/schema/plan.schema.json`](../skills/generation/assets/schema/plan.schema.json),
+[`skills/generation/assets/schema/selection.schema.json`](../skills/generation/assets/schema/selection.schema.json)
+and [`skills/generation/assets/schema/rules.schema.json`](../skills/generation/assets/schema/rules.schema.json),
 with [`skills/generation/assets/examples/`](../skills/generation/assets/examples/) holding a filled-in sample of
-each — the plan example is genuine generator output, not hand-written. When this document and a
+each — the plan example is genuine generator output, composed from the selection example next to
+it. The training-design knowledge the coach applies between the two lives in
+[`skills/generation/references/coaching.md`](../skills/generation/references/coaching.md). When this document and a
 schema disagree, the schema wins and this document is the bug. For "what do I literally type in
 `rules.md`", see [`generation-fields.md`](generation-fields.md) — this file is
 the *why*.
@@ -23,7 +26,8 @@ Three parties, one number each:
 | Who | Owns | Never touches |
 |---|---|---|
 | `volume.py` (onboarding) | how many weekly sets each muscle group gets | exercise selection |
-| `generate.py` (generation) | which exercises deliver those sets | the set targets |
+| `generate.py` (generation) | which exercises are *legal*, and what the week owes each muscle | which of them to use |
+| the coach (`coaching.md`) | which exercise, in what order, paired how, at what effort | the set targets and the pool |
 | the person (`rules.md`) | exclusions, focus, ordering | — it's their training |
 
 The volume block inside `programs/program-*.json` is the interface between the first two. That is
@@ -54,7 +58,7 @@ The default entry describes
 which ~1,100 carry a `volume` map — per-muscle involvement following the fractional-set
 convention (1.0 = prime mover, 0.5 = meaningful synergist, after Schoenfeld et al. 2019). Each
 performed set of an exercise adds its coefficients to the week's per-muscle totals; that is the
-arithmetic the fit works against.
+arithmetic the volume targets are counted in.
 
 ### Muscle mapping
 
@@ -85,41 +89,58 @@ variants for someone who can't yet do five, no dips for someone who can't do ten
 that's what the dataset offers; patterns live in the descriptor so a new dataset (or a false
 positive) is a data fix.
 
-## The fit
+## The brief and the selection
 
-`generate.py` fills sessions round-robin — slot 1 on every day, then slot 2 — so the week comes
-out balanced instead of front-loading day 1 and leaving day 6 empty. Each pick maximizes the
-marginal useful volume (coefficients capped by what each group still needs), with a penalty for
-exercises already used this week (variety), a bonus for focused groups, and a mild penalty per
-character of name — in this dataset the canonical movements have the short names, and without
-that steer the widest-map oddball variations win every tie. A repair pass then adds sets to
-prime movers of any still-short group. Whatever remains short is reported in `warnings` — never
-silently absorbed.
+`generate.py --brief` answers three questions and stops: what may this person legally be given,
+how much does each muscle need this week, and how much fits in a session. It hands over a ranked
+candidate pool per muscle group and a budget. It does not pick anything.
 
-Three deliberate calibrations, all tunable in `generate.config.json`:
+The pool is what survives filtering: the dataset's category filter, the equipment tier from the
+volume block, the benchmark gates, and the person's own exclusions. The ranking is a
+marginal-volume score against the full week's targets — a sensible reading order, not a
+verdict. `candidates_per_muscle` bounds how many are offered, because a pool nobody can read is
+the same as no pool.
 
-- **Indirect volume counts at a discount toward the fit** (`indirect_discount`, default half —
-  so a 0.5 synergist coefficient counts 0.25). At face value, the 0.5s from heavy compounds
-  "cover" arms, shoulders and core before a single direct exercise for them is picked; the
-  discount forces every group to earn real direct work. The plan JSON embeds each exercise's raw
-  volume map, so any other accounting can be recomputed from the record.
-- **One exercise per movement pattern per session** (`max_per_volume_profile_per_session`,
-  using the dataset's fine-grained `volume_profile`) — otherwise two near-identical dip
-  variants can land in the same day. The coarser `movement_group` cap still applies on top.
-- **Sessions may come in under the exercises-per-session cap.** The cap is a ceiling derived
-  from the session-length answer, not a quota: compounds deliver several groups per set, so the
-  allocation is often met with fewer exercises than the ceiling allows. Stuffing the session
-  past the allocation would overshoot the volume model's targets — the person can always ask
-  for more via focus rules or a bigger allocation.
+The budget has two halves. Each muscle's weekly allocation is spread as evenly as it divides
+across the days that train it (17 sets over 3 sessions comes out 6/6/5), and the session's
+exercise ceiling is the volume block's `exercises_per_session`, passed through untouched — one
+owner per number. It is a ceiling, never a quota; whether a session at that ceiling actually fits
+its slot at the goal's rest interval is a coaching judgment (`coaching.md` § 4).
 
-The fit is **deterministic**: stable sorts, explicit tie-breaks (name, then id), no randomness,
-no clock except the `--today` override. The same profile, program, rules, dataset and date
-produce a byte-identical plan. Boring on purpose: a surprising plan should always be explainable
-by an input that changed.
+Then `--selection` takes the choices back and recomputes everything: what the week delivers per
+muscle against what was allocated, with any shortfall reported in `warnings` — never silently
+absorbed. Run without `--write`, this is the **check**: the plan JSON goes to stdout and the
+allocated-versus-planned table with the warnings goes to stderr, so the coach shows the
+generator's numbers before anything is written. The same command with `--write`/`--write-md`
+is the write; nothing about the arithmetic changes between the two.
 
-Session ordering is a user-visible rule list (`## Order` in `rules.md`), applied top-down as
-successive sort keys. The default puts pinned exercises first, trailer groups (core, calves)
-last, and compounds before isolation in between.
+Deliberate calibrations, all tunable in `generate.config.json`:
+
+- **Indirect volume counts at a discount** (`indirect_discount`, default half — so a 0.5
+  synergist coefficient counts 0.25). At face value, the 0.5s from heavy compounds "cover" arms,
+  shoulders and core before a single direct exercise for them is chosen; the discount forces
+  every group to earn real direct work. The brief shows both: `volume` is the raw map the plan
+  records, `effective_volume` is what the generator will actually count — sum that column, not
+  the raw one. The plan JSON embeds each exercise's raw volume map, so any other accounting can
+  be recomputed from the record.
+- **The exercise ceiling is a ceiling.** Compounds deliver several groups per set, so an
+  allocation is often met with fewer exercises than the ceiling allows. Filling a session to the
+  ceiling for its own sake overshoots the volume model's targets.
+- **Almost nothing in `coaching.md` is enforced.** Its closing section, *What the script actually
+  enforces*, is the one canonical statement of what `--selection` refuses; everything else there is
+  guidance — a number the script can compute is a number the coach should see, not a gate.
+
+**The brief is deterministic; the plan is not.** Stable sorts, explicit tie-breaks (name, then
+id), no randomness, no clock except `--today` — the same inputs always produce a byte-identical
+*brief*. What gets chosen from it is a coach's judgment, so a plan is no longer reproducible from
+its inputs alone. What replaces reproducibility is **auditability**: the brief can be regenerated
+and says exactly what was on offer and what each muscle was owed; composing a selection recomputes
+every number from scratch; and a surprising plan is explainable either by an input that changed
+or by a choice someone made and can be asked about.
+
+Session ordering (`## Order` in `rules.md`, see `docs/generation-fields.md`) is no longer a sort
+the script performs: the list travels in the brief as the person's standing instruction and the
+coach applies it. Naming a rule that does not exist is still refused.
 
 ## Plans are append-only records
 
@@ -129,11 +150,14 @@ annotate it, cross things out, print it. The `.json` is the structured record an
 dataset commit hash, the merged rules, and every exercise's volume map, so it stays readable and
 auditable after the dataset cache is deleted or the upstream moves on.
 
-## What is deliberately not here (v1)
+## What is deliberately not here
 
-- **No weights, no progression.** The plan says movements, sets and rep ranges. Load selection
-  and week-to-week progression are the session-logging feature's job, when it exists.
-- **No per-exercise scheduling intelligence** (supersets, rest times, exercise pairing).
+- **No weights, no progression.** The plan says movements, sets, reps and effort. Load selection
+  and week-to-week progression are the session-logging feature's job, when it exists. That
+  absence is also why asymmetry correction, work capacity and a fatigue index are not in
+  `coaching.md`: every one of them needs per-set history.
+- **No multi-week block.** A plan is one week plus a deload multiplier. RIR is prescribed per
+  exercise and does not ramp across a mesocycle.
 - **No cardio or mobility programming.** The dataset's cardio and stretch categories are
   filtered out by the descriptor; widening `category_filter` is the extension point when a
   volume model for them exists.

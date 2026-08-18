@@ -50,6 +50,8 @@ echo "SKILL.md stays a set of pointers"
 assert_file_contains "$SKILL" "references/rules.md" "points at references/rules.md"
 assert_file_contains "$SKILL" "assets/datasets.json" "points at the dataset registry"
 assert_file_contains "$SKILL" "scripts/generate.py" "points at the generator"
+assert_file_contains "$SKILL" "without \`--write\` first" "the flow checks before it writes"
+assert_file_contains "$SKILL" "Check first, write second" "the gotcha names the order"
 assert_file_contains "$SKILL" "scripts/generate.config.json" "points at the config"
 assert_file_contains "$SKILL" "assets/schema/" "points at the schemas"
 assert_file_contains "$SKILL" "docs/generation-fields.md" "points at the hand-editing guide"
@@ -67,6 +69,8 @@ assert_file_contains "$WRAPPER" "Three bindings" "stays at three environment bin
 assert_file_contains "$WRAPPER" "AskUserQuestion" "binds the question tool"
 assert_file_contains "$WRAPPER" "Bash" "binds the shell for the clone and the script"
 assert_file_contains "$WRAPPER" "scripts/generate.py" "binds the generator step"
+assert_file_contains "$WRAPPER" "three times" "runs the generator three times: brief, check, write"
+assert_file_contains "$WRAPPER" "Before writing" "points the no-question-tool fallback at rules.md rather than restating it"
 assert_file_contains "$WRAPPER" "--dataset" "documents the dataset argument"
 assert_file_not_contains "$WRAPPER" "upper_lower" "holds no enum values either"
 assert_file_not_contains "$WRAPPER" "must_include_first" "holds no order rule names either"
@@ -114,6 +118,9 @@ assert_file_contains "$RULES" "The **week itself**" "shows the week itself"
 assert_file_contains "$RULES" "**Every warning**" "shows every warning"
 assert_file_contains "$RULES" "The **exact paths** about to be written." "names the exact paths"
 assert_file_contains "$RULES" "If they abandon here, write nothing." "an abandoned review writes nothing"
+assert_file_contains "$RULES" "The echo ends the turn" "the echo is a turn boundary"
+assert_file_contains "$RULES" "Three commands" "documents brief, check, write as three commands"
+assert_file_contains "$RULES" "never a hand tally" "the planned column is the generator's number"
 echo ""
 
 echo "docs/generation-fields.md stays the hand-editing contract"
@@ -125,6 +132,8 @@ for heading in "## Exclude exercises" "## Exclude equipment" "## Exclude movemen
     assert_file_contains "$FIELDS" "$heading" "documents the $heading section"
     assert_file_contains "$EXAMPLE_RULES" "$heading" "the sample has the $heading section"
 done
+echo ""
+
 assert_file_contains "$FIELDS" "unknown_exclude_exercise:<name>" "names the unknown-exclusion warning"
 assert_file_contains "$FIELDS" "unmatched_must_include:<name>" "names the unplaceable-must-include warning"
 assert_file_contains "$FIELDS" '`chest`, `back`, `shoulders`, `biceps`, `triceps`,' "lists the muscle groups"
@@ -136,6 +145,17 @@ assert_file_contains "$FIELDS" '`focus_muscles_first`' "documents the order rule
 assert_file_contains "$FIELDS" '`large_groups_before_small`' "documents the order rule"
 assert_file_contains "$FIELDS" "generated, not hand-written" "the plan JSON is not for hand-editing"
 echo ""
+
+echo "coaching.md says what is enforced and what is not"
+# The file is judgment, not contract, so almost nothing here is pinned. These
+# claims are: they are what stops a later edit from quietly turning
+# guidance into a gate, or a gate into guidance.
+COACHING="$REPO_ROOT/skills/generation/references/coaching.md"
+assert_file_contains "$COACHING" "Enforced: \`rep_floors\`" "names the one training rule with teeth"
+assert_file_contains "$COACHING" "The script enforces almost none of it" "is honest about its own status"
+assert_file_not_contains "$COACHING" "Fatigue index" "no rule that needs per-set history is in the coach's read path"
+assert_file_contains "$COACHING" "say which one you followed and why" "requires a stated override"
+assert_file_not_contains "$COACHING" "HARD CAP" "no rule claims a cap the script does not apply"
 
 echo "The registries say where knowledge lives"
 assert_file_contains "$DESCRIPTOR" "scripts/generate.py contains none of it" \

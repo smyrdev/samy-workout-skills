@@ -15,7 +15,7 @@
         "Before any file is written, the transcript shows a summary of the answers and names both target paths (profile/profile.json and profile/programs/program-<date>.json)",
         "profile/profile.json exists and validates against skills/onboarding/assets/schema/profile.schema.json",
         "Exactly one file exists under profile/programs/, named program-YYYY-MM-DD.json, and it validates against skills/onboarding/assets/schema/program.schema.json",
-        "Stored values are the option values, not labels: basics.bodyfat_bracket is '21-25', gym.type is 'garage_gym', program.split is 'upper_lower', program.session_minutes is '60-90'",
+        "Stored values are the option values, not labels: basics.bodyfat_bracket is one of the two schema brackets that '21-25%' straddles ('18-23' or '24-29') and the transcript either asked which or said which it chose, gym.type is 'garage_gym', program.split is 'upper_lower', program.session_minutes is '60-90'",
         "strength_benchmarks.pullups_5 and pullups_10 are both false; pushups_15, dips_10 and bench_press_10 are true; incline_press_10 and overhead_press_10 are false",
         "No age field is stored anywhere; basics.date_of_birth is '1991-03-22'",
         "The program file's volume block is non-null and its per_muscle_weekly_sets sums to weekly_sets_allocated (i.e. scripts/volume.py was run, not hand-computed)",
@@ -63,6 +63,24 @@
         "The response offers a choice between updating some fields and starting over, and does not proceed on its own",
         "profile/profile.json is byte-identical to files/profile.json after the turn",
         "No new file appears under profile/programs/"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "fresh-setup-clean-answers-no-question",
+      "setup": [
+        "profile/ contains only .gitkeep — no profile.json, no programs/"
+      ],
+      "files": [],
+      "prompt": "new here, set me up: Sam, male, born 1988-11-02, metric, 181 cm, 84 kg, bodyfat about 15%. Lifting advanced, cardio intermediate. Commercial gym. Goal both strength and hypertrophy, 5 days a week, 60-90 min, upper/lower, deloads yes. Benchmarks: 5 and 10 pull-ups yes, 15 push-ups yes, 10 dips yes, bench 10 yes, incline 10 yes, overhead press 10 no. Program name 'Autumn Block', emoji the falling leaf.",
+      "expected_output": "Every answer maps to exactly one option, so the skill asks nothing: it echoes the summary and the two paths, gets a go-ahead, writes profile.json and one program file, runs scripts/volume.py, and says where the files went.",
+      "assertions": [
+        "The transcript asks no clarifying question — the only stop before writing is the summary-plus-paths go-ahead",
+        "profile/profile.json validates against skills/onboarding/assets/schema/profile.schema.json; basics.bodyfat_bracket is '13-17', gym.type is 'commercial_gym', experience.lifting is 'advanced', experience.cardio is 'intermediate'",
+        "Exactly one file under profile/programs/, program-YYYY-MM-DD.json, validating against skills/onboarding/assets/schema/program.schema.json; program.primary_goal is 'both', days_per_week is 5, split is 'upper_lower', deload is true, name is 'Autumn Block'",
+        "strength_benchmarks: pullups_5, pullups_10, pushups_15, dips_10, bench_press_10, incline_press_10 are true; overhead_press_10 is false",
+        "The volume block is non-null and per_muscle_weekly_sets sums to weekly_sets_allocated",
+        "Nothing was written outside profile/profile.json and profile/programs/"
       ]
     }
   ]

@@ -12,6 +12,7 @@ python scripts/validate-skills.py                        # validate everything, 
 bash tests/skills/run-skill-tests.sh                     # offline test suite (-i adds agent tests)
 python skills/onboarding/scripts/volume.py --self-test    # volume model self-test
 python skills/generation/scripts/generate.py --self-test  # generator self-test, offline
+python skills/generation/scripts/generate.py --brief ...   # the candidates; then --selection to write
 git clone --depth 1 https://github.com/smyrdev/exercises-dataset datasets/exercises-dataset
 ```
 
@@ -34,6 +35,12 @@ this?" step — `user.name` is a display label, not a path. Do not reintroduce o
 - One owner per number: `volume.py` computes the per-muscle weekly set allocation, `generate.py`
   consumes it. Generation never recomputes or adjusts targets, and refuses a program file whose
   volume block is missing or incomplete rather than estimating one.
+- One owner per decision: `generate.py` decides what is *legal* and what each muscle is *owed*;
+  the model decides which exercise, in what order, paired how, at what effort. The script refuses
+  exactly two things — an exercise it never offered, and a rep target under the floor in
+  `generate.config.json`. Everything else in `skills/generation/references/coaching.md` is
+  guidance, on purpose. Do not add a cap to the script because a rule in `coaching.md` sounds like
+  one.
 - `skills/*/SKILL.md` is portable: no vendor tool names, no absolute or Windows paths, paths are
   skill-root-relative and each pointer says *when* to read the file. `.claude/skills/*/SKILL.md`
   are pointers, not forks — a change to a flow goes in the portable file, never into a wrapper.

@@ -1,7 +1,9 @@
 # Generation rules
 
 What the flow points at that is not the flow itself: what the inputs must look like, how the
-dataset cache works, what to say before writing, what this skill never does.
+dataset cache works, how to choose from a brief, what to say before writing, what this skill never
+does. `coaching.md` beside this file holds the training-design knowledge those choices are made
+with.
 
 ## Program answers and volume
 
@@ -35,8 +37,6 @@ parses it into, not something anyone types.
   switched off.
 - A one-off ("no squats this cycle") is a `--rules` file for that run only; it need not live at
   `profile/rules.md`.
-- An older `profile/rules.json` is still read, so nothing breaks — but the Markdown file is what
-  the person is pointed at, and what a snippet is written for.
 - Unknown names (a typo, an exercise the dataset lacks) come back as plan warnings — surface them;
   never silently drop a rule.
 
@@ -57,39 +57,98 @@ vocabulary is not fully mapped.
 
 ## Running the generator
 
+Three commands. The first asks what the week may contain; the second says what the chosen week
+delivers, without writing; the third writes it.
+
+```
+python skills/generation/scripts/generate.py --brief \
+  --profile profile/profile.json \
+  --program profile/programs/program-<date>.json \
+  --dataset-dir datasets/<name>
+```
+
+That prints the budget and the candidate pools, and writes nothing. Choose from it —
+[Choosing from the brief](#choosing-from-the-brief) — then hand the choices back **without**
+`--write`:
+
 ```
 python skills/generation/scripts/generate.py \
   --profile profile/profile.json \
   --program profile/programs/program-<date>.json \
   --dataset-dir datasets/<name> \
+  --selection <selection>.json
+```
+
+This is the check. It composes the week, prints the plan JSON to stdout and, on stderr, the
+allocated-versus-planned table with every warning. That table is what the echo step shows —
+[Before writing](#before-writing) — and the planned column is the generator's number,
+never a hand tally: indirect volume is discounted, and a coach's sum will disagree with
+the script's. If a target is short or a choice looks wrong, change the selection and run
+the check again; nothing has been written yet.
+
+Only when the person has seen it and not vetoed, run the same command once more with the
+outputs added:
+
+```
+python skills/generation/scripts/generate.py \
+  --profile profile/profile.json \
+  --program profile/programs/program-<date>.json \
+  --dataset-dir datasets/<name> \
+  --selection <selection>.json \
   --write profile/plans/plan-<today>.json \
   --write-md profile/plans/plan-<today>.md
 ```
 
-Add `--rules profile/rules.md` when it exists. If today's filename is taken,
+Add `--rules profile/rules.md` to all three when it exists. If today's filename is taken,
 suffix `-2`, then `-3` — the generator refuses to overwrite a plan, and so does this skill; old
-plans are records, never edited or deleted. Everything tunable lives in
+plans are records, never edited or deleted. The selection file is working material, not a record:
+it belongs in a scratch location, never under `profile/`. Everything tunable lives in
 `scripts/generate.config.json`, never in the script and never in prose.
+
+## Choosing from the brief
+
+The brief hands over a budget and a legal candidate pool per muscle group. Everything inside it is
+yours: which candidate fills a slot, what order the session runs in, what pairs as a superset, how
+many reps inside the band, and how close to failure each exercise sits. `coaching.md` is what to
+decide it with — read it before choosing, not after.
+
+- **The pool is a boundary, not a ranking to obey.** Its order is a marginal-volume score, kept
+  as a starting point. An exercise further down that suits this person better is the right answer.
+- **Choose an exercise the brief did not offer and the run is refused**, by name — the pool
+  already had the equipment, benchmarks and exclusions applied. Widen it by changing the rules and
+  re-running the brief.
+- **Say what you decided and why**, in one or two lines, before the echo step. A plan whose
+  reasoning is invisible cannot be argued with; making these decisions arguable is the point.
+- Only two training rules are checked — `coaching.md` § What the script actually enforces. Every
+  other rule there is yours to honour, and yours to name when you knowingly go against one.
 
 ## No Python
 
-If `scripts/generate.py` cannot run here, do not imitate it by hand. Write nothing, say so, and
-hand back the command above. A missing plan is recoverable; a plausible-looking wrong one is not.
+If `scripts/generate.py` cannot run here, do not imitate it by hand. Choosing exercises is your
+job; working out which ones are legal and how many sets each muscle is owed is not. Write nothing,
+say so, and hand back the commands above.
+A missing plan is recoverable; a plausible-looking wrong one is not.
 
 ## Before writing
 
 Show, before any file lands:
 
-- The **planned-versus-allocated table** — per muscle group, allocated versus what the fitted
+- The **planned-versus-allocated table** — per muscle group, allocated versus what the chosen
   week delivers.
 - The **week itself** — each day's exercises, sets and reps.
 - **Every warning**, in plain English: a short group ("cannot reach the hamstrings allocation —
   6 of 9 sets"), an exclusion that matched nothing, an unplaceable must-include.
 - The **exact paths** about to be written.
 
-Let the person veto or adjust. A swap is a rules change and a re-run — a `--rules` file for one
-cycle, or their `rules.md` for always — so the volume arithmetic stays true; never
-hand-edit an exercise into the generator's output. If they abandon here, write nothing.
+Also say, in a line or two, **why the week looks the way it does** — the choices that were yours
+rather than the arithmetic's.
+
+Let the person veto or adjust. An exercise swap is a changed selection and another compose: the
+choice was yours to make, so remaking it is cheap, and a preference they want to last still
+belongs in their `rules.md`. Either route recomputes the volume arithmetic, which is why you
+never hand-edit an exercise into the generator's output. If they abandon here, write nothing.
+The echo ends the turn: write only after they answer, in a later turn. With no way to ask (no
+question tool, a non-interactive session), show the same four things as text and stop.
 
 ## What this skill never does
 

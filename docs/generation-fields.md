@@ -35,8 +35,8 @@ switch a default off.
 | `## Exclude equipment` | dataset equipment values, e.g. `smith machine` | avoided even if your gym tier allows them; same warning on unknowns |
 | `## Exclude movement groups` | dataset movement families, e.g. `Shrugs` | |
 | `## Exclude muscles` | one or more of `chest`, `back`, `shoulders`, `biceps`, `triceps`, `quads`, `hamstrings`, `glutes`, `calves`, `core` | the group's target is dropped, not rerouted |
-| `## Focus muscles` | same ten values | picked earlier and more often when candidates tie; allocations unchanged |
-| `## Must include` | exact dataset exercise names | guaranteed a slot when tier, benchmark gates and exclusions allow; otherwise an `unmatched_must_include:<name>` warning |
+| `## Focus muscles` | same ten values | ranked higher in the brief's candidate pool; allocations unchanged |
+| `## Must include` | exact dataset exercise names | flagged `must_include` in the brief when tier, benchmark gates and exclusions allow — the coach places it and says so if it does not fit; otherwise an `unmatched_must_include:<name>` warning |
 | `## Order` | rules, primary sort first, later rules break ties | omit the section for the config default |
 
 A `profile/rules.json` from before this file was Markdown is still read, so an old one keeps
@@ -46,7 +46,13 @@ Markdown into; you never type JSON.
 
 Order rules: `must_include_first` (pinned exercises lead) · `trailer_groups_last` (config
 `trailer_groups`, core and calves by default, close the session) · `compound_before_isolation` ·
-`focus_muscles_first` · `large_groups_before_small` (bigger weekly allocations earlier).
+`focus_muscles_first` · `large_groups_before_small` (bigger weekly allocations earlier). The
+coach applies these, not the script — the list is your standing instruction. Naming a rule that
+does not exist is still refused, so a typo is caught rather than ignored.
+
+Rest intervals are not a `rules.md` section. They come from your goal, in
+`scripts/generate.config.json`. The exercise ceiling comes from your session-length answer via
+`volume.py`; a coach who lengthens rests should fill fewer of those slots, not run over.
 
 ## `profile/plans/plan-YYYY-MM-DD.md` — also yours
 
@@ -55,6 +61,10 @@ The human-readable render. Annotate, cross out, print — it is a snapshot for y
 ## `profile/plans/plan-YYYY-MM-DD.json` — generated, not hand-written
 
 The structured record: who, program echo, dataset name and commit, merged rules, allocated versus
-planned sets per group, every session, every warning. Want a different plan? Change `rules.md`
-(or the program answers via onboarding) and generate again — a new dated file appears, the old one
-stays. Hand-editing this file makes its volume arithmetic quietly wrong.
+planned sets per group, every session, every warning. Each exercise carries its sets and reps,
+and — where the coach prescribed them — `rir` (reps left in the tank), `superset_group` (a label
+shared by exercises done together), and `rest_seconds`. Those three are optional: a plan written
+before they existed is still a valid plan. Want a different plan? Ask for one — swapping an
+exercise is a fresh choice, not an edit — or change `rules.md` (or the program answers via
+onboarding) to make the preference stick. A new dated file appears, the old one stays.
+Hand-editing this file makes its volume arithmetic quietly wrong.

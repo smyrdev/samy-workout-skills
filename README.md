@@ -1,7 +1,7 @@
 # samy-workout-skills
 
 Two portable skills: **onboarding** interviews you once about your training situation and saves
-it; **generation** turns that into a concrete week of exercises, fitted to a per-muscle weekly
+it; **generation** turns that into a concrete week of exercises, chosen against a per-muscle weekly
 volume target using a real exercise dataset.
 
 They are **skills**, not an app — markdown files of instructions any capable LLM agent can
@@ -30,7 +30,7 @@ saved, and ends up with two files: `profile/profile.json` and
 `profile/programs/program-<today>.json`.
 
 Generation re-confirms your program answers ("same as last time" is one click), clones the
-exercise dataset into a local cache, fits exercises to your computed weekly per-muscle set
+exercise dataset into a local cache, works out which exercises are legal for your weekly per-muscle set
 allocation, shows you the week and the volume math before writing, and saves
 `profile/plans/plan-<today>.json` plus a readable `plan-<today>.md`.
 
@@ -94,9 +94,10 @@ python skills/onboarding/scripts/volume.py --profile profile/profile.json \
 Plans are built from
 [smyrdev/exercises-dataset](https://github.com/smyrdev/exercises-dataset) — ~1,300 exercises
 where most carry a per-muscle volume map (1.0 for prime movers, 0.5 for meaningful synergists).
-Each set of an exercise adds its coefficients to your weekly per-muscle totals, and the generator
-picks exercises until every muscle group's allocation is met — or tells you honestly which group
-falls short with your equipment.
+Each set of an exercise adds its coefficients to your weekly per-muscle totals. The generator
+works out which exercises you may legally be given and how many sets each muscle is owed; the
+coach picks from that, and the generator then reports honestly which group falls short with your
+equipment.
 
 The dataset is cloned into a gitignored `datasets/` cache on first use. Everything the generator
 knows about it — field names, equipment tiers, how its 22-muscle vocabulary maps onto the volume
@@ -153,8 +154,13 @@ Your files are plain JSON you can read, edit, back up, or delete. Nothing else t
 - **The seven strength benchmarks are self-reported.** Nothing verifies them.
 - **Bodyfat is a self-estimated bracket**, not a measurement, and it is stored as a range for
   exactly that reason.
-- **No weights or progression yet.** A plan says movements, sets and rep ranges; picking loads
-  and progressing them week to week is the session-logging feature's job, when it exists.
+- **No weights or progression yet.** A plan says movements, sets, reps and how close to failure;
+  picking loads and progressing them week to week is the session-logging feature's job, when it
+  exists. Rules that need that history (work capacity, asymmetry correction) are out of scope
+  until then.
+- **Exercise choice is a judgment, not a calculation.** Ask twice and you may get two different
+  weeks, both hitting the same allocation. The budget and the candidate pool are reproducible;
+  what gets chosen from them is reasoned, and you can ask why.
 - **Benchmark gates are name-pattern based.** "Can't do five pull-ups" removes exercises whose
   names match pull-up patterns; a dataset with unusual naming could slip past them.
 
@@ -198,11 +204,12 @@ skills/onboarding/scripts/volume.py            the volume algorithm
 skills/onboarding/scripts/volume.config.json   every number the volume model uses
 skills/onboarding/evals/                       test cases, trigger queries, fixtures
 skills/generation/SKILL.md                     the generation flow — vendor-neutral, pointers + gotchas
-skills/generation/references/rules.md          dataset cache, personal rules, echo-before-write
+skills/generation/references/rules.md          dataset cache, personal rules, choosing, echo-before-write
+skills/generation/references/coaching.md       training-design rules — how to choose, and why
 skills/generation/assets/datasets.json         dataset registry — all dataset-specific knowledge
-skills/generation/assets/schema/               plan and rules contracts, machine-readable
+skills/generation/assets/schema/               plan, selection and rules contracts, machine-readable
 skills/generation/assets/examples/             copy-to-start samples
-skills/generation/scripts/generate.py          the fitting algorithm
+skills/generation/scripts/generate.py          the budget, the candidate pool, and the checks
 skills/generation/scripts/generate.config.json every number the generator uses
 skills/generation/evals/                       test cases, trigger queries, fixtures (offline dataset included)
 .claude/skills/onboard/SKILL.md                thin wrapper so /onboard works in Claude Code

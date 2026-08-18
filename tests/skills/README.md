@@ -102,14 +102,22 @@ tokens, so this file asserts only what is left over:
 - `references/rules.md` keeps the rules that stop a wrong plan: never fabricate exercises, the exact clone
   command, a missing plan beats a plausible wrong one, never drop a rule, never hide a shortfall,
   suffix rather than overwrite
+- `references/coaching.md` keeps saying which of its rules the script actually enforces, and
+  which it does not — the one line that stops guidance drifting into a gate, or a gate into guidance
 - `docs/generation-fields.md` keeps the warning names, the ten muscle groups and all five order rules
 
 ### test-generation-script.sh
 `skills/generation/scripts/generate.py` through its real command line:
-- `--self-test` passes; its ten in-process invariants are not re-asserted here
-- the worked case reproduces `assets/examples/plan.example.json` byte for byte from the bundled fixture —
-  one `cmp` that pins selection, scoring, ordering, rounding and formatting at once (line endings
-  aside: what the checkout holds depends on `core.autocrlf`, not on the generator)
+- `--self-test` passes; its in-process invariants are not re-asserted here
+- the worked case reproduces `assets/examples/plan.example.json` byte for byte, composed from the
+  committed `assets/examples/selection.example.json` against the bundled fixture — one `cmp` that
+  pins the filtering, the volume arithmetic, rounding and formatting at once (line endings aside:
+  what the checkout holds depends on `core.autocrlf`, not on the generator)
+- `--brief` is reproducible: two runs give the same bytes, it budgets the session and each muscle,
+  it offers candidates, and it writes nothing even when handed `--write`
+- the two refusals fire and name themselves: an exercise the brief never offered, and a rep target
+  under the floor. A selection missing a day is refused too, rather than silently short a session
+- an exclusion removes an exercise from the candidates, and a stale selection naming it is refused
 - two identical runs produce identical output; targets come back in canonical order
 - usage errors exit 2 and input errors exit 3; a plan is never overwritten
 - every unknown value — dataset name, muscle, equipment tier, split, goal, rules key, order rule —

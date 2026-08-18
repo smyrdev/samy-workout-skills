@@ -53,7 +53,7 @@
       }
     },
     "rules_applied": {
-      "description": "The merged rules snapshot (defaults + personal rules.json) the fit actually used.",
+      "description": "The merged rules snapshot (defaults + personal rules.md) the run used.",
       "type": "object",
       "required": ["exclude", "focus", "order"],
       "additionalProperties": false,
@@ -82,7 +82,7 @@
       }
     },
     "targets": {
-      "description": "Per muscle group: the sets volume.py allocated, and the fractional sets this plan actually delivers (each set adds 1.0 for direct muscles, 0.5 for indirect ones). Groups excluded by rules are absent.",
+      "description": "Per muscle group: the sets volume.py allocated, and the fractional sets this plan actually delivers (each set adds the exercise's coefficient for direct muscles, and the coefficient times the config's indirect discount for indirect ones). Groups excluded by rules are absent.",
       "type": "object"
     },
     "sessions": {
@@ -112,6 +112,21 @@
                 "volume": {
                   "type": "object",
                   "description": "Muscle-group involvement per set, in the skill's canonical vocabulary (already mapped from the dataset's)."
+                },
+                "rir": {
+                  "description": "Reps in reserve, as the coach prescribed it. Optional: a plan written before this field existed is still valid, and a coach who did not prescribe one leaves it out rather than inventing a number.",
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "superset_group": {
+                  "description": "A short label shared by exercises performed together. Absent means performed straight.",
+                  "type": "string",
+                  "minLength": 1
+                },
+                "rest_seconds": {
+                  "description": "Present only where the coach overrode the rest interval the brief assumed.",
+                  "type": "integer",
+                  "minimum": 0
                 }
               }
             }

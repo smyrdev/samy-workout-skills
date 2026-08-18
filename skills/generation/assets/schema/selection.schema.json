@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/smyrdev/samy-workout-skills/skills/generation/assets/schema/selection.schema.json",
+  "title": "Exercise selection",
+  "description": "What the coach chose from a brief, handed back to scripts/generate.py to be composed into a plan. Ids and choices only — no volume arithmetic, no muscle targets, no exercise names. The script already knows what each id is; restating it here would create a second copy that can disagree. Transient by nature: a selection is an argument to one run, not a record. skills/generation/assets/examples/selection.example.json is the one that produced the shipped plan example.",
+  "type": "object",
+  "required": ["sessions"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema_version": { "description": "Optional; the brief carries the model version. A selection is an argument to one run, not a record.", "const": "1.0" },
+    "sessions": {
+      "description": "One entry per training day. Every day the brief asked for must appear, in any order — a missing day is refused rather than quietly dropped.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["day", "exercises"],
+        "additionalProperties": false,
+        "properties": {
+          "day": { "type": "integer", "minimum": 1, "maximum": 7 },
+          "exercises": {
+            "description": "In the order they are to be performed. The script preserves it exactly — ordering is a coaching decision and nothing re-sorts it.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "sets"],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "description": "Must be one of the candidates the brief offered for a muscle group this day trains. Anything else is refused.",
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sets": { "type": "integer", "minimum": 1 },
+                "reps": {
+                  "description": "A rep target, normally inside the band the brief offered. Below coaching.md 1.4's floor it is refused, on the goals that rule scopes itself to. Omitted, the goal's default band is used.",
+                  "type": "string",
+                  "minLength": 1
+                },
+                "rir": {
+                  "description": "Reps in reserve. Nothing checks it — proximity to failure is judgment, and coaching.md 1.x is where the reasoning lives.",
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "superset_group": {
+                  "description": "A short label shared by the exercises performed together, e.g. \"A\". Exercises with no label are performed straight.",
+                  "type": "string",
+                  "minLength": 1
+                },
+                "rest_seconds": {
+                  "description": "Overrides the brief's rest interval for this exercise. Raising it makes the session longer; the exercise ceiling does not move to compensate.",
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

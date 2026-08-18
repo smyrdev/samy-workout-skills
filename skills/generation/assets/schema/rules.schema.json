@@ -55,7 +55,7 @@
         "must_include": {
           "type": "array",
           "items": { "type": "string", "minLength": 1 },
-          "description": "Exact dataset exercise names guaranteed a slot when equipment and gates allow."
+          "description": "Exact dataset exercise names flagged must_include in the brief when equipment and gates allow; the coach places them."
         }
       }
     },
